@@ -11,6 +11,7 @@ namespace ES_F3105U
 {
     partial class MainForm
     {
+        // Lookup table for frequency values (Hz) by index
         Dictionary<byte, int> freq_lookup = new Dictionary<byte, int>()
             { { 0, 865000 }, { 1, 865500 }, { 2, 866000 }, { 3, 866500 }, { 4, 867000 },
               { 5, 867500 }, { 6, 868000 }, { 7, 902000 }, { 8, 902500 }, { 9, 903000 },
@@ -25,12 +26,19 @@ namespace ES_F3105U
               {50, 923500 }, {51, 924000 }, {52, 924500 }, {53, 925000 }, {54, 925500 },
               {55, 926000 }, {56, 926500 }, {57, 927000 }, {58, 927500 }, {59, 928000 }
             };
+        /// <summary>
+        /// Returns the frequency in Hz for a given lookup index.
+        /// </summary>
         private int GetFreq(byte freqLookup)
         {
             if (freq_lookup.ContainsKey(freqLookup))
                 return freq_lookup[freqLookup];
             return 0;
         }
+
+        /// <summary>
+        /// Populates the COM port dropdown with available serial ports.
+        /// </summary>
         private void Reader_PopulateComPorts()
         {
             cbReader_COM.Items.Clear();
@@ -40,6 +48,10 @@ namespace ES_F3105U
                 cbReader_COM.Items.Add(port);
             }
         }
+
+        /// <summary>
+        /// Initializes the reader UI, sets default baud rate.
+        /// </summary>
         private void Init_ReaderUI()
         {
             Reader_PopulateComPorts();
@@ -49,62 +61,89 @@ namespace ES_F3105U
                 cbReader_ComBaud.SelectedIndex = index;
             }
         }
+
+        /// <summary>
+        /// Refreshes the list of available COM ports.
+        /// </summary>
         private void btnReader_RefreshComPorts_Click(object sender, EventArgs e)
         {
             Reader_PopulateComPorts();
         }
 
+        /// <summary>
+        /// Opens the selected COM port and initializes the reader.
+        /// </summary>
         private async void btnReader_COMOpen_Click(object sender, EventArgs e)
         {
-            if (cbReader_COM.SelectedIndex != -1 && cbReader_ComBaud.SelectedIndex != -1)
+            // Validate user selection
+            if (cbReader_COM.SelectedIndex == -1 || cbReader_ComBaud.SelectedIndex == -1)
+                return;
+
+            readerClient = new();
+
+            string COMPort = cbReader_COM.Items[cbReader_COM.SelectedIndex].ToString();
+            string baud = cbReader_ComBaud.Items[cbReader_ComBaud.SelectedIndex].ToString();
+
+            try
             {
-                readerClient = new();
-
-                string COMPort = cbReader_COM.Items[cbReader_COM.SelectedIndex].ToString();
-                string baud = cbReader_ComBaud.Items[cbReader_ComBaud.SelectedIndex].ToString();
+                // Attempt to open the serial port
                 readerClient.OpenSerial(COMPort + ":" + baud, 3000, out status);
-                if (status == ErrorCode.OK)
+                if (status != ErrorCode.OK)
                 {
-                    btnReader_COMOpen.Enabled = false;
-
-                    readerClient.CommandResponseReceived = ResponseParser;
-
-                    if (checkEnableSerialLog.Checked)
-                        readerClient.SerialPortLog = Logging_SerialPortLogger;
-
-                    if (checkEnableAPILog.Checked)
-                        readerClient.APILog = Logging_APILogger;
-
-                    flag_cmd_reset.Value = false;
-                    status = readerClient.MsgBaseReset();
-                    if (status != ErrorCode.OK)
-                    {
-                        btnReader_COMOpen.Enabled = true;
-                        readerClient.CloseSerial(out status);
-                        return;
-                    }
-                    //Now we wait till reader responds something or we timeout.
-                    Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_reset));
-                    await task;
-                    if (task.Result != ErrorCode.OK)
-                    {
-                        btnReader_COMOpen.Enabled = true;
-                        AddListBoxResponse("Reader timeout");
-                        readerClient.CloseSerial(out status);
-                        return;
-                    }
-
-                    btnReader_COMOpen.Enabled = false;
-                    btnReader_COMClose.Enabled = true;
-
-                    await Task.Delay(500);
-                    btnReader_GetFirmware_Click(sender, e);
-                    await Task.Delay(500);
-                    btnReader_GetTXPower_Click(sender, e);
-                    await Task.Delay(500);
+                    // Show error to user
+                    MessageBox.Show("Failed to open COM port.");
+                    return;
                 }
+
+                // Register response and logging handlers
+                readerClient.CommandResponseReceived = ResponseParser;
+
+                if (checkEnableSerialLog.Checked)
+                    readerClient.SerialPortLog = Logging_SerialPortLogger;
+
+                if (checkEnableAPILog.Checked)
+                    readerClient.APILog = Logging_APILogger;
+
+                // Reset the reader and wait for response
+                flag_cmd_reset.Value = false;
+                status = readerClient.MsgBaseReset();
+                if (status != ErrorCode.OK)
+                {
+                    btnReader_COMOpen.Enabled = true;
+                    readerClient.CloseSerial(out status);
+                    return;
+                }
+                // Wait for reset flag or timeout
+                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_reset));
+                await task;
+                if (task.Result != ErrorCode.OK)
+                {
+                    btnReader_COMOpen.Enabled = true;
+                    AddListBoxResponse("Reader timeout");
+                    readerClient.CloseSerial(out status);
+                    return;
+                }
+
+                btnReader_COMOpen.Enabled = false;
+                btnReader_COMClose.Enabled = true;
+
+                // Query firmware and TX power after opening
+                await Task.Delay(500);
+                btnReader_GetFirmware_Click(sender, e);
+                await Task.Delay(500);
+                btnReader_GetTXPower_Click(sender, e);
+                await Task.Delay(500);
+            }
+            catch (Exception ex)
+            {
+                // Log and show error
+                AddListBoxResponse($"Error opening COM port: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Closes the COM port and disposes the reader client.
+        /// </summary>
         private void btnReader_COMClose_Click(object sender, EventArgs e)
         {
             btnReader_COMOpen.Enabled = true;
@@ -115,6 +154,9 @@ namespace ES_F3105U
             parameter.TimerInit = false;
         }
 
+        /// <summary>
+        /// Gets the firmware version from the reader and updates the UI.
+        /// </summary>
         private async void btnReader_GetFirmware_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -132,6 +174,9 @@ namespace ES_F3105U
             btnReader_GetFirmware.Enabled = true;
         }
 
+        /// <summary>
+        /// Gets the TX power from the reader and updates the UI.
+        /// </summary>
         private async void btnReader_GetTXPower_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -150,6 +195,9 @@ namespace ES_F3105U
             btnReader_GetTXPower.Enabled = true;
         }
 
+        /// <summary>
+        /// Gets the RF link profile from the reader and updates the UI.
+        /// </summary>
         private async void btnReader_GetRFLinkProfile_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -173,6 +221,9 @@ namespace ES_F3105U
             btnReader_GetRFLinkProfile.Enabled = true;
         }
 
+        /// <summary>
+        /// Gets the reader temperature and updates the UI.
+        /// </summary>
         private async void btnReader_GetTemperature_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -193,6 +244,9 @@ namespace ES_F3105U
 
         }
 
+        /// <summary>
+        /// Gets the frequency band and updates the UI with start/end frequencies.
+        /// </summary>
         private async void btnReader_GetFreqBand_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -215,6 +269,9 @@ namespace ES_F3105U
 
         }
 
+        /// <summary>
+        /// Sets the TX power on the reader after user confirmation.
+        /// </summary>
         private async void btnReader_SetTXPower_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -243,6 +300,9 @@ namespace ES_F3105U
             }
         }
 
+        /// <summary>
+        /// Saves the reader parameters to non-volatile memory.
+        /// </summary>
         private async void btnReader_SaveParameters_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -256,6 +316,9 @@ namespace ES_F3105U
             btnReader_SaveParameters.Enabled = true;
         }
 
+        /// <summary>
+        /// Resets the reader parameters to factory defaults after confirmation.
+        /// </summary>
         private async void btnReader_ResetParameters_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -272,11 +335,17 @@ namespace ES_F3105U
             btnReader_ResetParameters.Enabled = true;
         }
 
+        /// <summary>
+        /// Saves the frequency band settings (not implemented).
+        /// </summary>
         private void btnReader_SaveFreqBand_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
         }
 
+        /// <summary>
+        /// Saves the RF link profile after user confirmation.
+        /// </summary>
         private async void btnReader_SaveRFLinkProfile_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -299,6 +368,9 @@ namespace ES_F3105U
             }
         }
 
+        /// <summary>
+        /// Validates and bounds the TX power input as the user types.
+        /// </summary>
         private void txtReader_TXPower_TextChanged(object sender, EventArgs e)
         {
             filterOnlyDigits_TextChanged(sender, e);
@@ -318,6 +390,9 @@ namespace ES_F3105U
             
         }
 
+        /// <summary>
+        /// Gets the TX/RF ON/OFF times from the reader and updates the UI.
+        /// </summary>
         private async void btnReader_GetTXRFTime_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -338,6 +413,9 @@ namespace ES_F3105U
             btnReader_GetTXRFTime.Enabled = true;
         }
 
+        /// <summary>
+        /// Saves the TX/RF ON/OFF times to the reader after validation and confirmation.
+        /// </summary>
         private async void btnReader_SaveTXRFTime_Click(object sender, EventArgs e)
         {
             if (readerClient == null) return;
@@ -370,6 +448,9 @@ namespace ES_F3105U
 
         }
 
+        /// <summary>
+        /// Validates and bounds the RF ON/OFF time input as the user types.
+        /// </summary>
         private void txtReader_RF_ONOFF_Time_TextChanged(object sender, EventArgs e)
         {
             filterOnlyDigits_TextChanged(sender, e);
@@ -389,11 +470,17 @@ namespace ES_F3105U
             }
         }
 
+        /// <summary>
+        /// Placeholder for getting CW (continuous wave) status (not implemented).
+        /// </summary>
         private void btnReader_GetCW_Click(object sender, EventArgs e)
         {
 
         }
 
+        /// <summary>
+        /// Placeholder for setting CW (continuous wave) status (not implemented).
+        /// </summary>
         private void btnReader_SetCW_Click(object sender, EventArgs e)
         {
 

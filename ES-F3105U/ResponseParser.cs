@@ -8,10 +8,12 @@ using UCchip.Reader.API;
 
 namespace ES_F3105U
 {
-
+    /// <summary>
+    /// Partial MainForm class: Handles parsing of responses from the UHF reader and updates UI/flags accordingly.
+    /// </summary>
     partial class MainForm
     {
-        //Flagging states
+        // --- Flagging states for command completion ---
         Ref<bool> flag_cmd_reset = new Ref<bool>(false, "flag_cmd_reset");
         Ref<bool> flag_cmd_get_firmware_version = new Ref<bool>(false, "flag_cmd_get_firmware_version");
         Ref<bool> flag_cmd_get_output_power = new Ref<bool>(false, "flag_cmd_get_output_power");
@@ -33,29 +35,32 @@ namespace ES_F3105U
         Ref<bool> flag_cmd_get_cw = new Ref<bool>(false, "cmd_get_cw");
         Ref<bool> flag_cmd_set_cw = new Ref<bool>(false, "cmd_set_cw");
 
-        //Reader parameters
-        string readerVersion = "";
-        byte readerDBM = 0;
-        byte readerLinkProfile = 0;
-        string readerTemperature = "";
-        byte readerRegion;
-        byte readerStartFreq;
-        byte readerEndFreq;
-        ushort readerTXOnTime = 0;
-        ushort readerTXOffTime = 0;
-        byte readerCWStatus;
+        // --- Reader parameters ---
+        string readerVersion = ""; // Firmware version string
+        byte readerDBM = 0; // Output power in dBM
+        byte readerLinkProfile = 0; // RF link profile
+        string readerTemperature = ""; // Reader temperature string
+        byte readerRegion; // Frequency region
+        byte readerStartFreq; // Start frequency
+        byte readerEndFreq; // End frequency
+        ushort readerTXOnTime = 0; // TX on time
+        ushort readerTXOffTime = 0; // TX off time
+        byte readerCWStatus; // CW status
 
-        //Inventory
+        // --- Inventory queue for EPC data ---
         ConcurrentQueue<byte[]> epcQueue = new ConcurrentQueue<byte[]>();
 
-        //Return status code
+        // --- Return status code for last command ---
         ErrorCode readerStatusCode = 0;
 
-        //Function parameters
+        // --- Function parameters and buffers ---
         bool isMsgBaseSetAccessEpcMatch_Set = false;
         string readerFilteredEPC = "";
         byte[] readerReadBuffer = Array.Empty<byte>();
 
+        /// <summary>
+        /// Adds a message to the response ListBox with a timestamp.
+        /// </summary>
         private void AddListBoxResponse(string message)
         {
             string time_now = DateTime.Now.ToLongTimeString();
@@ -69,12 +74,17 @@ namespace ES_F3105U
                 lbResponse.Items.Insert(0, fullMsg);
             }
         }
+
+        /// <summary>
+        /// Parses a response from the reader and dispatches to the appropriate handler.
+        /// </summary>
+        /// <param name="cmdResponse">Raw response bytes from the reader.</param>
         private void ResponseParser(byte[] cmdResponse)
         {
             int bufLen = cmdResponse.Length;
             if (bufLen < 5)
             {
-                return;
+                return; // Ignore invalid responses
             }
             int dataLen = bufLen - 5;
             int index = 0;
@@ -96,9 +106,11 @@ namespace ES_F3105U
             index += dataLen;
             index++;                                                    //crc
 
+            // Dispatch to command-specific handler
             switch (commandContent.Command)
             {
                 case (byte)(Commands.cmd_temperature_warning):
+                    // Device overheating warning
                     AddListBoxResponse($"cmd_temperature_warning, Device is overheating, please check reader");
                     break;
                 case (byte)(Commands.cmd_reset):
@@ -163,10 +175,14 @@ namespace ES_F3105U
                     break;
             }
         }
+
+        /// <summary>
+        /// Returns a human-readable string for a given error code.
+        /// </summary>
         private string GetErrorCodeString(byte errCode)
         {
             string retString = string.Empty;
-
+            // Map error code to description
             return errCode switch
             {
                 0x10 => "Operation sucessful",
@@ -221,7 +237,9 @@ namespace ES_F3105U
         }
         #region command handler parsers
 
-        // 0x4a - cmd_reader_para_save
+        /// <summary>
+        /// Handles response for cmd_reader_para_save command (0x4a).
+        /// </summary>
         private void parse_cmd_reader_para_save(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -230,7 +248,9 @@ namespace ES_F3105U
             flag_cmd_reader_para_save.Value = true;
         }
 
-        // 0x4b
+        /// <summary>
+        /// Handles response for cmd_reader_para_reset command (0x4b).
+        /// </summary>
         private void parse_cmd_reader_para_reset(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -239,7 +259,9 @@ namespace ES_F3105U
             flag_cmd_reader_para_reset.Value = true;
         }
 
-        // 0x5c - cmd_get_tx_time
+        /// <summary>
+        /// Handles response for cmd_get_tx_time command (0x5c).
+        /// </summary>
         private void parse_cmd_get_tx_time(byte[] data)
         {
             if(data.Length == 4)
@@ -255,7 +277,9 @@ namespace ES_F3105U
             flag_cmd_get_tx_time.Value = true;
         }
 
-        // 0x5d - cmd_set_tx_time
+        /// <summary>
+        /// Handles response for cmd_set_tx_time command (0x5d).
+        /// </summary>
         private void parse_cmd_set_tx_time(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -264,7 +288,9 @@ namespace ES_F3105U
             flag_cmd_set_tx_time.Value = true;
         }
 
-        // 0x69 - cmd_set_rf_link_profile
+        /// <summary>
+        /// Handles response for cmd_set_rf_link_profile command (0x69).
+        /// </summary>
         private void parse_cmd_set_rf_link_profile(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -273,7 +299,9 @@ namespace ES_F3105U
             flag_cmd_set_rf_link_profile.Value = true;
         }
 
-        // 0x6a - cmd_get_rf_link_profile
+        /// <summary>
+        /// Handles response for cmd_get_rf_link_profile command (0x6a).
+        /// </summary>
         private void parse_cmd_get_rf_link_profile(byte[] data)
         {
             //No error status code returned
@@ -282,7 +310,9 @@ namespace ES_F3105U
             flag_cmd_get_rf_link_profile.Value = true;
         }
 
-        // 0x70 - cmd_reset
+        /// <summary>
+        /// Handles response for cmd_reset command (0x70).
+        /// </summary>
         private void parse_cmd_reset(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -291,7 +321,9 @@ namespace ES_F3105U
             flag_cmd_reset.Value = true;
         }
 
-        // 0x72 - cmd_get_firmware_version
+        /// <summary>
+        /// Handles response for cmd_get_firmware_version command (0x72).
+        /// </summary>
         private void parse_cmd_get_firmware_version(byte[] data)
         {
             //No error status code returned
@@ -311,7 +343,9 @@ namespace ES_F3105U
             flag_cmd_get_firmware_version.Value = true;
         }
 
-        // 0x76h - cmd_set_output_power
+        /// <summary>
+        /// Handles response for cmd_set_output_power command (0x76).
+        /// </summary>
         private void parse_cmd_set_output_power(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -320,7 +354,9 @@ namespace ES_F3105U
             flag_cmd_set_output_power.Value = true;
         }
 
-        // 0x77 - cmd_get_output_power
+        /// <summary>
+        /// Handles response for cmd_get_output_power command (0x77).
+        /// </summary>
         private void parse_cmd_get_output_power(byte[] data)
         {
             //No error status code returned
@@ -330,7 +366,9 @@ namespace ES_F3105U
             flag_cmd_get_output_power.Value = true;
         }
 
-        // 0x79 - cmd_get_frequency_region
+        /// <summary>
+        /// Handles response for cmd_get_frequency_region command (0x79).
+        /// </summary>
         private void parse_cmd_get_frequency_region(byte[] data)
         {
             //No error status code returned
@@ -341,7 +379,9 @@ namespace ES_F3105U
             flag_cmd_get_frequency_region.Value = true;
         }
 
-        // 0x7b - cmd_get_reader_temperature
+        /// <summary>
+        /// Handles response for cmd_get_reader_temperature command (0x7b).
+        /// </summary>
         private void parse_cmd_get_reader_temperature(byte[] data)
         {
             //No error status code returned
@@ -366,7 +406,9 @@ namespace ES_F3105U
             flag_cmd_get_reader_temperature.Value = true;
         }
 
-        // 0x81 - cmd_read
+        /// <summary>
+        /// Handles response for cmd_read command (0x81).
+        /// </summary>
         private void parse_cmd_read(byte[] data)
         {
             if (data.Length == 1)
@@ -385,7 +427,9 @@ namespace ES_F3105U
             flag_cmd_read.Value = true;
         }
 
-        // 0x82 - cmd_write
+        /// <summary>
+        /// Handles response for cmd_write command (0x82).
+        /// </summary>
         private void parse_cmd_write(byte[] data)
         {
             if (data.Length == 1)
@@ -404,7 +448,9 @@ namespace ES_F3105U
             flag_cmd_write.Value = true;
         }
 
-        // 0x85 - cmd_set_access_epc_match
+        /// <summary>
+        /// Handles response for cmd_set_access_epc_match command (0x85).
+        /// </summary>
         private void parse_cmd_set_access_epc_match(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -413,7 +459,9 @@ namespace ES_F3105U
             flag_cmd_set_access_epc_match.Value = true;
         }
 
-        // 0x86 - cmd_get_access_epc_match
+        /// <summary>
+        /// Handles response for cmd_get_access_epc_match command (0x86).
+        /// </summary>
         private void parse_cmd_get_access_epc_match(byte[] data)
         {
             string parsedReturn = "No Match";
@@ -437,7 +485,9 @@ namespace ES_F3105U
             flag_cmd_get_access_epc_match.Value = true;
         }
 
-        // 0x89 - cmd_real_time_inventory
+        /// <summary>
+        /// Handles response for cmd_real_time_inventory command (0x89).
+        /// </summary>
         private void parse_cmd_real_time_inventory_status(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
@@ -446,7 +496,9 @@ namespace ES_F3105U
             flag_cmd_real_time_inventory.Value = true;
         }
 
-        // 0x8c - cmd_stop_inventory
+        /// <summary>
+        /// Handles response for cmd_stop_inventory command (0x8c).
+        /// </summary>
         private void parse_cmd_stop_inventory(byte[] data)
         {
             readerStatusCode = (ErrorCode)data[0];
