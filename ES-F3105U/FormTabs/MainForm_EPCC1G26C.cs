@@ -18,6 +18,15 @@ namespace ES_F3105U
         private void Init_6CUI()
         {
             cb6C_MemBank.SelectedIndex = 1;
+
+            //Populate the interval time combobox in 10ms increments starting from 40ms
+            int i = 100;
+            while (i <= 300)
+            {
+                ComboBox_IntervalTime.Items.Add(Convert.ToString(i) + "ms");
+                i = i + 10;
+            }
+            ComboBox_IntervalTime.SelectedIndex = 0;
         }
 
         private bool isTimer6C_ReadProcessing = false;
@@ -191,6 +200,7 @@ namespace ES_F3105U
                     btn6C_Inventory.Text = "Stop";
                     timerInventory.Enabled = true;
                     bIsInventoryRunning = true;
+                    ComboBox_IntervalTime.Enabled = false;
                 }
             }
             else
@@ -206,6 +216,7 @@ namespace ES_F3105U
                     timerInventory.Enabled = false;
                     btn6C_Inventory.Text = "Inventory";
                     bIsInventoryRunning = false;
+                    ComboBox_IntervalTime.Enabled = true;
                 }
             }
             btn6C_Inventory.Enabled = true;
@@ -530,6 +541,14 @@ namespace ES_F3105U
 
             gbTagRW.Enabled = true;
             btn6C_FindLength.Enabled = true;
+        }
+
+        private void ComboBox_IntervalTime_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ComboBox_IntervalTime.SelectedIndex != -1)
+            {
+                timerInventory.Interval = 100 + (ComboBox_IntervalTime.SelectedIndex * 10);
+            }
         }
     }
 }

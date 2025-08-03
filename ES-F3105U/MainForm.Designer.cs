@@ -134,6 +134,8 @@
             label7 = new Label();
             txt6C_RWEPC = new TextBox();
             groupBox6 = new GroupBox();
+            ComboBox_IntervalTime = new ComboBox();
+            label31 = new Label();
             btn6C_QueryReaderFilter = new Button();
             label14 = new Label();
             btn6C_Inventory = new Button();
@@ -345,7 +347,7 @@
             label26.AutoSize = true;
             label26.Location = new Point(6, 82);
             label26.Name = "label26";
-            label26.Size = new Size(131, 15);
+            label26.Size = new Size(132, 15);
             label26.TabIndex = 63;
             label26.Text = "Time in ms, 0 to disable";
             // 
@@ -365,7 +367,7 @@
             label34.Location = new Point(1, 58);
             label34.Margin = new Padding(4, 0, 4, 0);
             label34.Name = "label34";
-            label34.Size = new Size(73, 15);
+            label34.Size = new Size(74, 15);
             label34.TabIndex = 66;
             label34.Text = "RF OFF Time";
             // 
@@ -407,7 +409,7 @@
             label33.Location = new Point(1, 31);
             label33.Margin = new Padding(4, 0, 4, 0);
             label33.Name = "label33";
-            label33.Size = new Size(70, 15);
+            label33.Size = new Size(71, 15);
             label33.TabIndex = 64;
             label33.Text = "RF ON Time";
             // 
@@ -553,7 +555,7 @@
             label29.AutoSize = true;
             label29.Location = new Point(6, 254);
             label29.Name = "label29";
-            label29.Size = new Size(286, 15);
+            label29.Size = new Size(287, 15);
             label29.TabIndex = 22;
             label29.Text = "* To make changes permanent, click Save Parameters";
             // 
@@ -626,7 +628,7 @@
             label6.Location = new Point(243, 24);
             label6.Margin = new Padding(4, 0, 4, 0);
             label6.Name = "label6";
-            label6.Size = new Size(73, 15);
+            label6.Size = new Size(74, 15);
             label6.TabIndex = 29;
             label6.Text = "Temperature";
             // 
@@ -688,7 +690,7 @@
             label3.Location = new Point(139, 24);
             label3.Margin = new Padding(4, 0, 4, 0);
             label3.Name = "label3";
-            label3.Size = new Size(56, 15);
+            label3.Size = new Size(57, 15);
             label3.TabIndex = 20;
             label3.Text = "TX Power";
             // 
@@ -878,7 +880,7 @@
             label30.AutoSize = true;
             label30.Location = new Point(262, 27);
             label30.Name = "label30";
-            label30.Size = new Size(49, 15);
+            label30.Size = new Size(50, 15);
             label30.TabIndex = 17;
             label30.Text = "Tag EPC";
             // 
@@ -932,7 +934,7 @@
             P_TID.Location = new Point(141, 14);
             P_TID.Margin = new Padding(4, 3, 4, 3);
             P_TID.Name = "P_TID";
-            P_TID.Size = new Size(42, 19);
+            P_TID.Size = new Size(43, 19);
             P_TID.TabIndex = 2;
             P_TID.TabStop = true;
             P_TID.Text = "TID";
@@ -978,7 +980,7 @@
             label8.Location = new Point(301, 214);
             label8.Margin = new Padding(4, 0, 4, 0);
             label8.Name = "label8";
-            label8.Size = new Size(140, 15);
+            label8.Size = new Size(139, 15);
             label8.TabIndex = 13;
             label8.Text = "Access Password (8 Hex):";
             // 
@@ -1196,7 +1198,7 @@
             label16.AutoSize = true;
             label16.Location = new Point(65, 54);
             label16.Name = "label16";
-            label16.Size = new Size(36, 15);
+            label16.Size = new Size(35, 15);
             label16.TabIndex = 23;
             label16.Text = "(Hex)";
             // 
@@ -1297,7 +1299,7 @@
             label13.AutoSize = true;
             label13.Location = new Point(2, 170);
             label13.Name = "label13";
-            label13.Size = new Size(67, 15);
+            label13.Size = new Size(66, 15);
             label13.TabIndex = 19;
             label13.Text = "Write (Hex)";
             // 
@@ -1388,7 +1390,7 @@
             label10.AutoSize = true;
             label10.Location = new Point(6, 112);
             label10.Name = "label10";
-            label10.Size = new Size(142, 15);
+            label10.Size = new Size(141, 15);
             label10.TabIndex = 10;
             label10.Text = "Start Address (Word/Hex)";
             // 
@@ -1397,7 +1399,7 @@
             label9.AutoSize = true;
             label9.Location = new Point(16, 82);
             label9.Name = "label9";
-            label9.Size = new Size(128, 15);
+            label9.Size = new Size(127, 15);
             label9.TabIndex = 8;
             label9.Text = "Access Password (Hex)";
             // 
@@ -1418,7 +1420,7 @@
             label7.AutoSize = true;
             label7.Location = new Point(6, 23);
             label7.Name = "label7";
-            label7.Size = new Size(49, 15);
+            label7.Size = new Size(50, 15);
             label7.TabIndex = 6;
             label7.Text = "Tag EPC";
             // 
@@ -1432,6 +1434,8 @@
             // 
             // groupBox6
             // 
+            groupBox6.Controls.Add(ComboBox_IntervalTime);
+            groupBox6.Controls.Add(label31);
             groupBox6.Controls.Add(btn6C_QueryReaderFilter);
             groupBox6.Controls.Add(label14);
             groupBox6.Controls.Add(btn6C_Inventory);
@@ -1442,6 +1446,27 @@
             groupBox6.TabIndex = 0;
             groupBox6.TabStop = false;
             groupBox6.Text = "Inventory";
+            // 
+            // ComboBox_IntervalTime
+            // 
+            ComboBox_IntervalTime.DropDownStyle = ComboBoxStyle.DropDownList;
+            ComboBox_IntervalTime.FormattingEnabled = true;
+            ComboBox_IntervalTime.Location = new Point(292, 255);
+            ComboBox_IntervalTime.Margin = new Padding(4, 3, 4, 3);
+            ComboBox_IntervalTime.Name = "ComboBox_IntervalTime";
+            ComboBox_IntervalTime.Size = new Size(139, 23);
+            ComboBox_IntervalTime.TabIndex = 24;
+            ComboBox_IntervalTime.SelectedIndexChanged += ComboBox_IntervalTime_SelectedIndexChanged;
+            // 
+            // label31
+            // 
+            label31.AutoSize = true;
+            label31.Location = new Point(207, 259);
+            label31.Margin = new Padding(4, 0, 4, 0);
+            label31.Name = "label31";
+            label31.Size = new Size(78, 15);
+            label31.TabIndex = 23;
+            label31.Text = "Read Interval:";
             // 
             // btn6C_QueryReaderFilter
             // 
@@ -1962,7 +1987,7 @@
             label49.Location = new Point(25, 86);
             label49.Margin = new Padding(4, 0, 4, 0);
             label49.Name = "label49";
-            label49.Size = new Size(24, 15);
+            label49.Size = new Size(25, 15);
             label49.TabIndex = 30;
             label49.Text = "TID";
             // 
@@ -2051,7 +2076,7 @@
             cbDup_EPCGA.Location = new Point(62, 111);
             cbDup_EPCGA.Margin = new Padding(4, 3, 4, 3);
             cbDup_EPCGA.Name = "cbDup_EPCGA";
-            cbDup_EPCGA.Size = new Size(211, 19);
+            cbDup_EPCGA.Size = new Size(213, 19);
             cbDup_EPCGA.TabIndex = 10;
             cbDup_EPCGA.Text = "EPC Global Application (T / Toggle)";
             cbDup_EPCGA.UseVisualStyleBackColor = true;
@@ -2063,7 +2088,7 @@
             cbDup_XPC.Location = new Point(62, 84);
             cbDup_XPC.Margin = new Padding(4, 3, 4, 3);
             cbDup_XPC.Name = "cbDup_XPC";
-            cbDup_XPC.Size = new Size(240, 19);
+            cbDup_XPC.Size = new Size(239, 19);
             cbDup_XPC.TabIndex = 9;
             cbDup_XPC.Text = "Extended Protocol Control (XI / XPC W1)";
             cbDup_XPC.UseVisualStyleBackColor = true;
@@ -2143,7 +2168,7 @@
             label57.Location = new Point(21, 142);
             label57.Margin = new Padding(4, 0, 4, 0);
             label57.Name = "label57";
-            label57.Size = new Size(33, 15);
+            label57.Size = new Size(34, 15);
             label57.TabIndex = 21;
             label57.Text = "TMN";
             // 
@@ -2290,7 +2315,7 @@
             label19.Location = new Point(26, 60);
             label19.Margin = new Padding(4, 0, 4, 0);
             label19.Name = "label19";
-            label19.Size = new Size(24, 15);
+            label19.Size = new Size(25, 15);
             label19.TabIndex = 68;
             label19.Text = "TID";
             // 
@@ -2567,7 +2592,6 @@
             // 
             // timerInventory
             // 
-            timerInventory.Interval = 10;
             timerInventory.Tick += timerInventory_Tick;
             // 
             // timer6C_PollRead
@@ -2849,5 +2873,7 @@
         private RadioButton NoProect2;
         private Label label30;
         private TextBox txt6C_LockEPCTag;
+        private ComboBox ComboBox_IntervalTime;
+        private Label label31;
     }
 }

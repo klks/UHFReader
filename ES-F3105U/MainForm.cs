@@ -79,9 +79,10 @@ namespace ES_F3105U
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (readerClient !=null)
+            if (readerClient != null)
                 readerClient.Dispose();
             readerClient = null;
         }
+
     }
 }
