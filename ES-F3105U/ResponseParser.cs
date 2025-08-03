@@ -65,14 +65,7 @@ namespace ES_F3105U
         {
             string time_now = DateTime.Now.ToLongTimeString();
             string fullMsg = $"[{time_now}] {message}";
-            if (lbResponse.InvokeRequired)
-            {
-                lbResponse.Invoke(new MethodInvoker(delegate { lbResponse.Items.Insert(0, fullMsg); }));
-            }
-            else
-            {
-                lbResponse.Items.Insert(0, fullMsg);
-            }
+            lbResponse.Invoke(new MethodInvoker(delegate { lbResponse.Items.Insert(0, fullMsg); }));
         }
 
         /// <summary>

@@ -341,37 +341,21 @@ namespace FM_5XX
         {
             string time_now = DateTime.Now.ToLongTimeString();
 
-            if (lbStatusMessage.InvokeRequired)
-            {
-                lbStatusMessage.Invoke(new MethodInvoker(delegate
-                {
-                    lbStatusMessage.Items.Add($"[{time_now}] {message}");
-                    lbStatusMessage.SelectedIndex = lbStatusMessage.Items.Count - 1;
-                }));
-            }
-            else
+            lbStatusMessage.Invoke(new MethodInvoker(delegate
             {
                 lbStatusMessage.Items.Add($"[{time_now}] {message}");
                 lbStatusMessage.SelectedIndex = lbStatusMessage.Items.Count - 1;
-            }
+            }));
         }
         private void DoSerialPortLoggerWork(string message, string send_direction)
         {
             string time_now = DateTime.Now.ToLongTimeString();
 
-            if (lbSerialLog.InvokeRequired)
-            {
-                lbSerialLog.Invoke(new MethodInvoker(delegate
-                {
-                    lbSerialLog.Items.Add($"[{time_now}][{send_direction}] {message}");
-                    lbSerialLog.SelectedIndex = lbSerialLog.Items.Count - 1;
-                }));
-            }
-            else
+            lbSerialLog.Invoke(new MethodInvoker(delegate
             {
                 lbSerialLog.Items.Add($"[{time_now}][{send_direction}] {message}");
                 lbSerialLog.SelectedIndex = lbSerialLog.Items.Count - 1;
-            }
+            }));
 
         }
         private void btnReader_COMClose_Click(object sender, EventArgs e)

@@ -94,10 +94,7 @@ namespace ES_F3105U
 
             if (bSingleFireRead)    //Enable controls again
             {
-                if(btn6C_Read.InvokeRequired)
-                    btn6C_Read.Invoke(new MethodInvoker(delegate { btn6C_Read.Enabled = true; }));
-                else
-                    btn6C_Read.Enabled = true;
+                btn6C_Read.Invoke(new MethodInvoker(delegate { btn6C_Read.Enabled = true; }));
             }
             AddListBoxResponse($"timer6C_PollRead -> End");
             isTimer6C_ReadProcessing = false;
@@ -273,21 +270,10 @@ namespace ES_F3105U
             string strStartAddr = "";
             string strRWLen = "";
 
-            if (txt6C_AccessPwd.InvokeRequired)
-                txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { strAccessPwd = txt6C_AccessPwd.Text; }));
-            else
-                strAccessPwd = txt6C_AccessPwd.Text;
-
-            if (txt6C_StartAddr.InvokeRequired)
-                txt6C_StartAddr.Invoke(new MethodInvoker(delegate { strStartAddr = txt6C_StartAddr.Text; }));
-            else
-                strStartAddr = txt6C_StartAddr.Text;
-
-            if (txt6C_RWLen.InvokeRequired)
-                txt6C_RWLen.Invoke(new MethodInvoker(delegate { strRWLen = txt6C_RWLen.Text; }));
-            else
-                strRWLen = txt6C_RWLen.Text;
-
+            txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { strAccessPwd = txt6C_AccessPwd.Text; }));
+            txt6C_StartAddr.Invoke(new MethodInvoker(delegate { strStartAddr = txt6C_StartAddr.Text; }));
+            txt6C_RWLen.Invoke(new MethodInvoker(delegate { strRWLen = txt6C_RWLen.Text; }));
+            
             if (strAccessPwd == "" ||
                 strStartAddr == "" ||
                 strRWLen == "")
@@ -297,11 +283,8 @@ namespace ES_F3105U
             }
 
             int AccessPwdLen = 0;
-            if (txt6C_AccessPwd.InvokeRequired)
-                txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { AccessPwdLen = txt6C_AccessPwd.TextLength; }));
-            else
-                AccessPwdLen = txt6C_AccessPwd.TextLength;
-
+            txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { AccessPwdLen = txt6C_AccessPwd.TextLength; }));
+            
             if (AccessPwdLen != 8)
             {
                 MessageBox.Show("Access Password must be 8 hex chars!", "RW Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
