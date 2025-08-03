@@ -10,6 +10,7 @@ namespace Utilities
 {
     public class Utilities
     {
+        #region Card DB Utils
         public static bool bICDBLoaded = false;
         public static DigitsMDID DigitsMDID_DB = new();
         public static List<DigitsICDB> DigitsDBList = [];
@@ -155,7 +156,166 @@ namespace Utilities
             }
             return null;
         }
+        #endregion
 
+        #region String Helpers
+        protected static char[] hexArray = "0123456789ABCDEF".ToCharArray();
+        public static byte[] StringToBytes(string s)
+        {
+            if (s == null)
+            {
+                return null;
+            }
+            return Encoding.ASCII.GetBytes(s);
+        }
+        public static string StringToHexString(string str)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(str.ToCharArray());
+            return BytesToHexString(bytes);
+        }
+
+        public static string BytesToHexString(byte[] b)
+        {
+            if (b == null)
+            {
+                return "null";
+            }
+            char[] array = new char[b.Length * 2];
+            for (int i = 0; i < b.Length; i++)
+            {
+                int num = b[i] & 0xFF;
+                array[i * 2] = hexArray[num >> 4];
+                array[i * 2 + 1] = hexArray[num & 0xF];
+            }
+            return new string(array);
+        }
+        public static string BytesToString(byte[] b)
+        {
+            return (b == null) ? "" : AsciiOctets2String(b);
+        }
+        public static string ByteToHexString(byte b)
+        {
+            char[] array = new char[2];
+            int num = b & 0xFF;
+            array[0] = hexArray[num >> 4];
+            array[1] = hexArray[num & 0xF];
+            return new string(array);
+        }
+        private static string AsciiOctets2String(byte[] bytes)
+        {
+            StringBuilder stringBuilder = new StringBuilder(bytes.Length);
+            foreach (char item in bytes.Select((byte b) => (char)b))
+            {
+                switch (item)
+                {
+                    case '\0':
+                        stringBuilder.Append("<NUL>");
+                        continue;
+                    case '\u0001':
+                        stringBuilder.Append("<SOH>");
+                        continue;
+                    case '\u0002':
+                        stringBuilder.Append("<STX>");
+                        continue;
+                    case '\u0003':
+                        stringBuilder.Append("<ETX>");
+                        continue;
+                    case '\u0004':
+                        stringBuilder.Append("<EOT>");
+                        continue;
+                    case '\u0005':
+                        stringBuilder.Append("<ENQ>");
+                        continue;
+                    case '\u0006':
+                        stringBuilder.Append("<ACK>");
+                        continue;
+                    case '\a':
+                        stringBuilder.Append("<BEL>");
+                        continue;
+                    case '\b':
+                        stringBuilder.Append("<BS>");
+                        continue;
+                    case '\t':
+                        stringBuilder.Append("<HT>");
+                        continue;
+                    case '\v':
+                        stringBuilder.Append("<VT>");
+                        continue;
+                    case '\f':
+                        stringBuilder.Append("<FF>");
+                        continue;
+                    case '\u000e':
+                        stringBuilder.Append("<SO>");
+                        continue;
+                    case '\u000f':
+                        stringBuilder.Append("<SI>");
+                        continue;
+                    case '\u0010':
+                        stringBuilder.Append("<DLE>");
+                        continue;
+                    case '\u0011':
+                        stringBuilder.Append("<DC1>");
+                        continue;
+                    case '\u0012':
+                        stringBuilder.Append("<DC2>");
+                        continue;
+                    case '\u0013':
+                        stringBuilder.Append("<DC3>");
+                        continue;
+                    case '\u0014':
+                        stringBuilder.Append("<DC4>");
+                        continue;
+                    case '\u0015':
+                        stringBuilder.Append("<NAK>");
+                        continue;
+                    case '\u0016':
+                        stringBuilder.Append("<SYN>");
+                        continue;
+                    case '\u0017':
+                        stringBuilder.Append("<ETB>");
+                        continue;
+                    case '\u0018':
+                        stringBuilder.Append("<CAN>");
+                        continue;
+                    case '\u0019':
+                        stringBuilder.Append("<EM>");
+                        continue;
+                    case '\u001a':
+                        stringBuilder.Append("<SUB>");
+                        continue;
+                    case '\u001b':
+                        stringBuilder.Append("<ESC>");
+                        continue;
+                    case '\u001c':
+                        stringBuilder.Append("<FS>");
+                        continue;
+                    case '\u001d':
+                        stringBuilder.Append("<GS>");
+                        continue;
+                    case '\u001e':
+                        stringBuilder.Append("<RS>");
+                        continue;
+                    case '\u001f':
+                        stringBuilder.Append("<US>");
+                        continue;
+                    case '\u007f':
+                        stringBuilder.Append("<DEL>");
+                        continue;
+                }
+                if (item > '\u007f')
+                {
+                    stringBuilder.AppendFormat("\\u{0:X4}", (ushort)item);
+                }
+                else
+                {
+                    stringBuilder.Append(item);
+                }
+            }
+            return stringBuilder.ToString();
+        }
+        #endregion
+
+        #region UI Filters
         public static void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
         {
             if ((Control.ModifierKeys & Keys.Control) == Keys.Control) return;
@@ -217,6 +377,6 @@ namespace Utilities
                 }
             }
         }
-
+        #endregion
     }
 }

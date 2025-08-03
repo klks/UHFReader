@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Utilities;
 
 namespace FM_5XX
 {
@@ -168,7 +169,6 @@ namespace FM_5XX
         private Module.CommandType CommandType = Module.CommandType.Normal;
         private SerialPort SerialPort_;
         private StringBuilder DataBuilder;
-        protected static char[] hexArray = "0123456789ABCDEF".ToCharArray();
         public event RawDataHandler RawDataReceiveEvent;
         public event CombineDataHandler CombineDataReceiveEvent;
 
@@ -237,118 +237,7 @@ namespace FM_5XX
             }
             return this;
         }
-        private static string AsciiOctets2String(byte[] bytes)
-        {
-            StringBuilder stringBuilder = new StringBuilder(bytes.Length);
-            foreach (char item in bytes.Select((byte b) => (char)b))
-            {
-                switch (item)
-                {
-                    case '\0':
-                        stringBuilder.Append("<NUL>");
-                        continue;
-                    case '\u0001':
-                        stringBuilder.Append("<SOH>");
-                        continue;
-                    case '\u0002':
-                        stringBuilder.Append("<STX>");
-                        continue;
-                    case '\u0003':
-                        stringBuilder.Append("<ETX>");
-                        continue;
-                    case '\u0004':
-                        stringBuilder.Append("<EOT>");
-                        continue;
-                    case '\u0005':
-                        stringBuilder.Append("<ENQ>");
-                        continue;
-                    case '\u0006':
-                        stringBuilder.Append("<ACK>");
-                        continue;
-                    case '\a':
-                        stringBuilder.Append("<BEL>");
-                        continue;
-                    case '\b':
-                        stringBuilder.Append("<BS>");
-                        continue;
-                    case '\t':
-                        stringBuilder.Append("<HT>");
-                        continue;
-                    case '\v':
-                        stringBuilder.Append("<VT>");
-                        continue;
-                    case '\f':
-                        stringBuilder.Append("<FF>");
-                        continue;
-                    case '\u000e':
-                        stringBuilder.Append("<SO>");
-                        continue;
-                    case '\u000f':
-                        stringBuilder.Append("<SI>");
-                        continue;
-                    case '\u0010':
-                        stringBuilder.Append("<DLE>");
-                        continue;
-                    case '\u0011':
-                        stringBuilder.Append("<DC1>");
-                        continue;
-                    case '\u0012':
-                        stringBuilder.Append("<DC2>");
-                        continue;
-                    case '\u0013':
-                        stringBuilder.Append("<DC3>");
-                        continue;
-                    case '\u0014':
-                        stringBuilder.Append("<DC4>");
-                        continue;
-                    case '\u0015':
-                        stringBuilder.Append("<NAK>");
-                        continue;
-                    case '\u0016':
-                        stringBuilder.Append("<SYN>");
-                        continue;
-                    case '\u0017':
-                        stringBuilder.Append("<ETB>");
-                        continue;
-                    case '\u0018':
-                        stringBuilder.Append("<CAN>");
-                        continue;
-                    case '\u0019':
-                        stringBuilder.Append("<EM>");
-                        continue;
-                    case '\u001a':
-                        stringBuilder.Append("<SUB>");
-                        continue;
-                    case '\u001b':
-                        stringBuilder.Append("<ESC>");
-                        continue;
-                    case '\u001c':
-                        stringBuilder.Append("<FS>");
-                        continue;
-                    case '\u001d':
-                        stringBuilder.Append("<GS>");
-                        continue;
-                    case '\u001e':
-                        stringBuilder.Append("<RS>");
-                        continue;
-                    case '\u001f':
-                        stringBuilder.Append("<US>");
-                        continue;
-                    case '\u007f':
-                        stringBuilder.Append("<DEL>");
-                        continue;
-                }
-                if (item > '\u007f')
-                {
-                    stringBuilder.AppendFormat("\\u{0:X4}", (ushort)item);
-                }
-                else
-                {
-                    stringBuilder.Append(item);
-                }
-            }
-            return stringBuilder.ToString();
-        }
+        
         public ReaderService Bank_(string paramBank)
         {
             string text = BitConverter.ToString(Encoding.Default.GetBytes(paramBank));
@@ -359,33 +248,7 @@ namespace FM_5XX
             }
             return this;
         }
-        public string BytesToHexString(byte[] b)
-        {
-            if (b == null)
-            {
-                return "null";
-            }
-            char[] array = new char[b.Length * 2];
-            for (int i = 0; i < b.Length; i++)
-            {
-                int num = b[i] & 0xFF;
-                array[i * 2] = hexArray[num >> 4];
-                array[i * 2 + 1] = hexArray[num & 0xF];
-            }
-            return new string(array);
-        }
-        public string BytesToString(byte[] b)
-        {
-            return (b == null) ? "" : AsciiOctets2String(b);
-        }
-        public string ByteToHexString(byte b)
-        {
-            char[] array = new char[2];
-            int num = b & 0xFF;
-            array[0] = hexArray[num >> 4];
-            array[1] = hexArray[num & 0xF];
-            return new string(array);
-        }
+        
         private void Clear()
         {
             if (DataBuilder != null)
@@ -425,7 +288,7 @@ namespace FM_5XX
         {
             lock (DataBuilder)
             {
-                DataBuilder.Append(MakesUpZero(ByteToHexString(paramCommand), 2));
+                DataBuilder.Append(MakesUpZero(Utilities.Utilities.ByteToHexString(paramCommand), 2));
             }
             return this;
         }
@@ -433,7 +296,7 @@ namespace FM_5XX
         {
             lock (DataBuilder)
             {
-                DataBuilder.Append(BytesToHexString(paramCommand));
+                DataBuilder.Append(Utilities.Utilities.BytesToHexString(paramCommand));
             }
             return this;
         }
@@ -452,9 +315,9 @@ namespace FM_5XX
             DataBuilder.Append(MakesUpZero(type, 2)).Append(MakesUpZero(command, 2)).Append(MakesUpZero(address, 4))
                 .Append(MakesUpZero(data, 2));
             byte b = Convert.ToByte((DataBuilder.Length + 2) / 2);
-            DataBuilder.Insert(0, MakesUpZero(ByteToHexString(b), 2));
+            DataBuilder.Insert(0, MakesUpZero(Utilities.Utilities.ByteToHexString(b), 2));
             byte b2 = CRC8(HexStringToBytes(DataBuilder.ToString()));
-            DataBuilder.Append(MakesUpZero(ByteToHexString(b2), 2));
+            DataBuilder.Append(MakesUpZero(Utilities.Utilities.ByteToHexString(b2), 2));
             DataBuilder.Insert(0, "AA");
             string hex = DataBuilder.ToString();
             Clear();
@@ -464,9 +327,9 @@ namespace FM_5XX
         {
             DataBuilder.Append(data);
             byte b = Convert.ToByte((DataBuilder.Length + 2) / 2);
-            DataBuilder.Insert(0, MakesUpZero(ByteToHexString(b), 2));
+            DataBuilder.Insert(0, MakesUpZero(Utilities.Utilities.ByteToHexString(b), 2));
             b = CRC8(HexStringToBytes(DataBuilder.ToString()));
-            DataBuilder.Append(MakesUpZero(ByteToHexString(b), 2));
+            DataBuilder.Append(MakesUpZero(Utilities.Utilities.ByteToHexString(b), 2));
             DataBuilder.Insert(0, "AA");
             string hex = DataBuilder.ToString();
             Clear();
@@ -585,7 +448,7 @@ namespace FM_5XX
                 throw new ArgumentException("data is null", "DataBuilder");
             }
             byte b = Convert.ToByte((DataBuilder.Length + 2) / 2);
-            DataBuilder.Insert(0, MakesUpZero(ByteToHexString(10), 2)).Append(MakesUpZero(ByteToHexString(13), 2));
+            DataBuilder.Insert(0, MakesUpZero(Utilities.Utilities.ByteToHexString(10), 2)).Append(MakesUpZero(Utilities.Utilities.ByteToHexString(13), 2));
             string hex = DataBuilder.ToString();
             Clear();
             return HexStringToBytes(hex);
@@ -647,7 +510,7 @@ namespace FM_5XX
         {
             lock (DataBuilder)
             {
-                DataBuilder.Append(ByteToHexString(paramData));
+                DataBuilder.Append(Utilities.Utilities.ByteToHexString(paramData));
             }
             return this;
         }
@@ -674,7 +537,7 @@ namespace FM_5XX
         private void DoCombine(byte[] data)
         {
             bool flag = true;
-            string text = BytesToString(data);
+            string text = Utilities.Utilities.BytesToString(data);
             if (SubPacket != null && SubPacket.Length > 0)
             {
                 text = SubPacket + text;
@@ -730,7 +593,7 @@ namespace FM_5XX
                         Array.Resize(ref array, newSize);
                         lock (ReceiveBuffer)
                         {
-                            ReceiveBuffer = BytesToHexString(array);
+                            ReceiveBuffer = Utilities.Utilities.BytesToHexString(array);
                         }
                     }
                     Array.Resize(ref array, 256);
@@ -973,7 +836,7 @@ namespace FM_5XX
                 {
                     if (ReceiveBuffer != null && ReceiveBuffer.Length > 0)
                     {
-                        array = ((CommandType != Module.CommandType.AA) ? StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
+                        array = ((CommandType != Module.CommandType.AA) ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
                         ReceiveBuffer = "";
                         num = 0;
                     }
@@ -1001,7 +864,7 @@ namespace FM_5XX
                 }
                 if (ReceiveBuffer != null && ReceiveBuffer.Length > 0)
                 {
-                    array = ((CommandType != Module.CommandType.AA) ? StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
+                    array = ((CommandType != Module.CommandType.AA) ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
                     ReceiveBuffer = "";
                     i = 0;
                 }
@@ -1015,7 +878,7 @@ namespace FM_5XX
         {
             lock (DataBuilder)
             {
-                DataBuilder.Append(ByteToHexString(paramRecom));
+                DataBuilder.Append(Utilities.Utilities.ByteToHexString(paramRecom));
             }
             return this;
         }
@@ -1025,7 +888,7 @@ namespace FM_5XX
             int num2 = 0;
             if (b[0] == 10)
             {
-                DataBuilder.Append(RemoveCRLF(BytesToString(b)));
+                DataBuilder.Append(RemoveCRLF(Utilities.Utilities.BytesToString(b)));
             }
             else
             {
@@ -1034,7 +897,7 @@ namespace FM_5XX
                     return "CRC Check Error";
                 }
                 num2 = b[6] + 7;
-                DataBuilder.Append(BytesToHexString(b));
+                DataBuilder.Append(Utilities.Utilities.BytesToHexString(b));
                 DataBuilder.Remove(num2 * 2, 2).Insert(num2 * 2, ",R");
                 DataBuilder.Remove(num, 2).Insert(num, " Q");
                 DataBuilder.Insert(10, ":").Insert(8, ":").Insert(6, " ")
@@ -1150,18 +1013,6 @@ namespace FM_5XX
             s = s.Replace("\r", "<CR>").Replace("\n", "<LF>");
             return s;
         }
-        public byte[] StringToBytes(string s)
-        {
-            if (s == null)
-            {
-                return null;
-            }
-            return Encoding.ASCII.GetBytes(s);
-        }
-        public string StringToHexString(string str)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(str.ToCharArray());
-            return BytesToHexString(bytes);
-        }
+       
     }
 }

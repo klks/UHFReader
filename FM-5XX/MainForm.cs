@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Utilities;
 
 namespace FM_5XX
 {
@@ -526,7 +527,7 @@ namespace FM_5XX
             byte[] b = readerClient.Receive();
             if (b != null)
             {
-                string s = readerClient.RemoveCRLF(readerClient.BytesToString(b));
+                string s = readerClient.RemoveCRLF(Utilities.Utilities.BytesToString(b));
                 string[] s_split = s.Split(",");
                 if (s_split.Length == 4)
                 {
@@ -680,12 +681,12 @@ namespace FM_5XX
                 case ReaderService.Module.Version.FI_R300S:
                     readerClient.Send(readerClient.ReadModeandChannel(), ReaderService.Module.CommandType.Normal);
                     byte[] bs = readerClient.Receive();
-                    ReceiveData_ModeChannel = readerClient.HexStringToBytes(readerClient.RemoveCRLF(readerClient.BytesToString(bs)));
+                    ReceiveData_ModeChannel = readerClient.HexStringToBytes(readerClient.RemoveCRLF(Utilities.Utilities.BytesToString(bs)));
 
                     await Task.Delay(250);
                     readerClient.Send(readerClient.ReadFrequencyOffset(), ReaderService.Module.CommandType.Normal);
                     bs = readerClient.Receive();
-                    ReceiveData_FreqOffset = readerClient.HexStringToBytes(readerClient.RemoveCRLF(readerClient.BytesToString(bs)));
+                    ReceiveData_FreqOffset = readerClient.HexStringToBytes(readerClient.RemoveCRLF(Utilities.Utilities.BytesToString(bs)));
                     break;
             }
             if (ReceiveData_ModeChannel != null)
@@ -792,7 +793,7 @@ namespace FM_5XX
                 DoProcess = CommandStates.INFO;
                 IsReceiveDataWork = true;
                 int powerLevel = (cbPowerLevel.Items.Count - 1) - cbPowerLevel.SelectedIndex;
-                string str = readerClient.MakesUpZero(readerClient.ByteToHexString((byte)powerLevel), 2);
+                string str = readerClient.MakesUpZero(Utilities.Utilities.ByteToHexString((byte)powerLevel), 2);
                 readerClient.Send(readerClient.SetPower(str), ReaderService.Module.CommandType.Normal);
                 AddStatusMessage("SavePowerLevel Called");
             }
@@ -829,7 +830,7 @@ namespace FM_5XX
                 else
                 {
                     int idx = cbFreqSel.SelectedIndex + 1;
-                    string str = readerClient.MakesUpZero(readerClient.ByteToHexString((byte)idx), 2);
+                    string str = readerClient.MakesUpZero(Utilities.Utilities.ByteToHexString((byte)idx), 2);
                     readerClient.Send(
                         readerClient.Command_J((rbBBM_RX.Checked) ? (byte)0x32 : (byte)0x31, str),
                         ReaderService.Module.CommandType.Normal);

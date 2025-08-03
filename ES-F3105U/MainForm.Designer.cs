@@ -1159,7 +1159,7 @@
             // cb6C_IKnowTagLock
             // 
             cb6C_IKnowTagLock.AutoSize = true;
-            cb6C_IKnowTagLock.Location = new Point(390, 296);
+            cb6C_IKnowTagLock.Location = new Point(396, 304);
             cb6C_IKnowTagLock.Name = "cb6C_IKnowTagLock";
             cb6C_IKnowTagLock.Size = new Size(144, 19);
             cb6C_IKnowTagLock.TabIndex = 4;
