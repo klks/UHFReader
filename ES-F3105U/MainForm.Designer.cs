@@ -134,8 +134,6 @@
             label7 = new Label();
             txt6C_RWEPC = new TextBox();
             groupBox6 = new GroupBox();
-            ComboBox_IntervalTime = new ComboBox();
-            label31 = new Label();
             btn6C_QueryReaderFilter = new Button();
             label14 = new Label();
             btn6C_Inventory = new Button();
@@ -1434,8 +1432,6 @@
             // 
             // groupBox6
             // 
-            groupBox6.Controls.Add(ComboBox_IntervalTime);
-            groupBox6.Controls.Add(label31);
             groupBox6.Controls.Add(btn6C_QueryReaderFilter);
             groupBox6.Controls.Add(label14);
             groupBox6.Controls.Add(btn6C_Inventory);
@@ -1446,27 +1442,6 @@
             groupBox6.TabIndex = 0;
             groupBox6.TabStop = false;
             groupBox6.Text = "Inventory";
-            // 
-            // ComboBox_IntervalTime
-            // 
-            ComboBox_IntervalTime.DropDownStyle = ComboBoxStyle.DropDownList;
-            ComboBox_IntervalTime.FormattingEnabled = true;
-            ComboBox_IntervalTime.Location = new Point(292, 255);
-            ComboBox_IntervalTime.Margin = new Padding(4, 3, 4, 3);
-            ComboBox_IntervalTime.Name = "ComboBox_IntervalTime";
-            ComboBox_IntervalTime.Size = new Size(139, 23);
-            ComboBox_IntervalTime.TabIndex = 24;
-            ComboBox_IntervalTime.SelectedIndexChanged += ComboBox_IntervalTime_SelectedIndexChanged;
-            // 
-            // label31
-            // 
-            label31.AutoSize = true;
-            label31.Location = new Point(207, 259);
-            label31.Margin = new Padding(4, 0, 4, 0);
-            label31.Name = "label31";
-            label31.Size = new Size(78, 15);
-            label31.TabIndex = 23;
-            label31.Text = "Read Interval:";
             // 
             // btn6C_QueryReaderFilter
             // 
@@ -2592,6 +2567,7 @@
             // 
             // timerInventory
             // 
+            timerInventory.Interval = 50;
             timerInventory.Tick += timerInventory_Tick;
             // 
             // timer6C_PollRead
@@ -2873,7 +2849,5 @@
         private RadioButton NoProect2;
         private Label label30;
         private TextBox txt6C_LockEPCTag;
-        private ComboBox ComboBox_IntervalTime;
-        private Label label31;
     }
 }

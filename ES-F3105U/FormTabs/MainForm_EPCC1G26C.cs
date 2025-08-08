@@ -18,15 +18,6 @@ namespace ES_F3105U
         private void Init_6CUI()
         {
             cb6C_MemBank.SelectedIndex = 1;
-
-            //Populate the interval time combobox in 10ms increments starting from 40ms
-            int i = 100;
-            while (i <= 300)
-            {
-                ComboBox_IntervalTime.Items.Add(Convert.ToString(i) + "ms");
-                i = i + 10;
-            }
-            ComboBox_IntervalTime.SelectedIndex = 0;
         }
 
         private bool isTimer6C_ReadProcessing = false;
@@ -181,8 +172,6 @@ namespace ES_F3105U
 
             if (btn6C_Inventory.Text == "Inventory")
             {
-                Task<ErrorCode> task;
-
                 //Reset UI fields
                 lvInventory.Items.Clear();
                 txt6C_KillEPC.Text = "";
@@ -192,7 +181,7 @@ namespace ES_F3105U
 
                 flag_cmd_real_time_inventory.Value = false;
                 readerClient.MsgStartInventory();
-                task = Task.Run(() => WaitForFlag(flag_cmd_real_time_inventory));
+                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_real_time_inventory));
                 await task;
 
                 if (task.Result == ErrorCode.OK)
@@ -200,24 +189,26 @@ namespace ES_F3105U
                     btn6C_Inventory.Text = "Stop";
                     timerInventory.Enabled = true;
                     bIsInventoryRunning = true;
-                    ComboBox_IntervalTime.Enabled = false;
                 }
             }
             else
             {
-                
-                flag_cmd_stop_inventory.Value = false;
-                readerClient.MsgBaseStopInventory();
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_stop_inventory));
-                await task;
-
-                if (task.Result == ErrorCode.OK)
+                for (int i=0; i<5; i++)
                 {
-                    timerInventory.Enabled = false;
-                    btn6C_Inventory.Text = "Inventory";
-                    bIsInventoryRunning = false;
-                    ComboBox_IntervalTime.Enabled = true;
+                    flag_cmd_stop_inventory.Value = false;
+                    readerClient.MsgBaseStopInventory();
+                    Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_stop_inventory, 1500));
+                    await task;
+
+                    if (task.Result == ErrorCode.OK)
+                    {
+                        timerInventory.Enabled = false;
+                        btn6C_Inventory.Text = "Inventory";
+                        bIsInventoryRunning = false;
+                        break;
+                    }
                 }
+                
             }
             btn6C_Inventory.Enabled = true;
         }
@@ -541,14 +532,6 @@ namespace ES_F3105U
 
             gbTagRW.Enabled = true;
             btn6C_FindLength.Enabled = true;
-        }
-
-        private void ComboBox_IntervalTime_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (ComboBox_IntervalTime.SelectedIndex != -1)
-            {
-                timerInventory.Interval = 100 + (ComboBox_IntervalTime.SelectedIndex * 10);
-            }
         }
     }
 }
