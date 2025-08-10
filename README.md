@@ -1,6 +1,6 @@
 # UHFReader
 
-## Supported Readers
+## Supported Readers (Serial COM Port)
 1. [LJYZN-105](https://github.com/klks/UHF_RFID_Notes/blob/main/READERS.md#ljyzn-105)
 1. [BY-RFID105](https://github.com/klks/UHF_RFID_Notes/blob/main/READERS.md#by-rfid105)
 1. [YRM100 / MagicRF (Q)M100](https://github.com/klks/UHF_RFID_Notes/blob/main/READERS.md#yrm100--magicrf-qm100)
