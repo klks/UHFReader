@@ -581,5 +581,17 @@ namespace ES_F3105U
             }
             return true;
         }
+
+        private void P_Reserve_CheckedChanged(object sender, EventArgs e)
+        {
+            gbLockPassword.Enabled = true;
+            gbLockTIDnUSER.Enabled = false;
+        }
+
+        private void P_TagLock_CheckedChanged(object sender, EventArgs e)
+        {
+            gbLockPassword.Enabled = false;
+            gbLockTIDnUSER.Enabled = true;
+        }
     }
 }

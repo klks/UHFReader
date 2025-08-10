@@ -925,6 +925,7 @@
             P_User.TabIndex = 3;
             P_User.Text = "User";
             P_User.UseVisualStyleBackColor = true;
+            P_User.CheckedChanged += P_TagLock_CheckedChanged;
             // 
             // P_TID
             // 
@@ -936,6 +937,7 @@
             P_TID.TabIndex = 2;
             P_TID.Text = "TID";
             P_TID.UseVisualStyleBackColor = true;
+            P_TID.CheckedChanged += P_TagLock_CheckedChanged;
             // 
             // P_EPC
             // 
@@ -949,6 +951,7 @@
             P_EPC.TabStop = true;
             P_EPC.Text = "EPC";
             P_EPC.UseVisualStyleBackColor = true;
+            P_EPC.CheckedChanged += P_TagLock_CheckedChanged;
             // 
             // P_Reserve
             // 
@@ -960,6 +963,7 @@
             P_Reserve.TabIndex = 0;
             P_Reserve.Text = "RESERVED";
             P_Reserve.UseVisualStyleBackColor = true;
+            P_Reserve.CheckedChanged += P_Reserve_CheckedChanged;
             // 
             // txt6C_LockEPCAccessPwd
             // 
@@ -988,6 +992,7 @@
             gbLockPassword.Controls.Add(Proect);
             gbLockPassword.Controls.Add(NoProect);
             gbLockPassword.Controls.Add(groupBox13);
+            gbLockPassword.Enabled = false;
             gbLockPassword.Location = new Point(7, 59);
             gbLockPassword.Margin = new Padding(4, 3, 4, 3);
             gbLockPassword.Name = "gbLockPassword";
