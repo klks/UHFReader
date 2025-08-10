@@ -1,4 +1,6 @@
 # UHFReader
+This project provides a .NET library for interfacing with various UHF RFID readers over serial COM ports.<br>
+The SDK's and Demo programs from the respective providers were used to build the apps.
 
 ## Supported Readers (Serial COM Port)
 1. [LJYZN-105](https://github.com/klks/UHF_RFID_Notes/blob/main/READERS.md#ljyzn-105)
