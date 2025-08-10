@@ -185,6 +185,7 @@ namespace UCchip.Reader.API
 
         public string PortName { get; set; }
         public int Rate { get; set; }
+        public int Timeout { get; set; }
         public int ReponseCommand { get; set; }
         public bool ResponseFlag = true;
 
@@ -226,6 +227,8 @@ namespace UCchip.Reader.API
 
                 status = ErrorCode.OK;
 
+                Timeout = timeoutMS;
+
                 if (!OpenPort())
                 {
                     status = ErrorCode.SystemError;
@@ -259,6 +262,8 @@ namespace UCchip.Reader.API
                 InternalPortInstance = new System.IO.Ports.SerialPort();
                 InternalPortInstance.PortName = PortName;
                 InternalPortInstance.BaudRate = Rate;
+                InternalPortInstance.ReadTimeout = Timeout;
+                InternalPortInstance.WriteTimeout = Timeout;
 
                 try
                 {

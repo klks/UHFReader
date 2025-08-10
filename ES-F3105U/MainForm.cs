@@ -83,6 +83,5 @@ namespace ES_F3105U
                 readerClient.Dispose();
             readerClient = null;
         }
-
     }
 }

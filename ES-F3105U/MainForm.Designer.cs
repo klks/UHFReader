@@ -85,13 +85,13 @@
             groupBox_TagLocking = new GroupBox();
             label30 = new Label();
             txt6C_LockEPCTag = new TextBox();
-            Button_SetProtectState = new Button();
+            btnSetProtectState = new Button();
             groupBox12 = new GroupBox();
             P_User = new RadioButton();
             P_TID = new RadioButton();
             P_EPC = new RadioButton();
             P_Reserve = new RadioButton();
-            txt6C_LockEPC = new TextBox();
+            txt6C_LockEPCAccessPwd = new TextBox();
             label8 = new Label();
             gbLockPassword = new GroupBox();
             AlwaysNot = new RadioButton();
@@ -113,7 +113,7 @@
             label16 = new Label();
             btn6C_KillTag = new Button();
             txt6C_KillEPC = new TextBox();
-            textBox1 = new TextBox();
+            txt6C_KillPwd = new TextBox();
             label15 = new Label();
             gbTagRW = new GroupBox();
             btn6C_FindLength = new Button();
@@ -859,9 +859,9 @@
             // 
             groupBox_TagLocking.Controls.Add(label30);
             groupBox_TagLocking.Controls.Add(txt6C_LockEPCTag);
-            groupBox_TagLocking.Controls.Add(Button_SetProtectState);
+            groupBox_TagLocking.Controls.Add(btnSetProtectState);
             groupBox_TagLocking.Controls.Add(groupBox12);
-            groupBox_TagLocking.Controls.Add(txt6C_LockEPC);
+            groupBox_TagLocking.Controls.Add(txt6C_LockEPCAccessPwd);
             groupBox_TagLocking.Controls.Add(label8);
             groupBox_TagLocking.Controls.Add(gbLockPassword);
             groupBox_TagLocking.Controls.Add(gbLockTIDnUSER);
@@ -890,15 +890,16 @@
             txt6C_LockEPCTag.Size = new Size(240, 23);
             txt6C_LockEPCTag.TabIndex = 16;
             // 
-            // Button_SetProtectState
+            // btnSetProtectState
             // 
-            Button_SetProtectState.Location = new Point(442, 230);
-            Button_SetProtectState.Margin = new Padding(4, 3, 4, 3);
-            Button_SetProtectState.Name = "Button_SetProtectState";
-            Button_SetProtectState.Size = new Size(115, 29);
-            Button_SetProtectState.TabIndex = 15;
-            Button_SetProtectState.Text = "Set Protect";
-            Button_SetProtectState.UseVisualStyleBackColor = true;
+            btnSetProtectState.Location = new Point(442, 230);
+            btnSetProtectState.Margin = new Padding(4, 3, 4, 3);
+            btnSetProtectState.Name = "btnSetProtectState";
+            btnSetProtectState.Size = new Size(115, 29);
+            btnSetProtectState.TabIndex = 15;
+            btnSetProtectState.Text = "Set Protect";
+            btnSetProtectState.UseVisualStyleBackColor = true;
+            btnSetProtectState.Click += Button_SetProtectState_Click;
             // 
             // groupBox12
             // 
@@ -922,7 +923,6 @@
             P_User.Name = "P_User";
             P_User.Size = new Size(48, 19);
             P_User.TabIndex = 3;
-            P_User.TabStop = true;
             P_User.Text = "User";
             P_User.UseVisualStyleBackColor = true;
             // 
@@ -934,13 +934,13 @@
             P_TID.Name = "P_TID";
             P_TID.Size = new Size(43, 19);
             P_TID.TabIndex = 2;
-            P_TID.TabStop = true;
             P_TID.Text = "TID";
             P_TID.UseVisualStyleBackColor = true;
             // 
             // P_EPC
             // 
             P_EPC.AutoSize = true;
+            P_EPC.Checked = true;
             P_EPC.Location = new Point(87, 14);
             P_EPC.Margin = new Padding(4, 3, 4, 3);
             P_EPC.Name = "P_EPC";
@@ -958,19 +958,18 @@
             P_Reserve.Name = "P_Reserve";
             P_Reserve.Size = new Size(78, 19);
             P_Reserve.TabIndex = 0;
-            P_Reserve.TabStop = true;
             P_Reserve.Text = "RESERVED";
             P_Reserve.UseVisualStyleBackColor = true;
             // 
-            // txt6C_LockEPC
+            // txt6C_LockEPCAccessPwd
             // 
-            txt6C_LockEPC.Location = new Point(304, 235);
-            txt6C_LockEPC.Margin = new Padding(4, 3, 4, 3);
-            txt6C_LockEPC.MaxLength = 8;
-            txt6C_LockEPC.Name = "txt6C_LockEPC";
-            txt6C_LockEPC.Size = new Size(116, 23);
-            txt6C_LockEPC.TabIndex = 14;
-            txt6C_LockEPC.Text = "00000000";
+            txt6C_LockEPCAccessPwd.Location = new Point(304, 235);
+            txt6C_LockEPCAccessPwd.Margin = new Padding(4, 3, 4, 3);
+            txt6C_LockEPCAccessPwd.MaxLength = 8;
+            txt6C_LockEPCAccessPwd.Name = "txt6C_LockEPCAccessPwd";
+            txt6C_LockEPCAccessPwd.Size = new Size(116, 23);
+            txt6C_LockEPCAccessPwd.TabIndex = 14;
+            txt6C_LockEPCAccessPwd.Text = "00000000";
             // 
             // label8
             // 
@@ -1006,7 +1005,6 @@
             AlwaysNot.Name = "AlwaysNot";
             AlwaysNot.Size = new Size(178, 19);
             AlwaysNot.TabIndex = 4;
-            AlwaysNot.TabStop = true;
             AlwaysNot.Text = "Never readable and writeable";
             AlwaysNot.UseVisualStyleBackColor = true;
             // 
@@ -1018,7 +1016,6 @@
             Always.Name = "Always";
             Always.Size = new Size(214, 19);
             Always.TabIndex = 3;
-            Always.TabStop = true;
             Always.Text = "Permanently readable and writeable";
             Always.UseVisualStyleBackColor = true;
             // 
@@ -1030,13 +1027,13 @@
             Proect.Name = "Proect";
             Proect.Size = new Size(268, 19);
             Proect.TabIndex = 2;
-            Proect.TabStop = true;
             Proect.Text = "Readable and writeable from the secured state";
             Proect.UseVisualStyleBackColor = true;
             // 
             // NoProect
             // 
             NoProect.AutoSize = true;
+            NoProect.Checked = true;
             NoProect.Location = new Point(9, 60);
             NoProect.Margin = new Padding(4, 3, 4, 3);
             NoProect.Name = "NoProect";
@@ -1061,6 +1058,7 @@
             // AccessCode
             // 
             AccessCode.AutoSize = true;
+            AccessCode.Checked = true;
             AccessCode.Location = new Point(128, 15);
             AccessCode.Margin = new Padding(4, 3, 4, 3);
             AccessCode.Name = "AccessCode";
@@ -1078,7 +1076,6 @@
             DestroyCode.Name = "DestroyCode";
             DestroyCode.Size = new Size(94, 19);
             DestroyCode.TabIndex = 0;
-            DestroyCode.TabStop = true;
             DestroyCode.Text = "Kill Password";
             DestroyCode.UseVisualStyleBackColor = true;
             // 
@@ -1105,7 +1102,6 @@
             AlwaysNot2.Name = "AlwaysNot2";
             AlwaysNot2.Size = new Size(107, 19);
             AlwaysNot2.TabIndex = 3;
-            AlwaysNot2.TabStop = true;
             AlwaysNot2.Text = "Never writeable";
             AlwaysNot2.UseVisualStyleBackColor = true;
             // 
@@ -1117,7 +1113,6 @@
             Always2.Name = "Always2";
             Always2.Size = new Size(143, 19);
             Always2.TabIndex = 2;
-            Always2.TabStop = true;
             Always2.Text = "Permanently writeable";
             Always2.UseVisualStyleBackColor = true;
             // 
@@ -1129,13 +1124,13 @@
             Proect2.Name = "Proect2";
             Proect2.Size = new Size(196, 19);
             Proect2.TabIndex = 1;
-            Proect2.TabStop = true;
             Proect2.Text = "Writeable from the secured state";
             Proect2.UseVisualStyleBackColor = true;
             // 
             // NoProect2
             // 
             NoProect2.AutoSize = true;
+            NoProect2.Checked = true;
             NoProect2.Location = new Point(8, 24);
             NoProect2.Margin = new Padding(4, 3, 4, 3);
             NoProect2.Name = "NoProect2";
@@ -1181,7 +1176,7 @@
             groupBox_TagKill.Controls.Add(label16);
             groupBox_TagKill.Controls.Add(btn6C_KillTag);
             groupBox_TagKill.Controls.Add(txt6C_KillEPC);
-            groupBox_TagKill.Controls.Add(textBox1);
+            groupBox_TagKill.Controls.Add(txt6C_KillPwd);
             groupBox_TagKill.Controls.Add(label15);
             groupBox_TagKill.Enabled = false;
             groupBox_TagKill.Location = new Point(706, 27);
@@ -1208,6 +1203,7 @@
             btn6C_KillTag.TabIndex = 21;
             btn6C_KillTag.Text = "Kill";
             btn6C_KillTag.UseVisualStyleBackColor = true;
+            btn6C_KillTag.Click += btn6C_KillTag_Click;
             // 
             // txt6C_KillEPC
             // 
@@ -1217,15 +1213,15 @@
             txt6C_KillEPC.Size = new Size(248, 23);
             txt6C_KillEPC.TabIndex = 0;
             // 
-            // textBox1
+            // txt6C_KillPwd
             // 
-            textBox1.CharacterCasing = CharacterCasing.Upper;
-            textBox1.Location = new Point(107, 54);
-            textBox1.MaxLength = 8;
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(68, 23);
-            textBox1.TabIndex = 21;
-            textBox1.Text = "00000000";
+            txt6C_KillPwd.CharacterCasing = CharacterCasing.Upper;
+            txt6C_KillPwd.Location = new Point(107, 54);
+            txt6C_KillPwd.MaxLength = 8;
+            txt6C_KillPwd.Name = "txt6C_KillPwd";
+            txt6C_KillPwd.Size = new Size(68, 23);
+            txt6C_KillPwd.TabIndex = 21;
+            txt6C_KillPwd.Text = "00000000";
             // 
             // label15
             // 
@@ -2714,7 +2710,7 @@
         private Button btn6C_QueryReaderFilter;
         private Button btn6C_KillTag;
         private Label label15;
-        private TextBox textBox1;
+        private TextBox txt6C_KillPwd;
         private Label label16;
         private CheckBox cbReader_PollReading;
         private Button btn6C_FindLength;
@@ -2826,13 +2822,13 @@
         private Label label26;
         private Label label35;
         private GroupBox groupBox_TagLocking;
-        private Button Button_SetProtectState;
+        private Button btnSetProtectState;
         private GroupBox groupBox12;
         private RadioButton P_User;
         private RadioButton P_TID;
         private RadioButton P_EPC;
         private RadioButton P_Reserve;
-        private TextBox txt6C_LockEPC;
+        private TextBox txt6C_LockEPCAccessPwd;
         private Label label8;
         private GroupBox gbLockPassword;
         private RadioButton AlwaysNot;

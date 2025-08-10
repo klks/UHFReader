@@ -652,7 +652,7 @@ namespace ES_F3105U
             DuplicateGroupEnabled(false);
             txtDup_Validate_TID.Text = "";
 
-            Task<string> task_data = Task.Run(() => GetFullDataString(2));      //TID
+            Task<string> task_data = Task.Run(() => GetFullDataString((byte)MemBank.TID));      //TID
             await task_data;
 
             if (task_data.Result != "")
@@ -678,7 +678,7 @@ namespace ES_F3105U
             txtDup_Validate_PC.Text = "";
             txtDup_Validate_FullEPC.Text = "";
 
-            Task<string> task_data = Task.Run(() => GetFullDataString(1));      //EPC
+            Task<string> task_data = Task.Run(() => GetFullDataString((byte)MemBank.EPC));      //EPC
             await task_data;
 
             if (task_data.Result != "")
@@ -711,7 +711,7 @@ namespace ES_F3105U
             DuplicateGroupEnabled(false);
 
             txtDup_Validate_UserData.Text = "";
-            Task<string> task_data = Task.Run(() => GetFullDataString(3));      //USER
+            Task<string> task_data = Task.Run(() => GetFullDataString((byte)MemBank.USER));      //USER
             await task_data;
 
             if (task_data.Result != "")
@@ -735,7 +735,7 @@ namespace ES_F3105U
             txtDup_Validate_AccessPwd.Text = "";
             txtDup_Validate_KillPwd.Text = "";
 
-            Task<string> task_data = Task.Run(() => GetFullDataString(0));      //RFU
+            Task<string> task_data = Task.Run(() => GetFullDataString((byte)MemBank.RESERVED));      //RFU
             await task_data;
 
             if (task_data.Result != "")

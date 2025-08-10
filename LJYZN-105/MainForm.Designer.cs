@@ -229,14 +229,6 @@
             P_TID = new RadioButton();
             P_EPC = new RadioButton();
             P_Reserve = new RadioButton();
-            gbLockPassword = new GroupBox();
-            AlwaysNot = new RadioButton();
-            Always = new RadioButton();
-            Proect = new RadioButton();
-            NoProect = new RadioButton();
-            groupBox9 = new GroupBox();
-            AccessCode = new RadioButton();
-            DestroyCode = new RadioButton();
             ComboBox_EPC1 = new ComboBox();
             groupBox5 = new GroupBox();
             textBox_pc = new TextBox();
@@ -322,6 +314,14 @@
             cbReader_COM = new ComboBox();
             Label1 = new Label();
             tabControl1 = new TabControl();
+            groupBox9 = new GroupBox();
+            DestroyCode = new RadioButton();
+            AccessCode = new RadioButton();
+            NoProect = new RadioButton();
+            Proect = new RadioButton();
+            Always = new RadioButton();
+            AlwaysNot = new RadioButton();
+            gbLockPassword = new GroupBox();
             StatusBar1.SuspendLayout();
             TabSheet_DUP.SuspendLayout();
             groupBox36.SuspendLayout();
@@ -350,8 +350,6 @@
             gbTagLock.SuspendLayout();
             gbLockTIDnUSER.SuspendLayout();
             groupBox10.SuspendLayout();
-            gbLockPassword.SuspendLayout();
-            groupBox9.SuspendLayout();
             groupBox5.SuspendLayout();
             groupBox6.SuspendLayout();
             groupBox4.SuspendLayout();
@@ -361,6 +359,8 @@
             groupBox2.SuspendLayout();
             GroupBox1.SuspendLayout();
             tabControl1.SuspendLayout();
+            groupBox9.SuspendLayout();
+            gbLockPassword.SuspendLayout();
             SuspendLayout();
             // 
             // StatusBar1
@@ -527,7 +527,7 @@
             label57.Location = new Point(20, 142);
             label57.Margin = new Padding(4, 0, 4, 0);
             label57.Name = "label57";
-            label57.Size = new Size(33, 15);
+            label57.Size = new Size(34, 15);
             label57.TabIndex = 21;
             label57.Text = "TMN";
             // 
@@ -639,7 +639,7 @@
             cbEPCGA.Location = new Point(61, 111);
             cbEPCGA.Margin = new Padding(4, 3, 4, 3);
             cbEPCGA.Name = "cbEPCGA";
-            cbEPCGA.Size = new Size(211, 19);
+            cbEPCGA.Size = new Size(213, 19);
             cbEPCGA.TabIndex = 10;
             cbEPCGA.Text = "EPC Global Application (T / Toggle)";
             cbEPCGA.UseVisualStyleBackColor = true;
@@ -651,7 +651,7 @@
             cbXPC.Location = new Point(61, 84);
             cbXPC.Margin = new Padding(4, 3, 4, 3);
             cbXPC.Name = "cbXPC";
-            cbXPC.Size = new Size(240, 19);
+            cbXPC.Size = new Size(239, 19);
             cbXPC.TabIndex = 9;
             cbXPC.Text = "Extended Protocol Control (XI / XPC W1)";
             cbXPC.UseVisualStyleBackColor = true;
@@ -917,7 +917,7 @@
             label49.Location = new Point(23, 85);
             label49.Margin = new Padding(4, 0, 4, 0);
             label49.Name = "label49";
-            label49.Size = new Size(24, 15);
+            label49.Size = new Size(25, 15);
             label49.TabIndex = 30;
             label49.Text = "TID";
             // 
@@ -1456,7 +1456,7 @@
             label36.Location = new Point(7, 110);
             label36.Margin = new Padding(4, 0, 4, 0);
             label36.Name = "label36";
-            label36.Size = new Size(151, 15);
+            label36.Size = new Size(150, 15);
             label36.TabIndex = 11;
             label36.Text = "Write Data (1-32 Byte/Hex):";
             // 
@@ -1628,7 +1628,7 @@
             label33.Location = new Point(10, 183);
             label33.Margin = new Padding(4, 0, 4, 0);
             label33.Name = "label33";
-            label33.Size = new Size(164, 15);
+            label33.Size = new Size(163, 15);
             label33.TabIndex = 5;
             label33.Text = "Condition(<=8 Hex Number):";
             // 
@@ -1638,7 +1638,7 @@
             label32.Location = new Point(9, 135);
             label32.Margin = new Padding(4, 0, 4, 0);
             label32.Name = "label32";
-            label32.Size = new Size(151, 15);
+            label32.Size = new Size(152, 15);
             label32.TabIndex = 4;
             label32.Text = "Address of Tag Data(0-223):";
             // 
@@ -1981,7 +1981,7 @@
             label29.Location = new Point(10, 46);
             label29.Margin = new Padding(4, 0, 4, 0);
             label29.Name = "label29";
-            label29.Size = new Size(111, 30);
+            label29.Size = new Size(112, 30);
             label29.TabIndex = 1;
             label29.Text = "Address of Tag Data\r\n(Word):";
             // 
@@ -2016,7 +2016,7 @@
             // Label_Alarm
             // 
             Label_Alarm.AutoSize = true;
-            Label_Alarm.Font = new Font("MS Reference Sans Serif", 30.3F, FontStyle.Regular, GraphicsUnit.Point, 2, true);
+            Label_Alarm.Font = new Font("Microsoft Sans Serif", 30.3F, FontStyle.Regular, GraphicsUnit.Point, 2, true);
             Label_Alarm.ForeColor = Color.Red;
             Label_Alarm.Location = new Point(284, 45);
             Label_Alarm.Margin = new Padding(4, 0, 4, 0);
@@ -2366,7 +2366,7 @@
             CheckBox_TID.Location = new Point(231, 80);
             CheckBox_TID.Margin = new Padding(4, 3, 4, 3);
             CheckBox_TID.Name = "CheckBox_TID";
-            CheckBox_TID.Size = new Size(43, 19);
+            CheckBox_TID.Size = new Size(44, 19);
             CheckBox_TID.TabIndex = 12;
             CheckBox_TID.Text = "TID";
             CheckBox_TID.UseVisualStyleBackColor = true;
@@ -2513,7 +2513,7 @@
             label22.Location = new Point(304, 173);
             label22.Margin = new Padding(4, 0, 4, 0);
             label22.Name = "label22";
-            label22.Size = new Size(140, 15);
+            label22.Size = new Size(139, 15);
             label22.TabIndex = 4;
             label22.Text = "Access Password (8 Hex):";
             // 
@@ -2613,7 +2613,7 @@
             P_TID.Location = new Point(139, 14);
             P_TID.Margin = new Padding(4, 3, 4, 3);
             P_TID.Name = "P_TID";
-            P_TID.Size = new Size(42, 19);
+            P_TID.Size = new Size(43, 19);
             P_TID.TabIndex = 2;
             P_TID.TabStop = true;
             P_TID.Text = "TID";
@@ -2645,106 +2645,6 @@
             P_Reserve.Text = "RESERVED";
             P_Reserve.UseVisualStyleBackColor = true;
             P_Reserve.CheckedChanged += P_Reserve_CheckedChanged;
-            // 
-            // gbLockPassword
-            // 
-            gbLockPassword.Controls.Add(AlwaysNot);
-            gbLockPassword.Controls.Add(Always);
-            gbLockPassword.Controls.Add(Proect);
-            gbLockPassword.Controls.Add(NoProect);
-            gbLockPassword.Controls.Add(groupBox9);
-            gbLockPassword.Location = new Point(5, 44);
-            gbLockPassword.Margin = new Padding(4, 3, 4, 3);
-            gbLockPassword.Name = "gbLockPassword";
-            gbLockPassword.Padding = new Padding(4, 3, 4, 3);
-            gbLockPassword.Size = new Size(289, 184);
-            gbLockPassword.TabIndex = 1;
-            gbLockPassword.TabStop = false;
-            gbLockPassword.Text = "Lock of [RESERVED] Password";
-            // 
-            // AlwaysNot
-            // 
-            AlwaysNot.AutoSize = true;
-            AlwaysNot.Location = new Point(7, 155);
-            AlwaysNot.Margin = new Padding(4, 3, 4, 3);
-            AlwaysNot.Name = "AlwaysNot";
-            AlwaysNot.Size = new Size(178, 19);
-            AlwaysNot.TabIndex = 4;
-            AlwaysNot.TabStop = true;
-            AlwaysNot.Text = "Never readable and writeable";
-            AlwaysNot.UseVisualStyleBackColor = true;
-            // 
-            // Always
-            // 
-            Always.AutoSize = true;
-            Always.Location = new Point(7, 131);
-            Always.Margin = new Padding(4, 3, 4, 3);
-            Always.Name = "Always";
-            Always.Size = new Size(214, 19);
-            Always.TabIndex = 3;
-            Always.TabStop = true;
-            Always.Text = "Permanently readable and writeable";
-            Always.UseVisualStyleBackColor = true;
-            // 
-            // Proect
-            // 
-            Proect.AutoSize = true;
-            Proect.Location = new Point(7, 108);
-            Proect.Margin = new Padding(4, 3, 4, 3);
-            Proect.Name = "Proect";
-            Proect.Size = new Size(268, 19);
-            Proect.TabIndex = 2;
-            Proect.TabStop = true;
-            Proect.Text = "Readable and writeable from the secured state";
-            Proect.UseVisualStyleBackColor = true;
-            // 
-            // NoProect
-            // 
-            NoProect.AutoSize = true;
-            NoProect.Location = new Point(7, 84);
-            NoProect.Margin = new Padding(4, 3, 4, 3);
-            NoProect.Name = "NoProect";
-            NoProect.Size = new Size(229, 19);
-            NoProect.TabIndex = 1;
-            NoProect.TabStop = true;
-            NoProect.Text = "Readable and  writeable from any state";
-            NoProect.UseVisualStyleBackColor = true;
-            // 
-            // groupBox9
-            // 
-            groupBox9.Controls.Add(AccessCode);
-            groupBox9.Controls.Add(DestroyCode);
-            groupBox9.Location = new Point(6, 23);
-            groupBox9.Margin = new Padding(4, 3, 4, 3);
-            groupBox9.Name = "groupBox9";
-            groupBox9.Padding = new Padding(4, 3, 4, 3);
-            groupBox9.Size = new Size(276, 60);
-            groupBox9.TabIndex = 0;
-            groupBox9.TabStop = false;
-            // 
-            // AccessCode
-            // 
-            AccessCode.AutoSize = true;
-            AccessCode.Location = new Point(126, 25);
-            AccessCode.Margin = new Padding(4, 3, 4, 3);
-            AccessCode.Name = "AccessCode";
-            AccessCode.Size = new Size(114, 19);
-            AccessCode.TabIndex = 1;
-            AccessCode.TabStop = true;
-            AccessCode.Text = "Access Password";
-            AccessCode.UseVisualStyleBackColor = true;
-            // 
-            // DestroyCode
-            // 
-            DestroyCode.AutoSize = true;
-            DestroyCode.Location = new Point(7, 25);
-            DestroyCode.Margin = new Padding(4, 3, 4, 3);
-            DestroyCode.Name = "DestroyCode";
-            DestroyCode.Size = new Size(94, 19);
-            DestroyCode.TabIndex = 0;
-            DestroyCode.TabStop = true;
-            DestroyCode.Text = "Kill Password";
-            DestroyCode.UseVisualStyleBackColor = true;
             // 
             // ComboBox_EPC1
             // 
@@ -2937,7 +2837,7 @@
             label21.Location = new Point(9, 196);
             label21.Margin = new Padding(4, 0, 4, 0);
             label21.Name = "label21";
-            label21.Size = new Size(97, 15);
+            label21.Size = new Size(96, 15);
             label21.TabIndex = 5;
             label21.Text = "Write Data (Hex):";
             // 
@@ -2947,7 +2847,7 @@
             label20.Location = new Point(9, 162);
             label20.Margin = new Padding(4, 0, 4, 0);
             label20.Name = "label20";
-            label20.Size = new Size(140, 15);
+            label20.Size = new Size(139, 15);
             label20.TabIndex = 4;
             label20.Text = "Access Password (8 Hex):";
             // 
@@ -3004,7 +2904,7 @@
             C_TID.Location = new Point(174, 14);
             C_TID.Margin = new Padding(4, 3, 4, 3);
             C_TID.Name = "C_TID";
-            C_TID.Size = new Size(42, 19);
+            C_TID.Size = new Size(43, 19);
             C_TID.TabIndex = 2;
             C_TID.TabStop = true;
             C_TID.Text = "TID";
@@ -3337,7 +3237,7 @@
             label15.Location = new Point(7, 177);
             label15.Margin = new Padding(4, 0, 4, 0);
             label15.Name = "label15";
-            label15.Size = new Size(91, 15);
+            label15.Size = new Size(90, 15);
             label15.TabIndex = 3;
             label15.Text = "Max.Frequency:";
             // 
@@ -3503,7 +3403,7 @@
             label9.Location = new Point(230, 119);
             label9.Margin = new Padding(4, 0, 4, 0);
             label9.Name = "label9";
-            label9.Size = new Size(91, 15);
+            label9.Size = new Size(90, 15);
             label9.TabIndex = 8;
             label9.Text = "Max.Frequency:";
             // 
@@ -3580,7 +3480,7 @@
             label4.Location = new Point(7, 27);
             label4.Margin = new Padding(4, 0, 4, 0);
             label4.Name = "label4";
-            label4.Size = new Size(34, 15);
+            label4.Size = new Size(35, 15);
             label4.TabIndex = 0;
             label4.Text = "Type:";
             // 
@@ -3726,6 +3626,106 @@
             tabControl1.TabIndex = 0;
             tabControl1.Selecting += tabControl1_Selecting;
             // 
+            // groupBox9
+            // 
+            groupBox9.Controls.Add(AccessCode);
+            groupBox9.Controls.Add(DestroyCode);
+            groupBox9.Location = new Point(6, 23);
+            groupBox9.Margin = new Padding(4, 3, 4, 3);
+            groupBox9.Name = "groupBox9";
+            groupBox9.Padding = new Padding(4, 3, 4, 3);
+            groupBox9.Size = new Size(276, 60);
+            groupBox9.TabIndex = 0;
+            groupBox9.TabStop = false;
+            // 
+            // DestroyCode
+            // 
+            DestroyCode.AutoSize = true;
+            DestroyCode.Location = new Point(7, 25);
+            DestroyCode.Margin = new Padding(4, 3, 4, 3);
+            DestroyCode.Name = "DestroyCode";
+            DestroyCode.Size = new Size(94, 19);
+            DestroyCode.TabIndex = 0;
+            DestroyCode.TabStop = true;
+            DestroyCode.Text = "Kill Password";
+            DestroyCode.UseVisualStyleBackColor = true;
+            // 
+            // AccessCode
+            // 
+            AccessCode.AutoSize = true;
+            AccessCode.Location = new Point(126, 25);
+            AccessCode.Margin = new Padding(4, 3, 4, 3);
+            AccessCode.Name = "AccessCode";
+            AccessCode.Size = new Size(114, 19);
+            AccessCode.TabIndex = 1;
+            AccessCode.TabStop = true;
+            AccessCode.Text = "Access Password";
+            AccessCode.UseVisualStyleBackColor = true;
+            // 
+            // NoProect
+            // 
+            NoProect.AutoSize = true;
+            NoProect.Location = new Point(7, 84);
+            NoProect.Margin = new Padding(4, 3, 4, 3);
+            NoProect.Name = "NoProect";
+            NoProect.Size = new Size(229, 19);
+            NoProect.TabIndex = 1;
+            NoProect.TabStop = true;
+            NoProect.Text = "Readable and  writeable from any state";
+            NoProect.UseVisualStyleBackColor = true;
+            // 
+            // Proect
+            // 
+            Proect.AutoSize = true;
+            Proect.Location = new Point(7, 108);
+            Proect.Margin = new Padding(4, 3, 4, 3);
+            Proect.Name = "Proect";
+            Proect.Size = new Size(268, 19);
+            Proect.TabIndex = 2;
+            Proect.TabStop = true;
+            Proect.Text = "Readable and writeable from the secured state";
+            Proect.UseVisualStyleBackColor = true;
+            // 
+            // Always
+            // 
+            Always.AutoSize = true;
+            Always.Location = new Point(7, 131);
+            Always.Margin = new Padding(4, 3, 4, 3);
+            Always.Name = "Always";
+            Always.Size = new Size(214, 19);
+            Always.TabIndex = 3;
+            Always.TabStop = true;
+            Always.Text = "Permanently readable and writeable";
+            Always.UseVisualStyleBackColor = true;
+            // 
+            // AlwaysNot
+            // 
+            AlwaysNot.AutoSize = true;
+            AlwaysNot.Location = new Point(7, 155);
+            AlwaysNot.Margin = new Padding(4, 3, 4, 3);
+            AlwaysNot.Name = "AlwaysNot";
+            AlwaysNot.Size = new Size(178, 19);
+            AlwaysNot.TabIndex = 4;
+            AlwaysNot.TabStop = true;
+            AlwaysNot.Text = "Never readable and writeable";
+            AlwaysNot.UseVisualStyleBackColor = true;
+            // 
+            // gbLockPassword
+            // 
+            gbLockPassword.Controls.Add(AlwaysNot);
+            gbLockPassword.Controls.Add(Always);
+            gbLockPassword.Controls.Add(Proect);
+            gbLockPassword.Controls.Add(NoProect);
+            gbLockPassword.Controls.Add(groupBox9);
+            gbLockPassword.Location = new Point(5, 46);
+            gbLockPassword.Margin = new Padding(4, 3, 4, 3);
+            gbLockPassword.Name = "gbLockPassword";
+            gbLockPassword.Padding = new Padding(4, 3, 4, 3);
+            gbLockPassword.Size = new Size(289, 184);
+            gbLockPassword.TabIndex = 1;
+            gbLockPassword.TabStop = false;
+            gbLockPassword.Text = "Lock of [RESERVED] Password";
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3792,10 +3792,6 @@
             gbLockTIDnUSER.PerformLayout();
             groupBox10.ResumeLayout(false);
             groupBox10.PerformLayout();
-            gbLockPassword.ResumeLayout(false);
-            gbLockPassword.PerformLayout();
-            groupBox9.ResumeLayout(false);
-            groupBox9.PerformLayout();
             groupBox5.ResumeLayout(false);
             groupBox5.PerformLayout();
             groupBox6.ResumeLayout(false);
@@ -3811,6 +3807,10 @@
             GroupBox1.ResumeLayout(false);
             GroupBox1.PerformLayout();
             tabControl1.ResumeLayout(false);
+            groupBox9.ResumeLayout(false);
+            groupBox9.PerformLayout();
+            gbLockPassword.ResumeLayout(false);
+            gbLockPassword.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -4014,14 +4014,6 @@
         private RadioButton P_TID;
         private RadioButton P_EPC;
         private RadioButton P_Reserve;
-        private GroupBox gbLockPassword;
-        private RadioButton AlwaysNot;
-        private RadioButton Always;
-        private RadioButton Proect;
-        private RadioButton NoProect;
-        private GroupBox groupBox9;
-        private RadioButton AccessCode;
-        private RadioButton DestroyCode;
         private ComboBox ComboBox_EPC1;
         private GroupBox groupBox5;
         private TextBox textBox_pc;
@@ -4108,6 +4100,14 @@
         internal Label Label1;
         private TabControl tabControl1;
         private CheckBox cb6C_IKnowTagLock;
+        private GroupBox gbLockPassword;
+        private RadioButton AlwaysNot;
+        private RadioButton Always;
+        private RadioButton Proect;
+        private RadioButton NoProect;
+        private GroupBox groupBox9;
+        private RadioButton AccessCode;
+        private RadioButton DestroyCode;
     }
 }
 

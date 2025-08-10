@@ -176,7 +176,6 @@ namespace ES_F3105U
                 lvInventory.Items.Clear();
                 txt6C_KillEPC.Text = "";
                 txt6C_RWEPC.Text = "";
-                txt6C_LockEPC.Text = "";
                 txt6C_LockEPCTag.Text = "";
 
                 flag_cmd_real_time_inventory.Value = false;
@@ -238,7 +237,6 @@ namespace ES_F3105U
                 string selEPC = lvInventory.SelectedItems[0].SubItems[2].Text;
                 txt6C_KillEPC.Text = selEPC;
                 txt6C_RWEPC.Text = selEPC;
-                txt6C_LockEPC.Text = selEPC;
                 txt6C_LockEPCTag.Text = selEPC;
 
                 byte[] bEPCArr = HexStringToByteArray(selEPC);
@@ -392,22 +390,10 @@ namespace ES_F3105U
             //Do we have anything to write and is it in multiples of 4?
             if (txtReader_WriteData.Text == "" || txtReader_WriteData.TextLength % 4 != 0) return;
 
-            //Disable filters if required
-            if (cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked == true && isMsgBaseSetAccessEpcMatch_Set == true)
-            {
-                //Clear any filters
-                flag_cmd_set_access_epc_match.Value = false;
-                readerClient.MsgBaseSetAccessEpcMatch(1, 0, []);
-                Task<ErrorCode> task_clear = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
-                await task_clear;
-                if (task_clear.Result == ErrorCode.OK)
-                    isMsgBaseSetAccessEpcMatch_Set = false;
-                else
-                {
-                    MessageBox.Show("Failed to clear MsgBaseSetAccessEpcMatch", "Write Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-            }
+            //Do we need to disable filters?
+            Task<bool> task_filter = Task.Run(() => WideOpenFilterCheck());
+            await task_filter;
+            if (task_filter.Result == false) return;
 
             //Do some sanity checking
             Task<bool> task_validate = Task.Run(() => b6CReadWriteSanityCheck());
@@ -532,6 +518,68 @@ namespace ES_F3105U
 
             gbTagRW.Enabled = true;
             btn6C_FindLength.Enabled = true;
+        }
+
+        private async void btn6C_KillTag_Click(object sender, EventArgs e)
+        {
+            if (readerClient == null) return;
+
+            if (txt6C_KillPwd.Text.Length != 8)
+            {
+                MessageBox.Show("Kill Password must be 8 hex chars!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            if (txt6C_KillPwd.Text == "00000000")
+            {
+                MessageBox.Show("Kill Password cannot be all zeroes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            uint killPwd = Convert.ToUInt32(txt6C_KillPwd.Text, 16);
+
+            //Do we need to disable filters?
+            Task<bool> task_filter = Task.Run(() => WideOpenFilterCheck());
+            await task_filter;
+            if (task_filter.Result == false) return;
+
+            flag_cmd_kill.Value = false;
+            readerClient.MsgBaseKill(killPwd);
+            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_kill));
+            await task;
+        }
+
+        private async void Button_SetProtectState_Click(object sender, EventArgs e)
+        {
+            if (readerClient == null) return;
+
+            //Do we need to disable filters?
+            Task<bool> task_filter = Task.Run(() => WideOpenFilterCheck());
+            await task_filter;
+            if (task_filter.Result == false) return;
+
+            //TODO more code
+        }
+
+        private async Task<bool> WideOpenFilterCheck()
+        {
+            if (readerClient == null) return false;
+
+            //Disable filters if required
+            if (cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked == true && isMsgBaseSetAccessEpcMatch_Set == true)
+            {
+                //Clear any filters
+                flag_cmd_set_access_epc_match.Value = false;
+                readerClient.MsgBaseSetAccessEpcMatch(1, 0, []);
+                Task<ErrorCode> task_clear = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
+                await task_clear;
+                if (task_clear.Result == ErrorCode.OK)
+                    isMsgBaseSetAccessEpcMatch_Set = false;
+                else
+                {
+                    MessageBox.Show("Failed to clear MsgBaseSetAccessEpcMatch", "Write Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

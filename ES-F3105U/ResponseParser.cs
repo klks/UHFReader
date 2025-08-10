@@ -34,6 +34,8 @@ namespace ES_F3105U
         Ref<bool> flag_cmd_set_tx_time = new Ref<bool>(false, "cmd_set_tx_time");
         Ref<bool> flag_cmd_get_cw = new Ref<bool>(false, "cmd_get_cw");
         Ref<bool> flag_cmd_set_cw = new Ref<bool>(false, "cmd_set_cw");
+        Ref<bool> flag_cmd_kill = new Ref<bool>(false, "cmd_kill");
+        Ref<bool> flag_cmd_lock = new Ref<bool>(false, "cmd_lock");
 
         // --- Reader parameters ---
         string readerVersion = ""; // Firmware version string
@@ -162,6 +164,9 @@ namespace ES_F3105U
                     break;
                 case (byte)(Commands.cmd_set_tx_time):
                     parse_cmd_set_tx_time(commandContent.Data);
+                    break;
+                case (byte)(Commands.cmd_kill):
+                    parse_cmd_kill(commandContent.Data);
                     break;
                 default:
                     AddListBoxResponse($"Unimplemented command 0x{commandContent.Command:X2}");
@@ -442,6 +447,31 @@ namespace ES_F3105U
         }
 
         /// <summary>
+        /// Handles response for cmd_kill command (0x84).
+        /// </summary>
+        private void parse_cmd_kill(byte[] data)
+        {
+            if (data.Length == 1)   // A one byte response indicates an error
+            {
+                readerStatusCode = (ErrorCode)data[0];
+                string parsedReturn = GetErrorCodeString(data[0]);
+                AddListBoxResponse($"cmd_kill -> {parsedReturn}");
+            }
+            else
+            {
+                ushort TagCount = (ushort)(data[1] << 8 | data[0]);
+                byte DataLen = data[2];
+                byte[] LockData = data.Skip(3).Take(DataLen).ToArray();
+                string lockDataString = ByteArrayToHexString(LockData);
+                AddListBoxResponse($"cmd_kill -> {TagCount} tags killed, Data: {lockDataString}");
+
+                string parsedReturn = GetErrorCodeString(data[3 + DataLen]);
+                AddListBoxResponse($"cmd_kill -> {parsedReturn}");
+            }
+            flag_cmd_kill.Value = true;
+        }
+
+        /// <summary>
         /// Handles response for cmd_set_access_epc_match command (0x85).
         /// </summary>
         private void parse_cmd_set_access_epc_match(byte[] data)
@@ -465,7 +495,7 @@ namespace ES_F3105U
                 if(data.Length == 1)
                 {
                     readerFilteredEPC = "";
-                    parsedReturn = "Has Match, Filter Open";
+                    parsedReturn = "No Match, Filter Wide Open";
                 }
                 else
                 {
