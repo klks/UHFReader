@@ -9,4 +9,9 @@
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="FormTabs\" />
+    <Folder Include="Shared\" />
+  </ItemGroup>
+
 </Project>

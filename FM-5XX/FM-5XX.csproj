@@ -18,4 +18,9 @@
     <ProjectReference Include="..\Utilities\Utilities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="FormTabs\" />
+    <Folder Include="Shared\" />
+  </ItemGroup>
+
 </Project>
