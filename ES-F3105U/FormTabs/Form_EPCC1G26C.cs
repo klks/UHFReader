@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,21 +11,94 @@ using UCchip.Reader.API;
 
 namespace ES_F3105U
 {
-    partial class MainForm
+    public partial class Form_EPCC1G26C : UserControl
     {
         DateTime dtLastInventoryRSSIUpdate = DateTime.Now;
-        bool bIsInventoryRunning = false;
         bool bSingleFireRead = false;
+        private bool isTimer6C_ReadProcessing = false;
 
-        private void Init_6CUI()
+        private static byte[,] para_B = {{43,43,45,49,43,43,45,49},
+                                    {43,43,45,49,43,43,45,49},
+                                    {43,43,45,49,43,43,45,49},
+                                    {53,53,48,43,49,45,43,43},
+                                    {47,47,47,47,46,43,43,43}};
+
+        private static int[,] para_C = {{43,43,45,49,43,43,45,49},
+                                    {43,43,45,49,43,43,45,49},
+                                    {43,43,45,49,43,43,45,49},
+                                    {-283,-283,-283,-283,-283,-283,-283,-283},
+                                    {-303,-283,-253,-238,-304,-313,-280,-266}};
+
+        public Form_EPCC1G26C()
         {
+            InitializeComponent();
             cb6C_MemBank.SelectedIndex = 1;
         }
 
-        private bool isTimer6C_ReadProcessing = false;
+        #region textbox filter methods
+        private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_KeyPress(sender, e);
+        }
+
+        private void filterOnlyDigits_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_KeyPress(sender, e);
+        }
+
+        private void filterOnlyHex_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
+        }
+
+        private void filterOnlyDigits_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_TextChanged(sender, e);
+        }
+        #endregion
+
+        private static int calculateRssi(int rssiData, byte epcLen)
+        {
+            byte rssiMode = 0;
+            byte hardwareMode = 0;
+            int B = 0;
+            int C = 0;
+            int D = 0;
+            int rssiVal = 0;
+            float A = 1.0f;
+            float rssiTemp = 0.0f;
+
+            if (epcLen <= 0) epcLen = 1;
+            rssiMode = (byte)(((rssiData >> 24) & 0x000000E0) >> 5);
+            hardwareMode = (byte)(((rssiData >> 24) & 0x0000001E) >> 1);
+            rssiData = (rssiData & 0x01ffffff);
+
+            if (rssiMode > 7 || hardwareMode > 4)
+            {
+                return -90;
+            }
+
+            B = para_B[hardwareMode, rssiMode];
+            C = para_C[hardwareMode, rssiMode];
+
+            rssiTemp = (rssiData / epcLen) * A;
+            rssiVal = (int)((B * Math.Log10(rssiTemp)) + C + D);
+
+            if (rssiVal > 0)
+            {
+                rssiVal = 0;
+            }
+            else if (rssiVal < -90)
+            {
+                rssiVal = -90;
+            }
+
+            return rssiVal;
+        }
+
         private async void timer6C_PollRead_Tick(object sender, EventArgs e)
         {
-            if (readerClient == null)
+            if (FormSharedData.readerClient == null)
             {
                 timer6C_PollRead.Enabled = false;
                 return;
@@ -46,9 +121,9 @@ namespace ES_F3105U
             string readDataEPC = "";
             string totalReadData = "";
 
-            AddListBoxResponse($"timer6C_PollRead -> Start");
+            FormSharedData.AddListBoxResponse($"timer6C_PollRead -> Start");
             uint curReadIndex = 0;
-            while(curReadIndex != readSize)   
+            while (curReadIndex != readSize)
             {
                 ushort toReadSize = (ushort)Math.Min(readSize - curReadIndex, (ushort)20);   //Only do 20 words at a time
 
@@ -56,7 +131,7 @@ namespace ES_F3105U
 
                 ReadWriteParsedData result = new ReadWriteParsedData();
 
-                Task<bool> task = Task.Run(() => AttemptRead_6C(membank, startAddr + curReadIndex, toReadSize, accessPwd, result));
+                Task<bool> task = Task.Run(() => FormSharedData.AttemptRead_6C(membank, startAddr + curReadIndex, toReadSize, accessPwd, result));
                 await task;
 
                 if (task.Result == true)
@@ -65,13 +140,13 @@ namespace ES_F3105U
                         readDataEPC = result.StringEPC;
 
                     if (result.StringEPC != readDataEPC)
-                        AddListBoxResponse($"timer6C_PollRead -> Incorrect EPC, expecting {readDataEPC} but got {result.StringEPC}");
+                        FormSharedData.AddListBoxResponse($"timer6C_PollRead -> Incorrect EPC, expecting {readDataEPC} but got {result.StringEPC}");
 
                     totalReadData += result.StringData;  //Append
                 }
                 else
                 {
-                    AddListBoxResponse($"timer6C_PollRead -> Abandoning Loop");
+                    FormSharedData.AddListBoxResponse($"timer6C_PollRead -> Abandoning Loop");
                     break;
                 }
 
@@ -79,9 +154,9 @@ namespace ES_F3105U
 
                 //Internal cooldown
                 TimeSpan td = DateTime.Now - dtStart;
-                if (td.Milliseconds < minCooldown)
+                if (td.Milliseconds < FormSharedData.minCooldown)
                 {
-                    Thread.Sleep(minCooldown - td.Milliseconds);
+                    Thread.Sleep(FormSharedData.minCooldown - td.Milliseconds);
                 }
             }
 
@@ -96,21 +171,21 @@ namespace ES_F3105U
             {
                 btn6C_Read.Invoke(new MethodInvoker(delegate { btn6C_Read.Enabled = true; }));
             }
-            AddListBoxResponse($"timer6C_PollRead -> End");
+            FormSharedData.AddListBoxResponse($"timer6C_PollRead -> End");
             isTimer6C_ReadProcessing = false;
         }
 
         private void timerInventory_Tick(object sender, EventArgs e)
         {
-            if (readerClient == null)
+            if (FormSharedData.readerClient == null)
             {
                 timerInventory.Enabled = false;
                 return;
             }
 
-            if (!epcQueue.IsEmpty)
+            if (!FormSharedData.responseParser.epcQueue.IsEmpty)
             {
-                if (epcQueue.TryDequeue(out byte[] epcData))
+                if (FormSharedData.responseParser.epcQueue.TryDequeue(out byte[] epcData))
                 {
                     int epcLen = epcData.Length - 10;
                     string PCString = UCchipClient.ToHexString(epcData.Skip(1).Take(2).ToArray());
@@ -163,12 +238,12 @@ namespace ES_F3105U
             }
         }
 
-        private async void btn6C_Inventory_Click(object sender, EventArgs e)
+        private async void btnInventory_Click(object sender, EventArgs e)
         {
-           if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btn6C_Inventory.Enabled = false;
-            epcQueue.Clear();   //Flush the queue
+            FormSharedData.responseParser.epcQueue.Clear();   //Flush the queue
 
             if (btn6C_Inventory.Text == "Inventory")
             {
@@ -178,36 +253,36 @@ namespace ES_F3105U
                 txt6C_RWEPC.Text = "";
                 txt6C_LockEPCTag.Text = "";
 
-                flag_cmd_real_time_inventory.Value = false;
-                readerClient.MsgStartInventory();
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_real_time_inventory));
+                FormSharedData.responseParser.ResetFlag("flag_cmd_real_time_inventory");
+                FormSharedData.readerClient.MsgStartInventory();
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_real_time_inventory"));
                 await task;
 
                 if (task.Result == ErrorCode.OK)
                 {
                     btn6C_Inventory.Text = "Stop";
                     timerInventory.Enabled = true;
-                    bIsInventoryRunning = true;
+                    FormSharedData.bIsInventoryRunning = true;
                 }
             }
             else
             {
-                for (int i=0; i<5; i++)
+                for (int i = 0; i < 5; i++)
                 {
-                    flag_cmd_stop_inventory.Value = false;
-                    readerClient.MsgBaseStopInventory();
-                    Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_stop_inventory, 1500));
+                    FormSharedData.responseParser.ResetFlag("flag_cmd_stop_inventory");
+                    FormSharedData.readerClient.MsgBaseStopInventory();
+                    Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_stop_inventory", 1500));
                     await task;
 
                     if (task.Result == ErrorCode.OK)
                     {
                         timerInventory.Enabled = false;
                         btn6C_Inventory.Text = "Inventory";
-                        bIsInventoryRunning = false;
+                        FormSharedData.bIsInventoryRunning = false;
                         break;
                     }
                 }
-                
+
             }
             btn6C_Inventory.Enabled = true;
         }
@@ -224,11 +299,12 @@ namespace ES_F3105U
 
         private async void lvInventory_DoubleClick(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
-            if (bIsInventoryRunning)
+            if (FormSharedData.bIsInventoryRunning)
             {
-                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
 
@@ -239,30 +315,31 @@ namespace ES_F3105U
                 txt6C_RWEPC.Text = selEPC;
                 txt6C_LockEPCTag.Text = selEPC;
 
-                byte[] bEPCArr = HexStringToByteArray(selEPC);
+                byte[] bEPCArr = Utilities.Utilities.HexStringToByteArray(selEPC);
 
-                flag_cmd_set_access_epc_match.Value = false;
-                readerClient.MsgBaseSetAccessEpcMatch(0, (byte)bEPCArr.Length, bEPCArr);
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
+                FormSharedData.responseParser.ResetFlag("flag_cmd_set_access_epc_match");
+                FormSharedData.readerClient.MsgBaseSetAccessEpcMatch(0, (byte)bEPCArr.Length, bEPCArr);
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_access_epc_match"));
                 await task;
 
                 if (task.Result == ErrorCode.OK)
-                    isMsgBaseSetAccessEpcMatch_Set = true;
+                    FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set = true;
             }
         }
 
-        private void btn6C_Clear_Click(object sender, EventArgs e)
+        private void btnClear_Click(object sender, EventArgs e)
         {
             lb6C_RWResults.Items.Clear();
         }
 
         private async Task<bool> b6CReadWriteSanityCheck()
         {
-            if (readerClient == null) return false;
+            if (FormSharedData.readerClient == null) return false;
 
-            if (bIsInventoryRunning)
+            if (FormSharedData.bIsInventoryRunning)
             {
-                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return false;
             }
 
@@ -273,48 +350,52 @@ namespace ES_F3105U
             txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { strAccessPwd = txt6C_AccessPwd.Text; }));
             txt6C_StartAddr.Invoke(new MethodInvoker(delegate { strStartAddr = txt6C_StartAddr.Text; }));
             txt6C_RWLen.Invoke(new MethodInvoker(delegate { strRWLen = txt6C_RWLen.Text; }));
-            
+
             if (strAccessPwd == "" ||
                 strStartAddr == "" ||
                 strRWLen == "")
             {
-                MessageBox.Show("Please check values for reading/writing", "RW Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please check values for reading/writing", "RW Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return false;
             }
 
             int AccessPwdLen = 0;
             txt6C_AccessPwd.Invoke(new MethodInvoker(delegate { AccessPwdLen = txt6C_AccessPwd.TextLength; }));
-            
+
             if (AccessPwdLen != 8)
             {
-                MessageBox.Show("Access Password must be 8 hex chars!", "RW Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Access Password must be 8 hex chars!", "RW Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return false;
             }
 
-            if (cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked == false)
+            if (FormSharedData.Option_Disable_Write_MsgBaseSetAccessEpcMatch == false)
             {
                 //Verify the filter in the reader against what we selected
-                flag_cmd_get_access_epc_match.Value = false;
-                readerClient.MsgBaseGetAccessEpcMatch();
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_access_epc_match));
+                FormSharedData.responseParser.ResetFlag("flag_cmd_get_access_epc_match");
+                FormSharedData.readerClient.MsgBaseGetAccessEpcMatch();
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_access_epc_match"));
                 await task;
 
                 if (task.Result == ErrorCode.Timeout)
                 {
-                    MessageBox.Show("Failed to validate EPC, try again!", "Match Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Failed to validate EPC, try again!", "Match Warning",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     return false;
                 }
 
                 string strSelectedEPC = txt6C_RWEPC.Text;
-                if (readerFilteredEPC == "" || strSelectedEPC == "")
+                if (FormSharedData.responseParser.readerFilteredEPC == "" || strSelectedEPC == "")
                 {
-                    MessageBox.Show("Please select an EPC from the inventory again, empty EPC filtered", "Selection Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Please select an EPC from the inventory again, empty EPC filtered", "Selection Warning",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     return false;
                 }
 
                 //Truncate to the length of the returned filter
                 string m1 = strSelectedEPC;
-                string m2 = readerFilteredEPC;
+                string m2 = FormSharedData.responseParser.readerFilteredEPC;
 
                 if (m1.Length != m2.Length)
                 {
@@ -325,20 +406,22 @@ namespace ES_F3105U
 
                 if (m1 != m2)
                 {
-                    MessageBox.Show("Please select an EPC from the inventory again, EPC selected do not match", "Selection Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Please select an EPC from the inventory again, EPC selected do not match", "Selection Warning",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     return false;
                 }
-            }    
-            
+            }
+
 
             return true;
         }
-        private async void btn6C_Read_Click(object sender, EventArgs e)
+        private async void btnRead_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
-            if (bIsInventoryRunning)
+            if (FormSharedData.readerClient == null) return;
+            if (FormSharedData.bIsInventoryRunning)
             {
-                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
 
@@ -365,7 +448,7 @@ namespace ES_F3105U
                     btn6C_Read.Text = "Stop";
                     bSingleFireRead = false;
                 }
-                
+
                 //Start the read operation
                 timer6C_PollRead.Enabled = true;
             }
@@ -385,7 +468,7 @@ namespace ES_F3105U
             }
         }
 
-        private async void btn6C_Write_Click(object sender, EventArgs e)
+        private async void btnWrite_Click(object sender, EventArgs e)
         {
             //Do we have anything to write and is it in multiples of 4?
             if (txtReader_WriteData.Text == "" || txtReader_WriteData.TextLength % 4 != 0) return;
@@ -405,24 +488,24 @@ namespace ES_F3105U
             byte membank = GetSelectedReadMemoryBank();
             uint accessPwd = Convert.ToUInt32(txt6C_AccessPwd.Text, 16);
             uint startAddr = Convert.ToUInt16(txt6C_StartAddr.Text, 16);
-            byte[] bWriteData = HexStringToByteArray(txtReader_WriteData.Text);
+            byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(txtReader_WriteData.Text);
 
             //AddListBoxResponse($"btn6C_Write_Click -> Start");
-            await AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
+            await FormSharedData.AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
             btn6C_Write.Enabled = true;
         }
 
-        private async void btn6C_QueryReaderFilter_Click(object sender, EventArgs e)
+        private async void btnQueryReaderFilter_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
-            flag_cmd_get_access_epc_match.Value = false;
-            readerClient.MsgBaseGetAccessEpcMatch();
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_access_epc_match));
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_access_epc_match");
+            FormSharedData.readerClient.MsgBaseGetAccessEpcMatch();
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_access_epc_match"));
             await task;
         }
 
-        private void txtReader_WriteData_TextChanged(object sender, EventArgs e)
+        private void txtWriteData_TextChanged(object sender, EventArgs e)
         {
             filterOnlyHex_TextChanged(sender, e);
             if (txtReader_WriteData.Text.Length > 0 &&
@@ -435,7 +518,7 @@ namespace ES_F3105U
                 btn6C_Write.Enabled = false;
         }
 
-        private void lb6C_RWResults_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void lbRWResults_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             int index = lb6C_RWResults.IndexFromPoint(e.Location);
             if (index != ListBox.NoMatches)
@@ -465,9 +548,10 @@ namespace ES_F3105U
             return membank;
         }
 
-        private async void btn6C_FindLength_Click(object sender, EventArgs e)
+        private async void btnFindLength_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Length search can take some time, are you sure?", "Find Length Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Length search can take some time, are you sure?", "Find Length Warning", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             //Do some sanity checking
@@ -479,7 +563,8 @@ namespace ES_F3105U
             gbTagRW.Enabled = false;
 
             uint iTotalWords = 0;
-            if (MessageBox.Show("Start from beginning?", "Find Length Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Start from beginning?", "Find Length Warning", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
             {
                 if (txt6C_RWLen.Text != null && txt6C_RWLen.TextLength > 0)
                 {
@@ -493,25 +578,25 @@ namespace ES_F3105U
             }
 
             byte membank = GetSelectedReadMemoryBank();
-            uint accessPwd = Convert.ToUInt32(txt6C_AccessPwd.Text, 16);            
+            uint accessPwd = Convert.ToUInt32(txt6C_AccessPwd.Text, 16);
             ushort readSize = 1;
 
-            while(true)
+            while (true)
             {
                 DateTime dtStart = DateTime.Now;
-                flag_cmd_read.Value = false;
-                readerClient.MsgBaseRead(membank, iTotalWords, readSize, accessPwd);
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_read));
+                FormSharedData.responseParser.ResetFlag("flag_cmd_read");
+                FormSharedData.readerClient.MsgBaseRead(membank, iTotalWords, readSize, accessPwd);
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_read"));
                 await task;
 
-                if (task.Result != ErrorCode.OK || readerStatusCode != (int)ErrorCode.OK) break;
+                if (task.Result != ErrorCode.OK || FormSharedData.responseParser.readerStatusCode != (int)ErrorCode.OK) break;
                 iTotalWords++;
 
                 //Internal cooldown
                 TimeSpan td = DateTime.Now - dtStart;
-                if (td.Milliseconds < minCooldown)
+                if (td.Milliseconds < FormSharedData.minCooldown)
                 {
-                    Thread.Sleep(minCooldown - td.Milliseconds);
+                    Thread.Sleep(FormSharedData.minCooldown - td.Milliseconds);
                 }
             }
             txt6C_RWLen.Text = iTotalWords.ToString();
@@ -520,18 +605,20 @@ namespace ES_F3105U
             btn6C_FindLength.Enabled = true;
         }
 
-        private async void btn6C_KillTag_Click(object sender, EventArgs e)
+        private async void btnKillTag_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             if (txt6C_KillPwd.Text.Length != 8)
             {
-                MessageBox.Show("Kill Password must be 8 hex chars!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Kill Password must be 8 hex chars!", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
             if (txt6C_KillPwd.Text == "00000000")
             {
-                MessageBox.Show("Kill Password cannot be all zeroes", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Kill Password cannot be all zeroes", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
             uint killPwd = Convert.ToUInt32(txt6C_KillPwd.Text, 16);
@@ -541,15 +628,15 @@ namespace ES_F3105U
             await task_filter;
             if (task_filter.Result == false) return;
 
-            flag_cmd_kill.Value = false;
-            readerClient.MsgBaseKill(killPwd);
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_kill));
+            FormSharedData.responseParser.ResetFlag("flag_cmd_kill");
+            FormSharedData.readerClient.MsgBaseKill(killPwd);
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_kill"));
             await task;
         }
 
-        private async void Button_SetProtectState_Click(object sender, EventArgs e)
+        private async void btnSetProtectState_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             //Do we need to disable filters?
             Task<bool> task_filter = Task.Run(() => WideOpenFilterCheck());
@@ -561,23 +648,19 @@ namespace ES_F3105U
 
         private async Task<bool> WideOpenFilterCheck()
         {
-            if (readerClient == null) return false;
+            if (FormSharedData.readerClient == null) return false;
 
             //Disable filters if required
-            if (cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked == true && isMsgBaseSetAccessEpcMatch_Set == true)
+            if (FormSharedData.Option_Disable_Write_MsgBaseSetAccessEpcMatch == true &&
+                FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set == true)
             {
-                //Clear any filters
-                flag_cmd_set_access_epc_match.Value = false;
-                readerClient.MsgBaseSetAccessEpcMatch(1, 0, []);
-                Task<ErrorCode> task_clear = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
-                await task_clear;
-                if (task_clear.Result == ErrorCode.OK)
-                    isMsgBaseSetAccessEpcMatch_Set = false;
-                else
-                {
-                    MessageBox.Show("Failed to clear MsgBaseSetAccessEpcMatch", "Write Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
+                Task<bool> task_bRet = Task.Run(() => FormSharedData.ClearEPCMatchFilter());
+                await task_bRet;
+
+                if (task_bRet.Result == false)
+                    MessageBox.Show("Failed to clear MsgBaseSetAccessEpcMatch", "Write Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
+                return task_bRet.Result;
             }
             return true;
         }
@@ -592,6 +675,11 @@ namespace ES_F3105U
         {
             gbLockPassword.Enabled = false;
             gbLockTIDnUSER.Enabled = true;
+        }
+
+        private void cbDisable_Write_MsgBaseSetAccessEpcMatch_CheckedChanged(object sender, EventArgs e)
+        {
+            FormSharedData.Option_Disable_Write_MsgBaseSetAccessEpcMatch = cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked;
         }
     }
 }

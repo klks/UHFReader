@@ -262,8 +262,8 @@ namespace UCchip.Reader.API
                 InternalPortInstance = new System.IO.Ports.SerialPort();
                 InternalPortInstance.PortName = PortName;
                 InternalPortInstance.BaudRate = Rate;
-                InternalPortInstance.ReadTimeout = Timeout;
-                InternalPortInstance.WriteTimeout = Timeout;
+                //InternalPortInstance.ReadTimeout = Timeout;
+                //InternalPortInstance.WriteTimeout = Timeout;
 
                 try
                 {

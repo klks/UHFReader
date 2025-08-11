@@ -1,19 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using UCchip.Reader.API;
 using Utilities;
-using static Utilities.Utilities;
 
 namespace ES_F3105U
 {
-    partial class MainForm
+    public partial class Form_Duplicate : UserControl
     {
+        public Form_Duplicate()
+        {
+            InitializeComponent();
+        }
+
+        #region textbox filter methods
+        private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_KeyPress(sender, e);
+        }
+
+        private void filterOnlyDigits_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_KeyPress(sender, e);
+        }
+
+        private void filterOnlyHex_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
+        }
+
+        private void filterOnlyDigits_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_TextChanged(sender, e);
+        }
+        #endregion
+
         public void ResetReadUI()
         {
             lblDup_ReadTID.Text = "(XXX Bits) (XXXX Words)";
@@ -56,6 +84,7 @@ namespace ES_F3105U
                 groupDuplicateUI.Enabled = false;
             }
         }
+
         private void btnDup_ReadClear_Click(object sender, EventArgs e)
         {
             ResetReadUI();
@@ -132,7 +161,7 @@ namespace ES_F3105U
                     try
                     {
                         Utilities.CardJson card_data = JsonSerializer.Deserialize<Utilities.CardJson>(jsonString);
-                        Utilities.CardInfo ci = CardJson_to_CardInfo(card_data);
+                        Utilities.CardInfo ci = Utilities.Utilities.CardJson_to_CardInfo(card_data);
 
                         ResetReadUI();
                         if (ci.FullEPC != null)
@@ -180,15 +209,15 @@ namespace ES_F3105U
                                 chkDup_ReadAuthChlg.Checked = ((uTIDShortTag & 0x40_0000) == 0x40_0000) ? true : false;
                                 chkDup_ReadFileOpen.Checked = ((uTIDShortTag & 0x20_0000) == 0x20_0000) ? true : false;
 
-                                LoadICDB();
-                                DigitsICDB? entry = GetShortTagExtendedInfo(txtDup_ReadMDID.Text, txtDup_ReadTMN.Text);
+                                Utilities.Utilities.LoadICDB();
+                                DigitsICDB? entry = Utilities.Utilities.GetShortTagExtendedInfo(txtDup_ReadMDID.Text, txtDup_ReadTMN.Text);
                                 if (entry != null)
                                 {
                                     txtDup_Read_STI_Manu.Text = entry.manufacturer;
                                     txtDup_Read_STI_Prod.Text = entry.modelName;
                                 }
                                 else
-                                    txtDup_Read_STI_Manu.Text = GetShortTagMDIDName(txtDup_ReadMDID.Text);
+                                    txtDup_Read_STI_Manu.Text = Utilities.Utilities.GetShortTagMDIDName(txtDup_ReadMDID.Text);
 
                             }
 
@@ -203,36 +232,30 @@ namespace ES_F3105U
                             txtDup_AFI.Text = (iPCBits & 0xFF).ToString("X2");
                         }
                     }
-                    catch { };
+                    catch { }
+                    ;
                 }
             }
         }
         private async Task<bool> bDupReadWriteSanityCheck()
         {
-            if (readerClient == null) return false;
+            if (FormSharedData.readerClient == null) return false;
 
-            if (bIsInventoryRunning)
+            if (FormSharedData.bIsInventoryRunning)
             {
-                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please stop inventory first before proceeding", "Inventory Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return false;
             }
 
-            if (cbDisable_Write_MsgBaseSetAccessEpcMatch.Checked == true || isMsgBaseSetAccessEpcMatch_Set == true)
+            if (FormSharedData.Option_Disable_Write_MsgBaseSetAccessEpcMatch == true ||
+                FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set == true)
             {
-                //Clear any filters
-                flag_cmd_set_access_epc_match.Value = false;
-                readerClient.MsgBaseSetAccessEpcMatch(1, 0, []);
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
-                await task;
-
-                if (task.Result == ErrorCode.OK)
-                    isMsgBaseSetAccessEpcMatch_Set = false;
-
+                Task<bool> task_bRet = Task.Run(() => FormSharedData.ClearEPCMatchFilter());
+                await task_bRet;
                 await Task.Delay(250);  //Slow down the next request
-                if (task.Result != ErrorCode.OK)
-                    return false;
+                return task_bRet.Result;
             }
-            
             return true;
         }
 
@@ -251,29 +274,31 @@ namespace ES_F3105U
                 DateTime dtStart = DateTime.Now;
 
                 ReadWriteParsedData result = new ReadWriteParsedData();
-                Task<bool> task_read = Task.Run(() => AttemptRead_6C(membank, readIndex, readSize, accessPwd, result));
+                Task<bool> task_read = Task.Run(() => FormSharedData.AttemptRead_6C(membank, readIndex, readSize, accessPwd, result));
                 await task_read;
 
                 if (task_read.Result == true)
                 {
-                    if (latchEPC == "" || isMsgBaseSetAccessEpcMatch_Set == false)
+                    if (latchEPC == "" || FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set == false)
                     {
                         await Task.Delay(250);  //Slow down the next request
                         latchEPC = result.StringEPC;
+
                         //Set a filter now
-                        flag_cmd_set_access_epc_match.Value = false;
-                        readerClient.MsgBaseSetAccessEpcMatch(0, (byte)result.RawEPC.Length, result.RawEPC);
-                        Task<ErrorCode> task_set = Task.Run(() => WaitForFlag(flag_cmd_set_access_epc_match));
+                        FormSharedData.responseParser.ResetFlag("flag_cmd_set_access_epc_match");
+                        FormSharedData.readerClient.MsgBaseSetAccessEpcMatch(0, (byte)result.RawEPC.Length, result.RawEPC);
+                        Task<ErrorCode> task_set = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_access_epc_match"));
                         await task_set;
                         if (task_set.Result == ErrorCode.OK)
-                            isMsgBaseSetAccessEpcMatch_Set = true;
+                            FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set = true;
                         await Task.Delay(250);  //Slow down the next request
                     }
 
                     //Check if there was a problem
                     if (latchEPC != result.StringEPC)
                     {
-                        MessageBox.Show("Multiple tags were detected when trying to read, please make sure only 1 card is nearby", "Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("Multiple tags were detected when trying to read, please make sure only 1 card is nearby", "Read Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                         strFullData = "";
                         break;
                     }
@@ -284,7 +309,8 @@ namespace ES_F3105U
                     if (result.readerStatusCode != ErrorCode.OK &&
                         result.readerStatusCode != ErrorCode.PARAM_WORDCNT_TOO_LONG)
                     {
-                        MessageBox.Show("Not all bytes were able to be read, check error code returned on the right", "Read Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("Not all bytes were able to be read, check error code returned on the right", "Read Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     }
                     break;
                 }
@@ -292,9 +318,9 @@ namespace ES_F3105U
 
                 //Internal cooldown
                 TimeSpan td = DateTime.Now - dtStart;
-                if (td.Milliseconds < minCooldown)
+                if (td.Milliseconds < FormSharedData.minCooldown)
                 {
-                    Thread.Sleep(minCooldown - td.Milliseconds);
+                    Thread.Sleep(FormSharedData.minCooldown - td.Milliseconds);
                 }
             }
             return strFullData;
@@ -302,7 +328,7 @@ namespace ES_F3105U
 
         private async void btnDup_ReadTID_Click(object sender, EventArgs e)
         {
-            
+
             //Do some sanity checking
             Task<bool> task_validate = Task.Run(() => bDupReadWriteSanityCheck());
             await task_validate;
@@ -338,15 +364,15 @@ namespace ES_F3105U
                     chkDup_ReadAuthChlg.Checked = ((uTIDShortTag & 0x40_0000) == 0x40_0000) ? true : false;
                     chkDup_ReadFileOpen.Checked = ((uTIDShortTag & 0x20_0000) == 0x20_0000) ? true : false;
 
-                    LoadICDB();
-                    DigitsICDB? entry = GetShortTagExtendedInfo(txtDup_ReadMDID.Text, txtDup_ReadTMN.Text);
+                    Utilities.Utilities.LoadICDB();
+                    DigitsICDB? entry = Utilities.Utilities.GetShortTagExtendedInfo(txtDup_ReadMDID.Text, txtDup_ReadTMN.Text);
                     if (entry != null)
                     {
                         txtDup_Read_STI_Manu.Text = entry.manufacturer;
                         txtDup_Read_STI_Prod.Text = entry.modelName;
                     }
                     else
-                        txtDup_Read_STI_Manu.Text = GetShortTagMDIDName(txtDup_ReadMDID.Text);
+                        txtDup_Read_STI_Manu.Text = Utilities.Utilities.GetShortTagMDIDName(txtDup_ReadMDID.Text);
                 }
             }
 
@@ -381,7 +407,7 @@ namespace ES_F3105U
             if (task_data.Result != "")
             {
                 string strFullEPC = task_data.Result;
-                if(strFullEPC.Length > 8)
+                if (strFullEPC.Length > 8)
                 {
                     txtDup_Read_CRC.Text = strFullEPC.Substring(0, 4);  //CRC
                     string strPC = strFullEPC.Substring(4, 4);  //PC
@@ -407,7 +433,7 @@ namespace ES_F3105U
                         txtDup_Read_EPC.Text = "";
                         txtDup_Write_EPC.Text = "";
                     }
-                        
+
                     txtDup_Read_FullEPC.Text = strFullEPC.Substring(4);
                     txtDup_Write_FullEPC.Text = txtDup_Read_FullEPC.Text;
                     txtDup_Read_FullEPCLen.Text = ((txtDup_Write_FullEPC.TextLength / 4) + 1).ToString();    //Add 1 for CRC that isnt included
@@ -427,6 +453,7 @@ namespace ES_F3105U
 
             DuplicateGroupEnabled(false);
             txtDup_Read_UserData.Text = "";
+
 
             Task<string> task_data = Task.Run(() => GetFullDataString((byte)MemBank.USER));      //USER
             await task_data;
@@ -464,7 +491,7 @@ namespace ES_F3105U
             if (task_data.Result != "")
             {
                 string strReserved = task_data.Result;
-                if(strReserved.Length >= 8)
+                if (strReserved.Length >= 8)
                 {
                     string killPwd = strReserved.Substring(0, 8);
                     txtDup_Read_KillPwd.Text = killPwd;
@@ -484,7 +511,8 @@ namespace ES_F3105U
 
         private async void btnDup_WriteTID_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Proceed to write TID data?", "Confirm...", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Proceed to write TID data?", "Confirm...", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             //Do some sanity checking
@@ -499,20 +527,20 @@ namespace ES_F3105U
             {
                 btnDup_WriteTID.Enabled = false;
                 uint accessPwd = 0;
-                byte[] bWriteData = HexStringToByteArray(writeData);
+                byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(writeData);
                 uint startAddr = 0;
                 if (txtDup_Read_AccessPwd.Text != "")
                     accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
 
-                await AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
-
+                await FormSharedData.AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
                 btnDup_WriteTID.Enabled = true;
             }
         }
 
         private async void btnDup_WriteEPC_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Proceed to write EPC data?", "Confirm...", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Proceed to write EPC data?", "Confirm...", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             //Do some sanity checking
@@ -527,20 +555,20 @@ namespace ES_F3105U
             {
                 btnDup_WriteEPC.Enabled = false;
                 uint accessPwd = 0;
-                byte[] bWriteData = HexStringToByteArray(writeData);
+                byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(writeData);
                 uint startAddr = 1;     //Skip CRC field
                 if (txtDup_Read_AccessPwd.Text != "")
                     accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
 
-                await AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
-
+                await FormSharedData.AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
                 btnDup_WriteEPC.Enabled = true;
             }
         }
 
         private async void btnDup_WriteUser_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Proceed to write USER data?", "Confirm...", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Proceed to write USER data?", "Confirm...", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             //Do some sanity checking
@@ -555,13 +583,12 @@ namespace ES_F3105U
             {
                 btnDup_WriteEPC.Enabled = false;
                 uint accessPwd = 0;
-                byte[] bWriteData = HexStringToByteArray(writeData);
+                byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(writeData);
                 uint startAddr = 0;
                 if (txtDup_Read_AccessPwd.Text != "")
                     accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
 
-                await AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
-
+                await FormSharedData.AttemptWrite_6C_Buffer(membank, accessPwd, startAddr, bWriteData);
                 btnDup_WriteEPC.Enabled = true;
             }
 
@@ -569,7 +596,8 @@ namespace ES_F3105U
 
         private async void btnDup_WriteRFU_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Proceed to write RFU data?", "Confirm...", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Proceed to write RFU data?", "Confirm...", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             //Do some sanity checking
@@ -582,21 +610,22 @@ namespace ES_F3105U
             btnDup_WriteRFU.Enabled = false;
 
             string killPwd = txtDup_Write_KillPwd.Text;
-            if(killPwd != null && killPwd != "")
+            if (killPwd != null && killPwd != "")
             {
-                if(killPwd.Length != 8)
+                if (killPwd.Length != 8)
                 {
-                    MessageBox.Show("Kill password must be 8 chars", "Length Mismatch", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Kill password must be 8 chars", "Length Mismatch",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 }
                 else
                 {
                     uint w_accessPwd = 0;
-                    byte[] bWriteData = HexStringToByteArray(killPwd);
+                    byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(killPwd);
                     uint startAddr = 0;
                     if (txtDup_Read_AccessPwd.Text != "")
                         w_accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
 
-                    await AttemptWrite_6C_Buffer(membank, w_accessPwd, startAddr, bWriteData);
+                    await FormSharedData.AttemptWrite_6C_Buffer(membank, w_accessPwd, startAddr, bWriteData);
                 }
             }
 
@@ -605,17 +634,18 @@ namespace ES_F3105U
             {
                 if (accessPwd.Length != 8)
                 {
-                    MessageBox.Show("Access password must be 8 chars", "Length Mismatch", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Access password must be 8 chars", "Length Mismatch",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 }
                 else
                 {
                     uint w_accessPwd = 0;
-                    byte[] bWriteData = HexStringToByteArray(accessPwd);
+                    byte[] bWriteData = Utilities.Utilities.HexStringToByteArray(accessPwd);
                     uint startAddr = 2;
                     if (txtDup_Read_AccessPwd.Text != "")
                         w_accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
 
-                    await AttemptWrite_6C_Buffer(membank, w_accessPwd, startAddr, bWriteData);
+                    await FormSharedData.AttemptWrite_6C_Buffer(membank, w_accessPwd, startAddr, bWriteData);
                 }
             }
 
@@ -658,7 +688,7 @@ namespace ES_F3105U
             if (task_data.Result != "")
             {
                 string strTID = task_data.Result;
-                txtDup_Validate_TID.Text =  strTID;
+                txtDup_Validate_TID.Text = strTID;
                 Validate_All_Fields();
             }
 
@@ -858,6 +888,33 @@ namespace ES_F3105U
                 else
                     btnDup_WriteTID.Enabled = false;
             }
+        }
+
+        private async void btnEPCMatchQuery_Click(object sender, EventArgs e)
+        {
+            if (FormSharedData.readerClient == null) return;
+
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_access_epc_match");
+            FormSharedData.readerClient.MsgBaseGetAccessEpcMatch();
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_access_epc_match"));
+            await task;
+
+            txtEPCMatchFilter.Text = FormSharedData.responseParser.readerFilteredEPC;
+        }
+
+        private async void btnEPCMatchClear_Click(object sender, EventArgs e)
+        {
+            if (FormSharedData.readerClient == null) return;
+
+            Task<bool> task_bRet = Task.Run(() => FormSharedData.ClearEPCMatchFilter());
+            await task_bRet;
+
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_access_epc_match");
+            FormSharedData.readerClient.MsgBaseGetAccessEpcMatch();
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_access_epc_match"));
+            await task;
+
+            txtEPCMatchFilter.Text = FormSharedData.responseParser.readerFilteredEPC;
         }
     }
 }

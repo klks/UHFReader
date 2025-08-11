@@ -8,6 +8,50 @@ using System.Threading.Tasks;
 
 namespace Utilities
 {
+    public struct CardInfo
+    {
+        public string TID;
+        public string EPC;
+        public string FullEPC;
+        public string AccessPwd;
+        public string KillPwd;
+        public string UserData;
+        public string PC;
+        public string EPC_CRC;
+
+        public int iTIDLen;
+        public int iEPCLen;
+        public int iFullEPCLen;
+        public int iUserLen;
+
+        public bool isCardAccessPWDLocked;
+        public bool isCardKillPWDLocked;
+        public bool isWavev2Card;
+
+        public bool hasLockedUserBlocks;
+        public List<int> arrUserBlocksLocked;
+
+        //PC Flags
+        public bool bPC_UMI;
+        public bool bPC_XPC;
+        public bool bPC_Toggle;
+    }
+
+    public class CardJson
+    {
+        public string? TID { get; set; }
+        public string? EPC { get; set; }
+        public string? FullEPC { get; set; }
+        public string? UserData { get; set; }
+        public string? AccessKey { get; set; }
+        public string? KillKey { get; set; }
+        public string? CRC { get; set; }
+        public string? PC { get; set; }
+        public bool isCardAccessPWDLocked { get; set; }
+        public bool isCardKillPWDLocked { get; set; }
+        public bool isWavev2Card { get; set; }
+    }
+
     /// <summary>
     /// Utility class providing common functions for card database operations, string conversion, and UI input filtering.
     /// </summary>
@@ -212,6 +256,25 @@ namespace Utilities
         {
             byte[] bytes = Encoding.UTF8.GetBytes(str.ToCharArray());
             return BytesToHexString(bytes);
+        }
+        public static byte[] HexStringToByteArray(string? s)
+        {
+            if (s == null || s == "")
+                return [];
+
+            s = s.Replace(" ", "");
+            byte[] buffer = new byte[s.Length / 2];
+            for (int i = 0; i < s.Length; i += 2)
+                buffer[i / 2] = (byte)Convert.ToByte(s.Substring(i, 2), 16);
+            return buffer;
+        }
+
+        public static string ByteArrayToHexString(byte[] data)
+        {
+            StringBuilder sb = new StringBuilder(data.Length * 3);
+            foreach (byte b in data)
+                sb.Append(Convert.ToString(b, 16).PadLeft(2, '0'));
+            return sb.ToString().ToUpper();
         }
 
         /// <summary>

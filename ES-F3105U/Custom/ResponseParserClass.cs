@@ -2,24 +2,25 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using UCchip.Reader.API;
 
 namespace ES_F3105U
 {
-    /// <summary>
-    /// Partial MainForm class: Handles parsing of responses from the UHF reader and updates UI/flags accordingly.
-    /// </summary>
-    partial class MainForm
+    public class ResponseParserClass
     {
+        //An array of Ref<bools>
+        private Dictionary<string, Ref<bool>> flags;
+
         // --- Flagging states for command completion ---
         Ref<bool> flag_cmd_reset = new Ref<bool>(false, "flag_cmd_reset");
         Ref<bool> flag_cmd_get_firmware_version = new Ref<bool>(false, "flag_cmd_get_firmware_version");
         Ref<bool> flag_cmd_get_output_power = new Ref<bool>(false, "flag_cmd_get_output_power");
         Ref<bool> flag_cmd_set_output_power = new Ref<bool>(false, "flag_cmd_set_output_power");
         Ref<bool> flag_cmd_get_rf_link_profile = new Ref<bool>(false, "flag_cmd_get_rf_link_profile");
-        Ref<bool> flag_cmd_set_rf_link_profile = new Ref<bool>(false, "cmd_set_rf_link_profile");
+        Ref<bool> flag_cmd_set_rf_link_profile = new Ref<bool>(false, "flag_cmd_set_rf_link_profile");
         Ref<bool> flag_cmd_get_reader_temperature = new Ref<bool>(false, "flag_cmd_get_reader_temperature");
         Ref<bool> flag_cmd_real_time_inventory = new Ref<bool>(false, "flag_cmd_real_time_inventory");
         Ref<bool> flag_cmd_stop_inventory = new Ref<bool>(false, "flag_cmd_stop_inventory");
@@ -30,51 +31,114 @@ namespace ES_F3105U
         Ref<bool> flag_cmd_get_frequency_region = new Ref<bool>(false, "flag_cmd_get_frequency_region");
         Ref<bool> flag_cmd_reader_para_save = new Ref<bool>(false, "flag_cmd_reader_para_save");
         Ref<bool> flag_cmd_reader_para_reset = new Ref<bool>(false, "flag_cmd_reader_para_reset");
-        Ref<bool> flag_cmd_get_tx_time = new Ref<bool>(false, "cmd_get_tx_time");
-        Ref<bool> flag_cmd_set_tx_time = new Ref<bool>(false, "cmd_set_tx_time");
-        Ref<bool> flag_cmd_get_cw = new Ref<bool>(false, "cmd_get_cw");
-        Ref<bool> flag_cmd_set_cw = new Ref<bool>(false, "cmd_set_cw");
-        Ref<bool> flag_cmd_kill = new Ref<bool>(false, "cmd_kill");
-        Ref<bool> flag_cmd_lock = new Ref<bool>(false, "cmd_lock");
+        Ref<bool> flag_cmd_get_tx_time = new Ref<bool>(false, "flag_cmd_get_tx_time");
+        Ref<bool> flag_cmd_set_tx_time = new Ref<bool>(false, "flag_cmd_set_tx_time");
+        Ref<bool> flag_cmd_get_cw = new Ref<bool>(false, "flag_cmd_get_cw");
+        Ref<bool> flag_cmd_set_cw = new Ref<bool>(false, "flag_cmd_set_cw");
+        Ref<bool> flag_cmd_kill = new Ref<bool>(false, "flag_cmd_kill");
+        Ref<bool> flag_cmd_lock = new Ref<bool>(false, "flag_cmd_lock");
 
         // --- Reader parameters ---
-        string readerVersion = ""; // Firmware version string
-        byte readerDBM = 0; // Output power in dBM
-        byte readerLinkProfile = 0; // RF link profile
-        string readerTemperature = ""; // Reader temperature string
-        byte readerRegion; // Frequency region
-        byte readerStartFreq; // Start frequency
-        byte readerEndFreq; // End frequency
-        ushort readerTXOnTime = 0; // TX on time
-        ushort readerTXOffTime = 0; // TX off time
-        byte readerCWStatus; // CW status
+        public string readerVersion = ""; // Firmware version string
+        public byte readerDBM = 0; // Output power in dBM
+        public byte readerLinkProfile = 0; // RF link profile
+        public string readerTemperature = ""; // Reader temperature string
+        public byte readerRegion; // Frequency region
+        public byte readerStartFreq; // Start frequency
+        public byte readerEndFreq; // End frequency
+        public ushort readerTXOnTime = 0; // TX on time
+        public ushort readerTXOffTime = 0; // TX off time
+        public byte readerCWStatus; // CW status
 
         // --- Inventory queue for EPC data ---
-        ConcurrentQueue<byte[]> epcQueue = new ConcurrentQueue<byte[]>();
+        public ConcurrentQueue<byte[]> epcQueue = new ConcurrentQueue<byte[]>();
 
         // --- Return status code for last command ---
-        ErrorCode readerStatusCode = 0;
+        public ErrorCode readerStatusCode = 0;
 
         // --- Function parameters and buffers ---
-        bool isMsgBaseSetAccessEpcMatch_Set = false;
-        string readerFilteredEPC = "";
-        byte[] readerReadBuffer = Array.Empty<byte>();
+        public bool isMsgBaseSetAccessEpcMatch_Set = false;
+        public string readerFilteredEPC = "";
+        public byte[] readerReadBuffer = Array.Empty<byte>();
+
+        public ResponseParserClass()
+        {
+            // Initialize the flags dictionary
+            flags = new Dictionary<string, Ref<bool>>
+            {
+                { "flag_cmd_reset", flag_cmd_reset },
+                { "flag_cmd_get_firmware_version", flag_cmd_get_firmware_version },
+                { "flag_cmd_get_output_power", flag_cmd_get_output_power },
+                { "flag_cmd_set_output_power", flag_cmd_set_output_power },
+                { "flag_cmd_get_rf_link_profile", flag_cmd_get_rf_link_profile },
+                { "flag_cmd_set_rf_link_profile", flag_cmd_set_rf_link_profile },
+                { "flag_cmd_get_reader_temperature", flag_cmd_get_reader_temperature },
+                { "flag_cmd_real_time_inventory", flag_cmd_real_time_inventory },
+                { "flag_cmd_stop_inventory", flag_cmd_stop_inventory },
+                { "flag_cmd_get_access_epc_match", flag_cmd_get_access_epc_match },
+                { "flag_cmd_set_access_epc_match", flag_cmd_set_access_epc_match },
+                { "flag_cmd_read", flag_cmd_read },
+                { "flag_cmd_write", flag_cmd_write },
+                { "flag_cmd_get_frequency_region", flag_cmd_get_frequency_region },
+                { "flag_cmd_reader_para_save", flag_cmd_reader_para_save },
+                { "flag_cmd_reader_para_reset", flag_cmd_reader_para_reset },
+                { "flag_cmd_get_tx_time", flag_cmd_get_tx_time },
+                { "flag_cmd_set_tx_time", flag_cmd_set_tx_time },
+                { "flag_cmd_get_cw", flag_cmd_get_cw },
+                { "flag_cmd_set_cw", flag_cmd_set_cw },
+                { "flag_cmd_kill", flag_cmd_kill },
+                { "flag_cmd_lock", flag_cmd_lock }
+            };
+        }
+
+        public void ResetFlag(string flagName)
+        {
+            if (flags.TryGetValue(flagName, out var flag))
+            {
+                flag.Value = false;
+            }
+        }
+
+        private void SetFlag(string flagName)
+        {
+            if (flags.TryGetValue(flagName, out var flag))
+            {
+                flag.Value = true;
+            }
+        }
 
         /// <summary>
-        /// Adds a message to the response ListBox with a timestamp.
+        /// Helper function to wait for a flag to be set, indicating command completion.
         /// </summary>
-        private void AddListBoxResponse(string message)
+        public async Task<ErrorCode> WaitForFlag(string flagName, int timeout = 5000)
         {
-            string time_now = DateTime.Now.ToLongTimeString();
-            string fullMsg = $"[{time_now}] {message}";
-            lbResponse.Invoke(new MethodInvoker(delegate { lbResponse.Items.Insert(0, fullMsg); }));
+            if (flags.TryGetValue(flagName, out var flag))
+            {
+                int waited = 0;
+                while (flag.Value == false)
+                {
+                    await Task.Delay(10);
+                    waited += 10;
+                    if (waited > timeout)
+                    {
+                        FormSharedData.AddListBoxResponse($"WaitForFlag({flagName}) -> Timeout");
+                        return ErrorCode.Timeout;
+                    }
+                }
+                return ErrorCode.OK;
+            }
+            else
+            {
+                FormSharedData.AddListBoxResponse($"WaitForFlag({flagName}) -> Flag not found");
+                return ErrorCode.ParameterError;
+            }
         }
 
         /// <summary>
         /// Parses a response from the reader and dispatches to the appropriate handler.
         /// </summary>
         /// <param name="cmdResponse">Raw response bytes from the reader.</param>
-        private void ResponseParser(byte[] cmdResponse)
+        public void ResponseParser(byte[] cmdResponse)
         {
             int bufLen = cmdResponse.Length;
             if (bufLen < 5)
@@ -106,7 +170,7 @@ namespace ES_F3105U
             {
                 case (byte)(Commands.cmd_temperature_warning):
                     // Device overheating warning
-                    AddListBoxResponse($"cmd_temperature_warning, Device is overheating, please check reader");
+                    FormSharedData.AddListBoxResponse($"cmd_temperature_warning, Device is overheating, please check reader");
                     break;
                 case (byte)(Commands.cmd_reset):
                     parse_cmd_reset(commandContent.Data);
@@ -169,7 +233,7 @@ namespace ES_F3105U
                     parse_cmd_kill(commandContent.Data);
                     break;
                 default:
-                    AddListBoxResponse($"Unimplemented command 0x{commandContent.Command:X2}");
+                    FormSharedData.AddListBoxResponse($"Unimplemented command 0x{commandContent.Command:X2}");
                     break;
             }
         }
@@ -177,7 +241,7 @@ namespace ES_F3105U
         /// <summary>
         /// Returns a human-readable string for a given error code.
         /// </summary>
-        private string GetErrorCodeString(byte errCode)
+        public string GetErrorCodeString(byte errCode)
         {
             string retString = string.Empty;
             // Map error code to description
@@ -242,8 +306,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_reader_para_save -> {parsedReturn}");
-            flag_cmd_reader_para_save.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_reader_para_save -> {parsedReturn}");
+            SetFlag("flag_cmd_reader_para_save");
         }
 
         /// <summary>
@@ -253,8 +317,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_reader_para_reset -> {parsedReturn}");
-            flag_cmd_reader_para_reset.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_reader_para_reset -> {parsedReturn}");
+            SetFlag("flag_cmd_reader_para_reset");
         }
 
         /// <summary>
@@ -262,17 +326,17 @@ namespace ES_F3105U
         /// </summary>
         private void parse_cmd_get_tx_time(byte[] data)
         {
-            if(data.Length == 4)
+            if (data.Length == 4)
             {
                 readerTXOnTime = (ushort)(data[0] << 8 | data[1]);
                 readerTXOffTime = (ushort)(data[2] << 8 | data[3]);
-                AddListBoxResponse($"cmd_get_tx_time -> {readerTXOnTime.ToString()}:{readerTXOffTime.ToString()}");
+                FormSharedData.AddListBoxResponse($"cmd_get_tx_time -> {readerTXOnTime.ToString()}:{readerTXOffTime.ToString()}");
             }
             else
             {
-                AddListBoxResponse($"cmd_get_tx_tim -> Error");
+                FormSharedData.AddListBoxResponse($"cmd_get_tx_tim -> Error");
             }
-            flag_cmd_get_tx_time.Value = true;
+            SetFlag("flag_cmd_get_tx_time");
         }
 
         /// <summary>
@@ -282,8 +346,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_set_tx_time -> {parsedReturn}");
-            flag_cmd_set_tx_time.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_set_tx_time -> {parsedReturn}");
+            SetFlag("flag_cmd_set_tx_time");
         }
 
         /// <summary>
@@ -293,8 +357,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_set_rf_link_profile -> {parsedReturn}");
-            flag_cmd_set_rf_link_profile.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_set_rf_link_profile -> {parsedReturn}");
+            SetFlag("flag_cmd_set_rf_link_profile");
         }
 
         /// <summary>
@@ -304,8 +368,8 @@ namespace ES_F3105U
         {
             //No error status code returned
             readerLinkProfile = data[0];
-            AddListBoxResponse($"cmd_get_rf_link_profile -> {readerDBM}");
-            flag_cmd_get_rf_link_profile.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_get_rf_link_profile -> {readerDBM}");
+            SetFlag("flag_cmd_get_rf_link_profile");
         }
 
         /// <summary>
@@ -315,8 +379,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_reset -> {parsedReturn}");
-            flag_cmd_reset.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_reset -> {parsedReturn}");
+            SetFlag("flag_cmd_reset");
         }
 
         /// <summary>
@@ -337,8 +401,8 @@ namespace ES_F3105U
             };
 
             readerVersion = $"{readerModel} v{data[0]}.{data[1]}";
-            AddListBoxResponse($"cmd_get_firmware_version -> {readerVersion}");
-            flag_cmd_get_firmware_version.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_get_firmware_version -> {readerVersion}");
+            SetFlag("flag_cmd_get_firmware_version");
         }
 
         /// <summary>
@@ -348,8 +412,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_set_output_power -> {parsedReturn}");
-            flag_cmd_set_output_power.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_set_output_power -> {parsedReturn}");
+            SetFlag("flag_cmd_set_output_power");
         }
 
         /// <summary>
@@ -360,8 +424,8 @@ namespace ES_F3105U
             //No error status code returned
             //Power range from 0-33 dBM
             readerDBM = data[0];
-            AddListBoxResponse($"cmd_get_output_power -> {readerDBM}");
-            flag_cmd_get_output_power.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_get_output_power -> {readerDBM}");
+            SetFlag("flag_cmd_get_output_power");
         }
 
         /// <summary>
@@ -373,8 +437,8 @@ namespace ES_F3105U
             readerRegion = data[0];
             readerStartFreq = data[1];
             readerEndFreq = data[2];
-            AddListBoxResponse($"cmd_get_frequency_region -> {readerRegion} {readerStartFreq} {readerEndFreq}");
-            flag_cmd_get_frequency_region.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_get_frequency_region -> {readerRegion} {readerStartFreq} {readerEndFreq}");
+            SetFlag("flag_cmd_get_frequency_region");
         }
 
         /// <summary>
@@ -399,9 +463,9 @@ namespace ES_F3105U
             {
                 ret = "Operation failed";
             }
-            AddListBoxResponse($"cmd_get_rf_link_profile -> {ret}");
+            FormSharedData.AddListBoxResponse($"cmd_get_rf_link_profile -> {ret}");
 
-            flag_cmd_get_reader_temperature.Value = true;
+            SetFlag("flag_cmd_get_reader_temperature");
         }
 
         /// <summary>
@@ -413,16 +477,16 @@ namespace ES_F3105U
             {
                 readerStatusCode = (ErrorCode)data[0];
                 string parsedReturn = GetErrorCodeString(data[0]);
-                AddListBoxResponse($"cmd_read -> {parsedReturn}");
+                FormSharedData.AddListBoxResponse($"cmd_read -> {parsedReturn}");
             }
             else
             {
                 //It is now the callers responsibility to parse the data
                 readerReadBuffer = data;
-                AddListBoxResponse($"cmd_read -> bytesReturned = {data.Length.ToString()}");
+                FormSharedData.AddListBoxResponse($"cmd_read -> bytesReturned = {data.Length.ToString()}");
                 readerStatusCode = (int)ErrorCode.OK;
             }
-            flag_cmd_read.Value = true;
+            SetFlag("flag_cmd_read");
         }
 
         /// <summary>
@@ -434,16 +498,16 @@ namespace ES_F3105U
             {
                 readerStatusCode = (ErrorCode)data[0];
                 string parsedReturn = GetErrorCodeString(data[0]);
-                AddListBoxResponse($"cmd_write -> {parsedReturn}");
+                FormSharedData.AddListBoxResponse($"cmd_write -> {parsedReturn}");
             }
             else
             {
                 //It is now the callers responsibility to parse the data
                 readerReadBuffer = data;
-                AddListBoxResponse($"cmd_write -> bytesReturned = {data.Length.ToString()}");
+                FormSharedData.AddListBoxResponse($"cmd_write -> bytesReturned = {data.Length.ToString()}");
                 readerStatusCode = (int)ErrorCode.OK;
             }
-            flag_cmd_write.Value = true;
+            SetFlag("flag_cmd_write");
         }
 
         /// <summary>
@@ -455,20 +519,20 @@ namespace ES_F3105U
             {
                 readerStatusCode = (ErrorCode)data[0];
                 string parsedReturn = GetErrorCodeString(data[0]);
-                AddListBoxResponse($"cmd_kill -> {parsedReturn}");
+                FormSharedData.AddListBoxResponse($"cmd_kill -> {parsedReturn}");
             }
             else
             {
                 ushort TagCount = (ushort)(data[1] << 8 | data[0]);
                 byte DataLen = data[2];
                 byte[] LockData = data.Skip(3).Take(DataLen).ToArray();
-                string lockDataString = ByteArrayToHexString(LockData);
-                AddListBoxResponse($"cmd_kill -> {TagCount} tags killed, Data: {lockDataString}");
+                string lockDataString = Utilities.Utilities.ByteArrayToHexString(LockData);
+                FormSharedData.AddListBoxResponse($"cmd_kill -> {TagCount} tags killed, Data: {lockDataString}");
 
                 string parsedReturn = GetErrorCodeString(data[3 + DataLen]);
-                AddListBoxResponse($"cmd_kill -> {parsedReturn}");
+                FormSharedData.AddListBoxResponse($"cmd_kill -> {parsedReturn}");
             }
-            flag_cmd_kill.Value = true;
+            SetFlag("flag_cmd_kill");
         }
 
         /// <summary>
@@ -478,8 +542,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_set_access_epc_match -> {parsedReturn}");
-            flag_cmd_set_access_epc_match.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_set_access_epc_match -> {parsedReturn}");
+            SetFlag("flag_cmd_set_access_epc_match");
         }
 
         /// <summary>
@@ -492,7 +556,7 @@ namespace ES_F3105U
             byte status = data[0];
             if (status == 0)
             {
-                if(data.Length == 1)
+                if (data.Length == 1)
                 {
                     readerFilteredEPC = "";
                     parsedReturn = "No Match, Filter Wide Open";
@@ -500,12 +564,12 @@ namespace ES_F3105U
                 else
                 {
                     byte[] epcBytes = data.Skip(2).ToArray();
-                    readerFilteredEPC = ByteArrayToHexString(epcBytes);
+                    readerFilteredEPC = Utilities.Utilities.ByteArrayToHexString(epcBytes);
                     parsedReturn = $"Has Match, {readerFilteredEPC}";
                 }
             }
-            AddListBoxResponse($"cmd_get_access_epc_match -> {parsedReturn}");
-            flag_cmd_get_access_epc_match.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_get_access_epc_match -> {parsedReturn}");
+            SetFlag("flag_cmd_get_access_epc_match");
         }
 
         /// <summary>
@@ -515,8 +579,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_real_time_inventory -> {parsedReturn}");
-            flag_cmd_real_time_inventory.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_real_time_inventory -> {parsedReturn}");
+            SetFlag("flag_cmd_real_time_inventory");
         }
 
         /// <summary>
@@ -526,8 +590,8 @@ namespace ES_F3105U
         {
             readerStatusCode = (ErrorCode)data[0];
             string parsedReturn = GetErrorCodeString(data[0]);
-            AddListBoxResponse($"cmd_stop_inventory -> {parsedReturn}");
-            flag_cmd_stop_inventory.Value = true;
+            FormSharedData.AddListBoxResponse($"cmd_stop_inventory -> {parsedReturn}");
+            SetFlag("flag_cmd_stop_inventory");
         }
 
         #endregion

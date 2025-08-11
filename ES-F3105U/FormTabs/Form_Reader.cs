@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using UCchip.Reader.API;
-using static UCchip.Reader.API.UCchipClient;
+using Utilities;
 
 namespace ES_F3105U
 {
-    partial class MainForm
+    public partial class Form_Reader : UserControl
     {
         // Lookup table for frequency values (Hz) by index
         Dictionary<byte, int> freq_lookup = new Dictionary<byte, int>()
@@ -26,6 +29,41 @@ namespace ES_F3105U
               {50, 923500 }, {51, 924000 }, {52, 924500 }, {53, 925000 }, {54, 925500 },
               {55, 926000 }, {56, 926500 }, {57, 927000 }, {58, 927500 }, {59, 928000 }
             };
+
+        public Form_Reader()
+        {
+            InitializeComponent();
+
+            Reader_PopulateComPorts();
+            int index = cbReader_ComBaud.FindString("115200");
+            if (index != -1)
+            {
+                cbReader_ComBaud.SelectedIndex = index;
+            }
+        }
+
+        #region textbox filter methods
+        private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_KeyPress(sender, e);
+        }
+
+        private void filterOnlyDigits_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_KeyPress(sender, e);
+        }
+
+        private void filterOnlyHex_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
+        }
+
+        private void filterOnlyDigits_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_TextChanged(sender, e);
+        }
+        #endregion
+
         /// <summary>
         /// Returns the frequency in Hz for a given lookup index.
         /// </summary>
@@ -50,19 +88,6 @@ namespace ES_F3105U
         }
 
         /// <summary>
-        /// Initializes the reader UI, sets default baud rate.
-        /// </summary>
-        private void Init_ReaderUI()
-        {
-            Reader_PopulateComPorts();
-            int index = cbReader_ComBaud.FindString("115200");
-            if( index != -1)
-            {
-                cbReader_ComBaud.SelectedIndex = index;
-            }
-        }
-
-        /// <summary>
         /// Refreshes the list of available COM ports.
         /// </summary>
         private void btnReader_RefreshComPorts_Click(object sender, EventArgs e)
@@ -79,48 +104,51 @@ namespace ES_F3105U
             if (cbReader_COM.SelectedIndex == -1 || cbReader_ComBaud.SelectedIndex == -1)
                 return;
 
-            readerClient = new();
+            FormSharedData.readerClient = new();
 
             string COMPort = cbReader_COM.Items[cbReader_COM.SelectedIndex].ToString();
             string baud = cbReader_ComBaud.Items[cbReader_ComBaud.SelectedIndex].ToString();
 
             try
             {
+                btnReader_COMOpen.Enabled = false;
+
                 // Attempt to open the serial port
-                readerClient.OpenSerial(COMPort + ":" + baud, 3000, out status);
-                if (status != ErrorCode.OK)
+                FormSharedData.readerClient.OpenSerial(COMPort + ":" + baud, 3000, out FormSharedData.status);
+                if (FormSharedData.status != ErrorCode.OK)
                 {
                     // Show error to user
-                    MessageBox.Show("Failed to open COM port.");
+                    MessageBox.Show("Failed to open COM port.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     return;
                 }
 
                 // Register response and logging handlers
-                readerClient.CommandResponseReceived = ResponseParser;
+                FormSharedData.readerClient.CommandResponseReceived = FormSharedData.responseParser.ResponseParser;
 
-                if (checkEnableSerialLog.Checked)
-                    readerClient.SerialPortLog = Logging_SerialPortLogger;
+                if (checkEnableSerialLog.Checked && FormSharedData.SerialPortLog != null)
+                    FormSharedData.readerClient.SerialPortLog = new UCchipClient.DelegateSerialPortLog(FormSharedData.SerialPortLog);
 
-                if (checkEnableAPILog.Checked)
-                    readerClient.APILog = Logging_APILogger;
+                if (checkEnableAPILog.Checked && FormSharedData.APILog != null)
+                    FormSharedData.readerClient.APILog = new UCchipClient.DelegateAPILog(FormSharedData.APILog);        
 
                 // Reset the reader and wait for response
-                flag_cmd_reset.Value = false;
-                status = readerClient.MsgBaseReset();
-                if (status != ErrorCode.OK)
+                FormSharedData.responseParser.ResetFlag("flag_cmd_reset");
+                FormSharedData.status = FormSharedData.readerClient.MsgBaseReset();
+                if (FormSharedData.status != ErrorCode.OK)
                 {
                     btnReader_COMOpen.Enabled = true;
-                    readerClient.CloseSerial(out status);
+                    FormSharedData.readerClient.CloseSerial(out FormSharedData.status);
                     return;
                 }
                 // Wait for reset flag or timeout
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_reset));
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_reset"));
                 await task;
                 if (task.Result != ErrorCode.OK)
                 {
                     btnReader_COMOpen.Enabled = true;
-                    AddListBoxResponse("Reader timeout");
-                    readerClient.CloseSerial(out status);
+                    FormSharedData.AddListBoxResponse("Reader timeout");
+                    FormSharedData.readerClient.CloseSerial(out FormSharedData.status);
                     return;
                 }
 
@@ -137,7 +165,7 @@ namespace ES_F3105U
             catch (Exception ex)
             {
                 // Log and show error
-                AddListBoxResponse($"Error opening COM port: {ex.Message}");
+                FormSharedData.AddListBoxResponse($"Error opening COM port: {ex.Message}");
             }
         }
 
@@ -148,9 +176,9 @@ namespace ES_F3105U
         {
             btnReader_COMOpen.Enabled = true;
             btnReader_COMClose.Enabled = false;
-            if (readerClient !=null)
-                readerClient.Dispose();
-            readerClient = null;
+            if (FormSharedData.readerClient != null)
+                FormSharedData.readerClient.Dispose();
+            FormSharedData.readerClient = null;
             parameter.TimerInit = false;
         }
 
@@ -159,17 +187,17 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetFirmware_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetFirmware.Enabled = false;
-            flag_cmd_get_firmware_version.Value = false;
-            readerClient.MsgBaseGetFirmwareVer();
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_firmware_version));
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_firmware_version");
+            FormSharedData.readerClient.MsgBaseGetFirmwareVer();
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_firmware_version"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                txtReader_FirmwareVer.Text = readerVersion;
+                txtReader_FirmwareVer.Text = FormSharedData.responseParser.readerVersion;
             }
             btnReader_GetFirmware.Enabled = true;
         }
@@ -179,18 +207,18 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetTXPower_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetTXPower.Enabled = false;
-            flag_cmd_get_output_power.Value = false;
-            readerClient.MsgBaseGetOutputPower();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_output_power");
+            FormSharedData.readerClient.MsgBaseGetOutputPower();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_output_power));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_output_power"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                txtReader_TXPower.Text = readerDBM.ToString();
+                txtReader_TXPower.Text = FormSharedData.responseParser.readerDBM.ToString();
             }
             btnReader_GetTXPower.Enabled = true;
         }
@@ -200,18 +228,18 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetRFLinkProfile_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetRFLinkProfile.Enabled = false;
-            flag_cmd_get_rf_link_profile.Value = false;
-            readerClient.MsgBaseGetRfLinkProfile();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_rf_link_profile");
+            FormSharedData.readerClient.MsgBaseGetRfLinkProfile();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_rf_link_profile));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_rf_link_profile"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                string strfind = $"0x{readerLinkProfile:X2}";
+                string strfind = $"0x{FormSharedData.responseParser.readerLinkProfile:X2}";
                 int index = cbReader_ReadRFLinkProfile.FindString(strfind);
                 if (index != -1)
                 {
@@ -226,18 +254,18 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetTemperature_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetTemperature.Enabled = false;
-            flag_cmd_get_reader_temperature.Value = false;
-            readerClient.MsgBaseGetReaderTemp();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_reader_temperature");
+            FormSharedData.readerClient.MsgBaseGetReaderTemp();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_reader_temperature));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_reader_temperature"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                txtReader_Temperature.Text = readerTemperature;
+                txtReader_Temperature.Text = FormSharedData.responseParser.readerTemperature;
             }
 
             btnReader_GetTemperature.Enabled = true;
@@ -249,20 +277,20 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetFreqBand_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetTemperature.Enabled = false;
-            flag_cmd_get_frequency_region.Value = false;
-            readerClient.MsgBaseGetFreqRegion();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_frequency_region");
+            FormSharedData.readerClient.MsgBaseGetFreqRegion();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_frequency_region));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_frequency_region"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                cbReader_FreqBand.SelectedIndex = readerRegion-1;
-                txtReader_StartFreq.Text = GetFreq(readerStartFreq).ToString() + " Hz";
-                txtReader_EndFreq.Text = GetFreq(readerEndFreq).ToString() + " Hz";
+                cbReader_FreqBand.SelectedIndex = FormSharedData.responseParser.readerRegion - 1;
+                txtReader_StartFreq.Text = GetFreq(FormSharedData.responseParser.readerStartFreq).ToString() + " Hz";
+                txtReader_EndFreq.Text = GetFreq(FormSharedData.responseParser.readerEndFreq).ToString() + " Hz";
             }
 
             btnReader_GetTemperature.Enabled = true;
@@ -274,9 +302,10 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_SetTXPower_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
-            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             if (txtReader_TXPower.TextLength > 0)
@@ -291,10 +320,10 @@ namespace ES_F3105U
                 txtReader_TXPower.Text = bPowerLevel.ToString();
 
                 btnReader_SetTXPower.Enabled = false;
-                flag_cmd_set_output_power.Value = false;
-                readerClient.MsgBaseSetOutputPower(bPowerLevel);
+                FormSharedData.responseParser.ResetFlag("flag_cmd_set_output_power");
+                FormSharedData.readerClient.MsgBaseSetOutputPower(bPowerLevel);
 
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_set_output_power));
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_output_power"));
                 await task;
                 btnReader_SetTXPower.Enabled = true;
             }
@@ -305,13 +334,13 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_SaveParameters_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_SaveParameters.Enabled = false;
-            flag_cmd_reader_para_save.Value = false;
-            readerClient.MsgBaseReaderParaSave();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_reader_para_save");
+            FormSharedData.readerClient.MsgBaseReaderParaSave();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_reader_para_save));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_reader_para_save"));
             await task;
             btnReader_SaveParameters.Enabled = true;
         }
@@ -321,15 +350,16 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_ResetParameters_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
-            if (MessageBox.Show("Are you sure you want to reset reader settings?", "Confirm Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (FormSharedData.readerClient == null) return;
+            if (MessageBox.Show("Are you sure you want to reset reader settings?", "Confirm Reset",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             btnReader_ResetParameters.Enabled = false;
-            flag_cmd_reader_para_reset.Value = false;
-            readerClient.MsgBaseReaderParaReset();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_reader_para_reset");
+            FormSharedData.readerClient.MsgBaseReaderParaReset();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_reader_para_reset));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_reader_para_reset"));
             await task;
 
             btnReader_ResetParameters.Enabled = true;
@@ -340,7 +370,7 @@ namespace ES_F3105U
         /// </summary>
         private void btnReader_SaveFreqBand_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
         }
 
         /// <summary>
@@ -348,20 +378,21 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_SaveRFLinkProfile_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
-            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             int selIdx = cbReader_ReadRFLinkProfile.SelectedIndex;
-            if(selIdx != -1)
+            if (selIdx != -1)
             {
                 byte profileID = Convert.ToByte(cbReader_ReadRFLinkProfile.Text.Substring(2, 2), 16);
                 btnReader_SaveRFLinkProfile.Enabled = false;
 
-                flag_cmd_set_rf_link_profile.Value = false;
-                readerClient.MsgBaseSetRfLinkProfile(profileID);
-                Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_set_rf_link_profile));
+                FormSharedData.responseParser.ResetFlag("flag_cmd_set_rf_link_profile");
+                FormSharedData.readerClient.MsgBaseSetRfLinkProfile(profileID);
+                Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_rf_link_profile"));
                 await task;
 
                 btnReader_SaveRFLinkProfile.Enabled = true;
@@ -387,7 +418,7 @@ namespace ES_F3105U
                     txtReader_TXPower.Text = "20";
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -395,19 +426,19 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_GetTXRFTime_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
+            if (FormSharedData.readerClient == null) return;
 
             btnReader_GetTXRFTime.Enabled = false;
-            flag_cmd_get_tx_time.Value = false;
-            readerClient.MsgBaseGetTxTime();
+            FormSharedData.responseParser.ResetFlag("flag_cmd_get_tx_time");
+            FormSharedData.readerClient.MsgBaseGetTxTime();
 
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_get_tx_time));
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_get_tx_time"));
             await task;
 
             if (task.Result == ErrorCode.OK)
             {
-                txtReader_RFONTime.Text = readerTXOnTime.ToString();
-                txtReader_RFOFFTime.Text = readerTXOffTime.ToString();
+                txtReader_RFONTime.Text = FormSharedData.responseParser.readerTXOnTime.ToString();
+                txtReader_RFOFFTime.Text = FormSharedData.responseParser.readerTXOffTime.ToString();
             }
 
             btnReader_GetTXRFTime.Enabled = true;
@@ -418,30 +449,32 @@ namespace ES_F3105U
         /// </summary>
         private async void btnReader_SaveTXRFTime_Click(object sender, EventArgs e)
         {
-            if (readerClient == null) return;
-            if(txtReader_RFONTime.TextLength == 0)
+            if (FormSharedData.readerClient == null) return;
+            if (txtReader_RFONTime.TextLength == 0)
             {
-                MessageBox.Show("Please enter RF ON time");
+                MessageBox.Show("Please enter RF ON time", "Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
 
             if (txtReader_RFOFFTime.TextLength == 0)
             {
-                MessageBox.Show("Please enter RF OFF time");
+                MessageBox.Show("Please enter RF OFF time", "Warning",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 return;
             }
 
-            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            if (MessageBox.Show("Are you sure you want to change reader settings?", "Confirm Save", 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
             btnReader_SaveTXRFTime.Enabled = false;
-            flag_cmd_set_tx_time.Value = false;
-
+            FormSharedData.responseParser.ResetFlag("flag_cmd_set_tx_time");
             ushort on_time = Convert.ToUInt16(txtReader_RFONTime.Text);
             ushort off_time = Convert.ToUInt16(txtReader_RFOFFTime.Text);
 
-            readerClient.MsgBaseSetTxTime(on_time, off_time);
-            Task<ErrorCode> task = Task.Run(() => WaitForFlag(flag_cmd_set_tx_time));
+            FormSharedData.readerClient.MsgBaseSetTxTime(on_time, off_time);
+            Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_tx_time"));
             await task;
 
             btnReader_SaveTXRFTime.Enabled = true;
