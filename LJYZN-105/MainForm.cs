@@ -15,42 +15,41 @@ namespace LJYZN_105
 
     public partial class MainForm : Form
     {
-        private bool fAppClosed; //在测试模式下响应关闭应用程序
-        private byte fComAdr = 0xff; //当前操作的ComAdr
-        private int ferrorcode;
-        private byte fBaud;
-        private double fdminfre;
-        private double fdmaxfre;
-        private byte Maskadr;
-        private byte MaskLen;
-        private byte MaskFlag;
-        private int fCmdRet = 30; //所有执行指令的返回值
-        private int fOpenComIndex; //打开的串口索引号
-        private bool fIsInventoryScan;
-        private bool fisinventoryscan_6B;
-        private byte[] fOperEPC = new byte[36];
-        private byte[] fPassWord = new byte[4];
-        private byte[] fOperID_6B = new byte[8];
-        private int CardNum1 = 0;
-        ArrayList list = new ArrayList();
-        private bool fTimer_6B_ReadWrite;
-        private string fInventory_EPC_List = ""; //Store the query list (if the read data does not change, it will not be refreshed)
-        private int frmcomportindex;
-        private bool ComOpen = false;
-        private string strDefaultKey = "00000000";
+        bool fAppClosed;
 
         public MainForm()
         {
             InitializeComponent();
+
+            //Add Reader User Interface
+            var tabReader = new Form_Reader();
+            tabReader.Dock = DockStyle.Fill;
+            tabControl1.TabPages[0].Controls.Add(tabReader);
+
+            //Add 6C User Interface
+            var tab6C = new Form_EPCC1G26C();
+            tab6C.Dock = DockStyle.Fill;
+            tabControl1.TabPages[1].Controls.Add(tab6C);
+
+            //Add 6B User Interface
+            var tab6B = new Form_6B();
+            tab6B.Dock = DockStyle.Fill;
+            tabControl1.TabPages[2].Controls.Add(tab6B);
+
+            //Add Duplicate User interface
+            var tabDup = new Form_Duplicate();
+            tabDup.Dock = DockStyle.Fill;
+            tabControl1.TabPages[3].Controls.Add(tabDup);
+
+            FormSharedData.MainForm = this; // Set the main form reference in shared data
+            FormSharedData.Form_Reader = tabReader; // Set the reader form reference in shared data
+            FormSharedData.Form_6C = tab6C; // Set the 6C form reference in shared data
+            FormSharedData.Form_6B = tab6B; // Set the 6B form reference in shared data
+            FormSharedData.Form_Duplicate = tabDup; // Set the Duplicate form reference in shared data
+            FormSharedData.tss_Status = tss_Status; // Set the status label reference in shared data
         }
-        private void RefreshStatus()
-        {
-            if (!(cbReader_AlreadyOpenCOM.Items.Count != 0))
-                tss_COM.Text = "COM Closed";
-            else
-                tss_COM.Text = " COM" + Convert.ToString(frmcomportindex);
-        }
-        private string GetReturnCodeDesc(int cmdRet)
+        
+        public string GetReturnCodeDesc(int cmdRet)
         {
             Dictionary<int, string> retDescription = new Dictionary<int, string>
             {
@@ -96,7 +95,7 @@ namespace LJYZN_105
             };
             return retDescription.GetValueOrDefault(cmdRet, "");
         }
-        private string GetErrorCodeDesc(int cmdRet)
+        public string GetErrorCodeDesc(int cmdRet)
         {
             Dictionary<int, string> errDescription = new Dictionary<int, string>
             {
@@ -129,7 +128,7 @@ namespace LJYZN_105
             return sb.ToString().ToUpper();
 
         }
-        private void AddCmdLog(string CMD, string cmdStr, int cmdRet)
+        public void AddCmdLog(string CMD, string cmdStr, int cmdRet)
         {
             try
             {
@@ -138,7 +137,7 @@ namespace LJYZN_105
             }
             finally { }
         }
-        private void AddCmdLog(string CMD, string cmdStr, int cmdRet, int errocode)
+        public void AddCmdLog(string CMD, string cmdStr, int cmdRet, int errocode)
         {
             try
             {
@@ -149,7 +148,7 @@ namespace LJYZN_105
                     tss_Status.Text = DateTime.Now.ToLongTimeString() + " " +
                                         cmdStr + " : " +
                                         GetReturnCodeDesc(cmdRet) + " " + "0x" + Convert.ToString(errocode, 16).PadLeft(2, '0') +
-                                        " (" + GetErrorCodeDesc(ferrorcode) + ")"; ;
+                                        " (" + GetErrorCodeDesc(FormSharedData.ferrorcode) + ")"; ;
                 }
                 else
                 {
@@ -161,98 +160,27 @@ namespace LJYZN_105
             }
             finally { }
         }
-        private void ClearLastInfo()
-        {
-            cbReader_AlreadyOpenCOM.Refresh();
-            RefreshStatus();
-            Edit_Type.Text = "";
-            Edit_Version.Text = "";
-            ISO180006B.Checked = false;
-            EPCC1G2.Checked = false;
-            Edit_ComAdr.Text = "";
-            Edit_powerdBm.Text = "";
-            Edit_scantime.Text = "";
-            Edit_dminfre.Text = "";
-            Edit_dmaxfre.Text = "";
-            //  PageControl1.TabIndex = 0;
-        }
-        private void InitComList()
-        {
-            int i = 0;
-            cbReader_COM.Items.Clear();
-            cbReader_COM.Items.Add(" AUTO");
-            for (i = 1; i < 13; i++)
-                cbReader_COM.Items.Add(" COM" + Convert.ToString(i));
-            cbReader_COM.SelectedIndex = 0;
-            RefreshStatus();
-        }
-        private void InitReaderList()
-        {
-            int i = 0;
-            // ComboBox_PowerDbm.SelectedIndex = 0;
-            cbReader_SetBaud.SelectedIndex = 3;
-            for (i = 0; i < 63; i++)
-            {
-                ComboBox_dminfre.Items.Add(Convert.ToString(902.6 + i * 0.4) + " MHz");
-                ComboBox_dmaxfre.Items.Add(Convert.ToString(902.6 + i * 0.4) + " MHz");
-            }
-            ComboBox_dmaxfre.SelectedIndex = 62;
-            ComboBox_dminfre.SelectedIndex = 0;
-            for (i = 0x03; i <= 0xff; i++)
-                ComboBox_scantime.Items.Add(Convert.ToString(i) + "*100ms");
-            ComboBox_scantime.SelectedIndex = 7;
-            i = 40;
-            while (i <= 300)
-            {
-                ComboBox_IntervalTime.Items.Add(Convert.ToString(i) + "ms");
-                i = i + 10;
-            }
-            ComboBox_IntervalTime.SelectedIndex = 1;
-            for (i = 0; i < 7; i++)
-                ComboBox_BlockNum.Items.Add(Convert.ToString(i * 2) + " and " + Convert.ToString(i * 2 + 1));
-            ComboBox_BlockNum.SelectedIndex = 0;
-            i = 40;
-            while (i <= 300)
-            {
-                ComboBox_IntervalTime_6B.Items.Add(Convert.ToString(i) + "ms");
-                i = i + 10;
-            }
-            ComboBox_IntervalTime_6B.SelectedIndex = 1;
-
-            ComboBox_PowerDbm.SelectedIndex = 13;
-            rbReader_FreqBand_User.Checked = true;
-        }
+        
         private void Form1_Load(object sender, EventArgs e)
         {
-            progressBar1.Visible = false;
-            fOpenComIndex = -1;
-            fComAdr = 0;
-            ferrorcode = -1;
-            fBaud = 5;
-            InitComList();
-            InitReaderList();
-            NoAlarm_G2.Checked = true;
+            FormSharedData.fOpenComIndex = -1;
+            FormSharedData.fComAdr = 0;
+            FormSharedData.ferrorcode = -1;
+            FormSharedData.fBaud = 5;
 
-            Byone_6B.Checked = true;
-            Different_6B.Checked = true;
+            /*Byone_6B.Checked = true;
+            Different_6B.Checked = true;*/
 
-            P_EPC.Checked = true;
-            C_EPC.Checked = true;
-            DestroyCode.Checked = true;
-            NoProect.Checked = true;
-            NoProect2.Checked = true;
+            //DestroyCode.Checked = true;
             fAppClosed = false;
-            fIsInventoryScan = false;
+            /*fIsInventoryScan = false;
             fisinventoryscan_6B = false;
-            fTimer_6B_ReadWrite = false;
-            Label_Alarm.Visible = false;
-            Timer_Test_.Enabled = false;
-            Timer_G2_Read.Enabled = false;
-            Timer_G2_Alarm.Enabled = false;
+            fTimer_6B_ReadWrite = false;*/
+            //Timer_Test_.Enabled = false;
+            //Timer_G2_Read.Enabled = false;
+            //Timer_G2_Alarm.Enabled = false;
 
-            btnReader_GetReaderInfo.Enabled = false;
-            btnReader_SetParameter.Enabled = false;
-            btnReader_SetDefaultParameter.Enabled = false;
+            /*
             Button_QueryTag.Enabled = false;
             Button_DestroyCard.Enabled = false;
             Button_WriteEPC_G2.Enabled = false;
@@ -268,38 +196,40 @@ namespace LJYZN_105
             Button_BlockWrite.Enabled = false;
             Button_BlockErase.Enabled = false;
             Button_SetProtectState.Enabled = false;
-            SpeedButton_Query_6B.Enabled = false;
+            */
+            /*SpeedButton_Query_6B.Enabled = false;
             SpeedButton_Read_6B.Enabled = false;
             SpeedButton_Write_6B.Enabled = false;
             SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-            SpeedButton_Check_6B.Enabled = false;
+            SpeedButton_Check_6B.Enabled = false;*/
 
-            gbLockPassword.Enabled = false;
-            gbLockTIDnUSER.Enabled = false;
+            //gbLockPassword.Enabled = false;
+            //gbLockTIDnUSER.Enabled = false;
 
-            P_Reserve.Enabled = false;
-            P_EPC.Enabled = false;
-            P_TID.Enabled = false;
-            P_User.Enabled = false;
-            Same_6B.Enabled = false;
+            //P_Reserve.Enabled = false;
+            //P_EPC.Enabled = false;
+            //P_TID.Enabled = false;
+            //P_User.Enabled = false;
+            /*Same_6B.Enabled = false;
             Different_6B.Enabled = false;
             Less_6B.Enabled = false;
-            Greater_6B.Enabled = false;
-            cbReader_ComBaud.SelectedIndex = 3;
+            Greater_6B.Enabled = false;*/
+            
         }
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Timer_Test_.Enabled = false;
-            Timer_G2_Read.Enabled = false;
-            Timer_G2_Alarm.Enabled = false;
+            //Timer_Test_.Enabled = false;
+            //Timer_G2_Read.Enabled = false;
+            //Timer_G2_Alarm.Enabled = false;
             fAppClosed = true;
         }
 
         private void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
         {
-            Timer_G2_Alarm.Enabled = false;
-            Timer_G2_Read.Enabled = false;
-            Timer_Test_.Enabled = false;
+            //Timer_G2_Alarm.Enabled = false;
+            //Timer_G2_Read.Enabled = false;
+            //Timer_Test_.Enabled = false;
+            /*
             SpeedButton_Read_G2.Text = "Read";
             Button_QueryTag.Text = "Query Tag";
             Button_CheckEASAlarm_G2.Text = "Check Alarm";
@@ -359,10 +289,12 @@ namespace LJYZN_105
                 Button_SetProtectState.Enabled = false;
                 checkBox1.Enabled = false;
             }
+            */
 
-            Timer_Test_6B.Enabled = false;
-            Timer_6B_Read.Enabled = false;
-            Timer_6B_Write.Enabled = false;
+            //Timer_Test_6B.Enabled = false;
+            //Timer_6B_Read.Enabled = false;
+            //Timer_6B_Write.Enabled = false;
+            /*
             SpeedButton_Query_6B.Text = "Query";
             SpeedButton_Read_6B.Text = "Read";
             SpeedButton_Write_6B.Text = "Write";
@@ -396,21 +328,8 @@ namespace LJYZN_105
                     Greater_6B.Enabled = true;
                 }
             }
+            */
 
-        }
-        private void ComboBox_COM_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            cbReader_ComBaud.Items.Clear();
-            if (cbReader_COM.SelectedIndex == 0)
-            {
-                cbReader_ComBaud.Items.AddRange(new object[] { "9600bps", "19200bps", "38400bps", "57600bps", "115200bps" });
-                cbReader_ComBaud.SelectedIndex = 3;
-            }
-            else
-            {
-                cbReader_ComBaud.Items.Add("Auto");
-                cbReader_ComBaud.SelectedIndex = 0;
-            }
         }
         private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
         {
@@ -434,7 +353,7 @@ namespace LJYZN_105
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (fOpenComIndex != -1)
+            if (FormSharedData.fOpenComIndex != -1)
             {
                 StaticClassReaderB.CloseComPort();
             }

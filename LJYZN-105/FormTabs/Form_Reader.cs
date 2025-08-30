@@ -1,15 +1,120 @@
-﻿using ReaderB;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using ReaderB;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+using Utilities;
 
 namespace LJYZN_105
 {
-    public partial class MainForm : Form
+    public partial class Form_Reader : UserControl
     {
+        public Form_Reader()
+        {
+            InitializeComponent();
+        }
+
+        #region textbox filter methods
+        private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_KeyPress(sender, e);
+        }
+
+        private void filterOnlyDigits_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_KeyPress(sender, e);
+        }
+
+        private void filterOnlyHex_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
+        }
+
+        private void filterOnlyDigits_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_TextChanged(sender, e);
+        }
+        #endregion
+
+        private void Form_Reader_Load(object sender, EventArgs e)
+        {
+            int i = 0;
+            cbReader_COM.Items.Clear();
+            cbReader_COM.Items.Add(" AUTO");
+            for (i = 1; i < 13; i++)
+                cbReader_COM.Items.Add(" COM" + Convert.ToString(i));
+            cbReader_COM.SelectedIndex = 0;
+
+            // ComboBox_PowerDbm.SelectedIndex = 0;
+            cbReader_SetBaud.SelectedIndex = 3;
+            for (i = 0; i < 63; i++)
+            {
+                ComboBox_dminfre.Items.Add(Convert.ToString(902.6 + i * 0.4) + " MHz");
+                ComboBox_dmaxfre.Items.Add(Convert.ToString(902.6 + i * 0.4) + " MHz");
+            }
+            ComboBox_dmaxfre.SelectedIndex = 62;
+            ComboBox_dminfre.SelectedIndex = 0;
+            for (i = 0x03; i <= 0xff; i++)
+                ComboBox_scantime.Items.Add(Convert.ToString(i) + "*100ms");
+            ComboBox_scantime.SelectedIndex = 7;
+
+            ComboBox_PowerDbm.SelectedIndex = 13;
+            rbReader_FreqBand_User.Checked = true;
+
+            cbReader_ComBaud.SelectedIndex = 3;
+
+            progressBar1.Visible = false;
+
+            RefreshStatus();
+        }
+
+        public void RefreshStatus()
+        {
+            if (!(cbReader_AlreadyOpenCOM.Items.Count != 0))
+                FormSharedData.tss_Status.Text = "COM Closed";
+            else
+                FormSharedData.tss_Status.Text = " COM" + Convert.ToString(FormSharedData.frmcomportindex);
+        }
+
+        public void ClearLastInfo()
+        {
+            cbReader_AlreadyOpenCOM.Refresh();
+            RefreshStatus();
+            Edit_Type.Text = "";
+            Edit_Version.Text = "";
+            ISO180006B.Checked = false;
+            EPCC1G2.Checked = false;
+            Edit_ComAdr.Text = "";
+            Edit_powerdBm.Text = "";
+            Edit_scantime.Text = "";
+            Edit_dminfre.Text = "";
+            Edit_dmaxfre.Text = "";
+            //  PageControl1.TabIndex = 0;
+        }
+
+        private void ComboBox_COM_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            cbReader_ComBaud.Items.Clear();
+            if (cbReader_COM.SelectedIndex == 0)
+            {
+                cbReader_ComBaud.Items.AddRange(new object[] { "9600bps", "19200bps", "38400bps", "57600bps", "115200bps" });
+                cbReader_ComBaud.SelectedIndex = 3;
+            }
+            else
+            {
+                cbReader_ComBaud.Items.Add("Auto");
+                cbReader_ComBaud.SelectedIndex = 0;
+            }
+        }
+
         private void btnReader_OpenPort_Click(object sender, EventArgs e)
         {
             int port = 0;
@@ -19,36 +124,36 @@ namespace LJYZN_105
             Cursor = Cursors.WaitCursor;
             if (txtReader_CmdComAddr.Text == "")
                 txtReader_CmdComAddr.Text = "FF";
-            fComAdr = Convert.ToByte(txtReader_CmdComAddr.Text, 16); // $FF;
+            FormSharedData.fComAdr = Convert.ToByte(txtReader_CmdComAddr.Text, 16); // $FF;
             try
             {
                 if (cbReader_COM.SelectedIndex == 0)//Auto
                 {
-                    fBaud = Convert.ToByte(cbReader_ComBaud.SelectedIndex);
-                    if (fBaud > 2)
+                    FormSharedData.fBaud = Convert.ToByte(cbReader_ComBaud.SelectedIndex);
+                    if (FormSharedData.fBaud > 2)
                     {
-                        fBaud = Convert.ToByte(fBaud + 2);
+                        FormSharedData.fBaud = Convert.ToByte(FormSharedData.fBaud + 2);
                     }
-                    openresult = StaticClassReaderB.AutoOpenComPort(ref port, ref fComAdr, fBaud, ref frmcomportindex);
-                    fOpenComIndex = frmcomportindex;
+                    openresult = StaticClassReaderB.AutoOpenComPort(ref port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                    FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                     if (openresult == 0)
                     {
-                        ComOpen = true;
+                        FormSharedData.ComOpen = true;
                         // Button3_Click(sender, e); //自动执行读取写卡器信息
-                        if (fBaud > 3)
+                        if (FormSharedData.fBaud > 3)
                         {
-                            cbReader_SetBaud.SelectedIndex = Convert.ToInt32(fBaud - 2);
+                            cbReader_SetBaud.SelectedIndex = Convert.ToInt32(FormSharedData.fBaud - 2);
                         }
                         else
                         {
-                            cbReader_SetBaud.SelectedIndex = Convert.ToInt32(fBaud);
+                            cbReader_SetBaud.SelectedIndex = Convert.ToInt32(FormSharedData.fBaud);
                         }
                         btnReader_GetReaderInfo_Click(sender, e); //自动执行读取写卡器信息
-                        if ((fCmdRet == 0x35) | (fCmdRet == 0x30))
+                        if ((FormSharedData.fCmdRet == 0x35) | (FormSharedData.fCmdRet == 0x30))
                         {
                             MessageBox.Show("Serial Communication Error or Occupied", "Information");
-                            StaticClassReaderB.CloseSpecComPort(frmcomportindex);
-                            ComOpen = false;
+                            StaticClassReaderB.CloseSpecComPort(FormSharedData.frmcomportindex);
+                            FormSharedData.ComOpen = false;
                         }
                     }
                 }
@@ -59,11 +164,11 @@ namespace LJYZN_105
                     port = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
                     for (i = 6; i >= 0; i--)
                     {
-                        fBaud = Convert.ToByte(i);
-                        if (fBaud == 3)
+                        FormSharedData.fBaud = Convert.ToByte(i);
+                        if (FormSharedData.fBaud == 3)
                             continue;
-                        openresult = StaticClassReaderB.OpenComPort(port, ref fComAdr, fBaud, ref frmcomportindex);
-                        fOpenComIndex = frmcomportindex;
+                        openresult = StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                        FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                         if (openresult == 0x35)
                         {
                             MessageBox.Show("COM Opened", "Information");
@@ -71,21 +176,21 @@ namespace LJYZN_105
                         }
                         if (openresult == 0)
                         {
-                            ComOpen = true;
+                            FormSharedData.ComOpen = true;
                             btnReader_GetReaderInfo_Click(sender, e); //自动执行读取写卡器信息
-                            if (fBaud > 3)
+                            if (FormSharedData.fBaud > 3)
                             {
-                                cbReader_SetBaud.SelectedIndex = Convert.ToInt32(fBaud - 2);
+                                cbReader_SetBaud.SelectedIndex = Convert.ToInt32(FormSharedData.fBaud - 2);
                             }
                             else
                             {
-                                cbReader_SetBaud.SelectedIndex = Convert.ToInt32(fBaud);
+                                cbReader_SetBaud.SelectedIndex = Convert.ToInt32(FormSharedData.fBaud);
                             }
-                            if ((fCmdRet == 0x35) || (fCmdRet == 0x30))
+                            if ((FormSharedData.fCmdRet == 0x35) || (FormSharedData.fCmdRet == 0x30))
                             {
-                                ComOpen = false;
+                                FormSharedData.ComOpen = false;
                                 MessageBox.Show("Serial Communication Error or Occupied", "Information");
-                                StaticClassReaderB.CloseSpecComPort(frmcomportindex);
+                                StaticClassReaderB.CloseSpecComPort(FormSharedData.frmcomportindex);
                                 return;
                             }
                             RefreshStatus();
@@ -100,13 +205,14 @@ namespace LJYZN_105
                 Cursor = Cursors.Default;
             }
 
-            if ((fOpenComIndex != -1) & (openresult != 0X35) & (openresult != 0X30))
+            if ((FormSharedData.fOpenComIndex != -1) & (openresult != 0X35) & (openresult != 0X30))
             {
-                cbReader_AlreadyOpenCOM.Items.Add("COM" + Convert.ToString(fOpenComIndex));
+                cbReader_AlreadyOpenCOM.Items.Add("COM" + Convert.ToString(FormSharedData.fOpenComIndex));
                 cbReader_AlreadyOpenCOM.SelectedIndex = cbReader_AlreadyOpenCOM.SelectedIndex + 1;
                 btnReader_GetReaderInfo.Enabled = true;
                 btnReader_SetParameter.Enabled = true;
                 btnReader_SetDefaultParameter.Enabled = true;
+                /*
                 Button_QueryTag.Enabled = true;
                 Button_WriteEPC_G2.Enabled = true;
                 Button_SetMultiReadProtect_G2.Enabled = true;
@@ -114,17 +220,17 @@ namespace LJYZN_105
                 Button_CheckReadProtected_G2.Enabled = true;
                 Button_CheckEASAlarm_G2.Enabled = true;
                 SpeedButton_Query_6B.Enabled = true;
-
-                ComOpen = true;
+                */
+                FormSharedData.ComOpen = true;
             }
-            if ((fOpenComIndex == -1) && (openresult == 0x30))
+            if ((FormSharedData.fOpenComIndex == -1) && (openresult == 0x30))
                 MessageBox.Show("Serial Communication Error", "Information");
 
-            if ((cbReader_AlreadyOpenCOM.Items.Count != 0) & (fOpenComIndex != -1) & (openresult != 0X35) & (openresult != 0X30) & (fCmdRet == 0))
+            if ((cbReader_AlreadyOpenCOM.Items.Count != 0) & (FormSharedData.fOpenComIndex != -1) & (openresult != 0X35) & (openresult != 0X30) & (FormSharedData.fCmdRet == 0))
             {
-                fComAdr = Convert.ToByte(Edit_ComAdr.Text, 16);
+                FormSharedData.fComAdr = Convert.ToByte(Edit_ComAdr.Text, 16);
                 temp = cbReader_AlreadyOpenCOM.SelectedItem.ToString();
-                frmcomportindex = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
+                FormSharedData.frmcomportindex = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
             }
             RefreshStatus();
         }
@@ -145,8 +251,8 @@ namespace LJYZN_105
                 {
                     temp = cbReader_AlreadyOpenCOM.SelectedItem.ToString();
                     port = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
-                    fCmdRet = StaticClassReaderB.CloseSpecComPort(port);
-                    if (fCmdRet == 0)
+                    FormSharedData.fCmdRet = StaticClassReaderB.CloseSpecComPort(port);
+                    if (FormSharedData.fCmdRet == 0)
                     {
                         cbReader_AlreadyOpenCOM.Items.RemoveAt(0);
                         if (cbReader_AlreadyOpenCOM.Items.Count != 0)
@@ -154,9 +260,9 @@ namespace LJYZN_105
                             temp = cbReader_AlreadyOpenCOM.SelectedItem.ToString();
                             port = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
                             StaticClassReaderB.CloseSpecComPort(port);
-                            fComAdr = 0xFF;
-                            StaticClassReaderB.OpenComPort(port, ref fComAdr, fBaud, ref frmcomportindex);
-                            fOpenComIndex = frmcomportindex;
+                            FormSharedData.fComAdr = 0xFF;
+                            StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                            FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                             RefreshStatus();
                             btnReader_GetReaderInfo_Click(sender, e); //自动执行读取写卡器信息
                         }
@@ -173,13 +279,14 @@ namespace LJYZN_105
                 cbReader_AlreadyOpenCOM.SelectedIndex = 0;
             else
             {
-                fOpenComIndex = -1;
+                FormSharedData.fOpenComIndex = -1;
                 cbReader_AlreadyOpenCOM.Items.Clear();
                 cbReader_AlreadyOpenCOM.Refresh();
                 RefreshStatus();
                 btnReader_GetReaderInfo.Enabled = false;
                 btnReader_SetParameter.Enabled = false;
                 btnReader_SetDefaultParameter.Enabled = false;
+                /*
                 Button_QueryTag.Enabled = false;
                 Button_DestroyCard.Enabled = false;
                 Button_WriteEPC_G2.Enabled = false;
@@ -270,8 +377,8 @@ namespace LJYZN_105
                 SpeedButton_Write_6B.Enabled = false;
                 SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
                 SpeedButton_Check_6B.Enabled = false;
-                lv6B_Tags.Items.Clear();
-                ComOpen = false;
+                lv6B_Tags.Items.Clear();*/
+                FormSharedData.ComOpen = false;
             }
         }
 
@@ -294,8 +401,9 @@ namespace LJYZN_105
             Edit_powerdBm.Text = "";
             Edit_dminfre.Text = "";
             Edit_dmaxfre.Text = "";
-            fCmdRet = StaticClassReaderB.GetReaderInformation(ref fComAdr, VersionInfo, ref ReaderType, TrType, ref dmaxfre, ref dminfre, ref powerdBm, ref ScanTime, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.GetReaderInformation(ref FormSharedData.fComAdr, VersionInfo, ref ReaderType,
+                                                                            TrType, ref dmaxfre, ref dminfre, ref powerdBm, ref ScanTime, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
             {
                 Edit_Version.Text = Convert.ToString(VersionInfo[0], 10).PadLeft(2, '0') + "." + Convert.ToString(VersionInfo[1], 10).PadLeft(2, '0');
 
@@ -303,8 +411,8 @@ namespace LJYZN_105
                     ComboBox_PowerDbm.SelectedIndex = 13;
                 else
                     ComboBox_PowerDbm.SelectedIndex = powerdBm;
-                Edit_ComAdr.Text = Convert.ToString(fComAdr, 16).PadLeft(2, '0');
-                Edit_NewComAdr.Text = Convert.ToString(fComAdr, 16).PadLeft(2, '0');
+                Edit_ComAdr.Text = Convert.ToString(FormSharedData.fComAdr, 16).PadLeft(2, '0');
+                Edit_NewComAdr.Text = Convert.ToString(FormSharedData.fComAdr, 16).PadLeft(2, '0');
                 Edit_scantime.Text = Convert.ToString(ScanTime, 10).PadLeft(2, '0') + "*100ms";
                 ComboBox_scantime.SelectedIndex = ScanTime - 3;
                 Edit_powerdBm.Text = Convert.ToString(powerdBm, 10).PadLeft(2, '0');
@@ -315,42 +423,42 @@ namespace LJYZN_105
                     case 0:
                         {
                             rbReader_FreqBand_User.Checked = true;
-                            fdminfre = 902.6 + (dminfre & 0x3F) * 0.4;
-                            fdmaxfre = 902.6 + (dmaxfre & 0x3F) * 0.4;
+                            FormSharedData.fdminfre = 902.6 + (dminfre & 0x3F) * 0.4;
+                            FormSharedData.fdmaxfre = 902.6 + (dmaxfre & 0x3F) * 0.4;
                         }
                         break;
                     case 1:
                         {
                             rbReader_FreqBand_Chinese.Checked = true;
-                            fdminfre = 920.125 + (dminfre & 0x3F) * 0.25;
-                            fdmaxfre = 920.125 + (dmaxfre & 0x3F) * 0.25;
+                            FormSharedData.fdminfre = 920.125 + (dminfre & 0x3F) * 0.25;
+                            FormSharedData.fdmaxfre = 920.125 + (dmaxfre & 0x3F) * 0.25;
                         }
                         break;
                     case 2:
                         {
                             rbReader_FreqBand_US.Checked = true;
-                            fdminfre = 902.75 + (dminfre & 0x3F) * 0.5;
-                            fdmaxfre = 902.75 + (dmaxfre & 0x3F) * 0.5;
+                            FormSharedData.fdminfre = 902.75 + (dminfre & 0x3F) * 0.5;
+                            FormSharedData.fdmaxfre = 902.75 + (dmaxfre & 0x3F) * 0.5;
                         }
                         break;
                     case 3:
                         {
                             rbReader_FreqBand_Korean.Checked = true;
-                            fdminfre = 917.1 + (dminfre & 0x3F) * 0.2;
-                            fdmaxfre = 917.1 + (dmaxfre & 0x3F) * 0.2;
+                            FormSharedData.fdminfre = 917.1 + (dminfre & 0x3F) * 0.2;
+                            FormSharedData.fdmaxfre = 917.1 + (dmaxfre & 0x3F) * 0.2;
                         }
                         break;
                     case 4:
                         {
                             rbReader_FreqBand_Europe.Checked = true;
-                            fdminfre = 865.1 + (dminfre & 0x3F) * 0.2;
-                            fdmaxfre = 865.1 + (dmaxfre & 0x3F) * 0.2;
+                            FormSharedData.fdminfre = 865.1 + (dminfre & 0x3F) * 0.2;
+                            FormSharedData.fdmaxfre = 865.1 + (dmaxfre & 0x3F) * 0.2;
                         }
                         break;
                 }
-                Edit_dminfre.Text = Convert.ToString(fdminfre) + "MHz";
-                Edit_dmaxfre.Text = Convert.ToString(fdmaxfre) + "MHz";
-                if (fdmaxfre != fdminfre)
+                Edit_dminfre.Text = Convert.ToString(FormSharedData.fdminfre) + "MHz";
+                Edit_dmaxfre.Text = Convert.ToString(FormSharedData.fdmaxfre) + "MHz";
+                if (FormSharedData.fdmaxfre != FormSharedData.fdminfre)
                     CheckBox_SameFre.Checked = false;
                 ComboBox_dminfre.SelectedIndex = dminfre & 0x3F;
                 ComboBox_dmaxfre.SelectedIndex = dmaxfre & 0x3F;
@@ -367,7 +475,7 @@ namespace LJYZN_105
                     EPCC1G2.Checked = false;
                 }
             }
-            AddCmdLog("GetReaderInformation", "GetReaderInformation", fCmdRet);
+            FormSharedData.MainForm.AddCmdLog("GetReaderInformation", "GetReaderInformation", FormSharedData.fCmdRet);
         }
 
         private void btnReader_SetParameter_Click(object sender, EventArgs e)
@@ -394,85 +502,85 @@ namespace LJYZN_105
             dmaxfre = Convert.ToByte(((band & 0x0c) << 4) | (ComboBox_dmaxfre.SelectedIndex & 0x3F));
             aNewComAdr = Convert.ToByte(Edit_NewComAdr.Text);
             powerDbm = Convert.ToByte(ComboBox_PowerDbm.SelectedIndex);
-            fBaud = Convert.ToByte(cbReader_SetBaud.SelectedIndex);
-            if (fBaud > 2)
-                fBaud = Convert.ToByte(fBaud + 2);
+            FormSharedData.fBaud = Convert.ToByte(cbReader_SetBaud.SelectedIndex);
+            if (FormSharedData.fBaud > 2)
+                FormSharedData.fBaud = Convert.ToByte(FormSharedData.fBaud + 2);
             scantime = Convert.ToByte(ComboBox_scantime.SelectedIndex + 3);
             setinfo = "Write";
             progressBar1.Value = 10;
-            fCmdRet = StaticClassReaderB.WriteComAdr(ref fComAdr, ref aNewComAdr, frmcomportindex);
-            if (fCmdRet == 0x13)
-                fComAdr = aNewComAdr;
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0x13)
+                FormSharedData.fComAdr = aNewComAdr;
+            if (FormSharedData.fCmdRet == 0)
             {
-                fComAdr = aNewComAdr;
+                FormSharedData.fComAdr = aNewComAdr;
                 returninfo = returninfo + setinfo + "Address Successfully";
             }
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + setinfo + "Address Response Command Error";
             else
             {
                 returninfo = returninfo + setinfo + "Address Fail";
                 returninfoDlg = returninfoDlg + setinfo + "Address Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 25;
-            fCmdRet = StaticClassReaderB.SetPowerDbm(ref fComAdr, powerDbm, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Power Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Power Response Command Error";
             else
             {
                 returninfo = returninfo + ",Power Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Power Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 40;
-            fCmdRet = StaticClassReaderB.Writedfre(ref fComAdr, ref dmaxfre, ref dminfre, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Frequency Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Frequency Response Command Error";
             else
             {
                 returninfo = returninfo + ",Frequency Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Frequency Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 55;
-            fCmdRet = StaticClassReaderB.Writebaud(ref fComAdr, ref fBaud, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Baud Rate Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Baud Rate Response Command Error";
             else
             {
                 returninfo = returninfo + ",Baud Rate Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Baud Rate Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 70;
-            fCmdRet = StaticClassReaderB.WriteScanTime(ref fComAdr, ref scantime, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",InventoryScanTime Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",InventoryScanTime Response Command Error";
             else
             {
                 returninfo = returninfo + ",InventoryScanTime Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "InventoryScanTime Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 100;
             btnReader_GetReaderInfo_Click(sender, e);
             progressBar1.Visible = false;
-            tss_Status.Text = DateTime.Now.ToLongTimeString() + returninfo;
+            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + returninfo;
             if (returninfoDlg != "")
                 MessageBox.Show(returninfoDlg, "Information");
 
@@ -489,84 +597,84 @@ namespace LJYZN_105
             dmaxfre = 62;
             aNewComAdr = 0x00;
             powerDbm = 13;
-            fBaud = 5;
+            FormSharedData.fBaud = 5;
             scantime = 10;
             setinfo = " Recovery ";
             cbReader_SetBaud.SelectedIndex = 3;
             progressBar1.Value = 10;
-            fCmdRet = StaticClassReaderB.WriteComAdr(ref fComAdr, ref aNewComAdr, frmcomportindex);
-            if (fCmdRet == 0x13)
-                fComAdr = aNewComAdr;
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0x13)
+                FormSharedData.fComAdr = aNewComAdr;
+            if (FormSharedData.fCmdRet == 0)
             {
-                fComAdr = aNewComAdr;
+                FormSharedData.fComAdr = aNewComAdr;
                 returninfo = returninfo + setinfo + "Address Successfully";
             }
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + setinfo + "Address Response Command Error";
             else
             {
                 returninfo = returninfo + setinfo + "Address Fail";
                 returninfoDlg = returninfoDlg + setinfo + "Address Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 25;
-            fCmdRet = StaticClassReaderB.SetPowerDbm(ref fComAdr, powerDbm, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Power Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Power Response Command Error";
             else
             {
                 returninfo = returninfo + ",Power Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Power Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 40;
-            fCmdRet = StaticClassReaderB.Writedfre(ref fComAdr, ref dmaxfre, ref dminfre, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Frequency Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Frequency Response Command Error";
             else
             {
                 returninfo = returninfo + ",Frequency Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Frequency Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 55;
-            fCmdRet = StaticClassReaderB.Writebaud(ref fComAdr, ref fBaud, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Baud Rate Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",Baud Rate Response Command Error";
             else
             {
                 returninfo = returninfo + ",Baud Rate Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "Baud Rate Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 70;
-            fCmdRet = StaticClassReaderB.WriteScanTime(ref fComAdr, ref scantime, frmcomportindex);
-            if (fCmdRet == 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",InventoryScanTime Success";
-            else if (fCmdRet == 0xEE)
+            else if (FormSharedData.fCmdRet == 0xEE)
                 returninfo = returninfo + ",InventoryScanTime Response Command Error";
             else
             {
                 returninfo = returninfo + ",InventoryScanTime Fail";
                 returninfoDlg = returninfoDlg + " " + setinfo + "InventoryScanTime Fail Command Response=0x"
-                     + Convert.ToString(fCmdRet) + "(" + GetReturnCodeDesc(fCmdRet) + ")";
+                     + Convert.ToString(FormSharedData.fCmdRet) + "(" + FormSharedData.MainForm.GetReturnCodeDesc(FormSharedData.fCmdRet) + ")";
             }
 
             progressBar1.Value = 100;
             btnReader_GetReaderInfo_Click(sender, e);
             progressBar1.Visible = false;
-            tss_Status.Text = DateTime.Now.ToLongTimeString() + returninfo;
+            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + returninfo;
             if (returninfoDlg != "")
                 MessageBox.Show(returninfoDlg, "Information");
 
@@ -653,6 +761,5 @@ namespace LJYZN_105
                 MessageBox.Show("Min.Frequency is equal or lesser than Max.Frequency", "Error Information");
             }
         }
-
     }
 }

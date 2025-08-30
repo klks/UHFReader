@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace LJYZN_105
 {
-    //internal class ReaderStructs
-    //{
-    //}
+    public enum MonzaQT
+    {
+        PAGE_PRIVATE = 0,
+        PAGE_PUBLIC = 1,
+        RANGE_REDUCE = 2
+    }
 
     enum TagErrCode
     {
@@ -64,5 +68,4 @@ namespace LJYZN_105
         CMD_6B_CHECK_LOCK,
         CMD_6B_LOCK,
     }
-
 }

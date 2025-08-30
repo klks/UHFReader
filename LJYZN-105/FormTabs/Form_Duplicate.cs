@@ -1,24 +1,56 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using ReaderB;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
-using ReaderB;
 using Utilities;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Button;
 using static Utilities.Utilities;
 
 namespace LJYZN_105
 {
-    public partial class MainForm : Form
+    public partial class Form_Duplicate : UserControl
     {
         //Used for Wave v2 Code
         private string hassearchcard = "no";
         private string hasreadcard = "no";
         private string hasresearchcard = "no";
         private string strWavev2Key = "E6FA3C97";
+
+        public Form_Duplicate()
+        {
+            InitializeComponent();
+        }
+
+        #region textbox filter methods
+        private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_KeyPress(sender, e);
+        }
+
+        private void filterOnlyDigits_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_KeyPress(sender, e);
+        }
+
+        private void filterOnlyHex_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
+        }
+
+        private void filterOnlyDigits_TextChanged(object sender, EventArgs e)
+        {
+            Utilities.Utilities.filterOnlyDigits_TextChanged(sender, e);
+        }
+        #endregion
 
         private void txtDup_Write_TID_TextChanged(object sender, EventArgs e)
         {
@@ -35,7 +67,7 @@ namespace LJYZN_105
 
                 lblDup_WriteTID.Text = String.Format("({0} Bits) ({1} Words) {2}", (iTIDLen * 2) * 8, iTIDLen, has_extra);
             }
-                
+
         }
 
         private void btnDup_ReadCard_Click(object sender, EventArgs e)
@@ -49,7 +81,7 @@ namespace LJYZN_105
             hasreadcard = "yes";
             ResetReadUI();  //Cleanup the UI
 
-            if (ComboBox_EPC2.Items.Count != 1)
+            if (FormSharedData.Form_6C.ComboBox_EPC2.Items.Count != 1)
             {
                 return;
             }
@@ -57,7 +89,7 @@ namespace LJYZN_105
             //Disable button to prevent multiple clicks
             btnDup_ReadCard.Enabled = false;
 
-            CardInfo ci = QueryCardDetails(ComboBox_EPC2.SelectedItem.ToString() ?? "");
+            CardInfo ci = QueryCardDetails(FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString() ?? "");
 
             txtDup_Read_EPC.Text = ci.EPC;
             txtDup_Read_CRC.Text = ci.EPC_CRC;
@@ -71,7 +103,7 @@ namespace LJYZN_105
             if (ci.isWavev2Card)
                 btnWavev2Flag.Visible = true;
 
-            if(ci.hasLockedUserBlocks)
+            if (ci.hasLockedUserBlocks)
                 btnHasLockedUserBlocks.Visible = true;
 
             txtDup_Read_AccessPwd.Text = ci.AccessPwd;
@@ -128,7 +160,7 @@ namespace LJYZN_105
                 }
 
                 //These are cards that have a different password but arent locked yet
-                if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != strDefaultKey)
+                if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != FormSharedData.strDefaultKey)
                 {
                     waveFlagRed.Visible = true;
                 }
@@ -175,7 +207,7 @@ namespace LJYZN_105
                 cbEPCGA.Checked = ((iPCBits & 0x100) == 0x100) ? true : false;
                 txtAFI.Text = (iPCBits & 0xFF).ToString("X2");
 
-                tss_Status.Text = DateTime.Now.ToLongTimeString() + " Read card data successfully";
+                FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Read card data successfully";
                 MessageBox.Show("Card was read successfully", "Read success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 btnDup_ReadCard.Enabled = true;
             }
@@ -210,20 +242,20 @@ namespace LJYZN_105
 
             btnDup_WriteCard.Enabled = false;
 
-            string txtEPCString = ComboBox_EPC2.SelectedItem.ToString();
-            MaskFlag = 0;
-            Maskadr = Convert.ToByte("00", 16);
-            MaskLen = Convert.ToByte("00", 16);
+            string txtEPCString = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
             byte iEPCLenBytes = Convert.ToByte(txtEPCString.Length / 2); ;
             byte iEPCLenWords = Convert.ToByte(txtEPCString.Length / 4);
             byte[] arrEPCHexBytes = HexStringToByteArray(txtEPCString);
-            byte[] retArray = new byte[320];           
+            byte[] retArray = new byte[320];
             int writtenDataNum = 0;
             byte wordPtr = Convert.ToByte("02", 16);
 
 
-            fPassWord = HexStringToByteArray(strDefaultKey);
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
             //Write EPC w/ Extended parts
             if (txtDup_Write_FullEPC.Text == "")
@@ -235,28 +267,31 @@ namespace LJYZN_105
             string txtJustEPC = txtDup_Write_FullEPC.Text.Substring(4, txtDup_Write_FullEPC.Text.Length - 4);
             byte[] arrJustEPC = HexStringToByteArray(txtJustEPC);
             wordPtr = Convert.ToByte("02", 16);
-            fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length, arrJustEPC, fPassWord, Maskadr, MaskLen, MaskFlag, writtenDataNum, iEPCLenBytes, ref ferrorcode, frmcomportindex);
-            if (fCmdRet != 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length,
+                                                                    arrJustEPC, FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet != 0)
             {
-                if(MessageBox.Show("Failed to write Full EPC value. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
+                if (MessageBox.Show("Failed to write Full EPC value. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
                     btnDup_WriteCard.Enabled = true;
                     return;
                 }
-                
+
             }
 
             //Write jsut EPC
             arrJustEPC = HexStringToByteArray(txtDup_Write_EPC.Text);
-            fCmdRet = StaticClassReaderB.WriteEPC_G2(ref fComAdr, fPassWord, arrJustEPC, (byte)arrJustEPC.Length, ref ferrorcode, frmcomportindex);
-            if (fCmdRet != 0)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteEPC_G2(ref FormSharedData.fComAdr, FormSharedData.fPassWord, arrJustEPC, (byte)arrJustEPC.Length,
+                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet != 0)
             {
-                if(MessageBox.Show("Failed to write just EPC. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
+                if (MessageBox.Show("Failed to write just EPC. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
                     btnDup_WriteCard.Enabled = true;
                     return;
                 }
-                
+
             }
 
             //Write user data
@@ -266,8 +301,10 @@ namespace LJYZN_105
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("00", 16);
 
-                fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData, fPassWord, Maskadr, MaskLen, MaskFlag, writtenDataNum, iEPCLenBytes, ref ferrorcode, frmcomportindex);
-                if (fCmdRet != 0)
+                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData,
+                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet != 0)
                 {
                     if (MessageBox.Show("Failed to write User Data. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                     {
@@ -280,8 +317,10 @@ namespace LJYZN_105
             int CardNum = 0;
             int Totallen = 0;
             byte[] array14 = new byte[5000];
-            fCmdRet = StaticClassReaderB.Inventory_G2(ref fComAdr, 0, 0, 0, array14, ref Totallen, ref CardNum, frmcomportindex);
-            if ((fCmdRet == 1) | (fCmdRet == 2) | (fCmdRet == 3) | (fCmdRet == 4) | (fCmdRet == 251))
+            FormSharedData.fCmdRet = StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array14, ref Totallen, ref CardNum, FormSharedData.frmcomportindex);
+            if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
+                (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
+                (FormSharedData.fCmdRet == 251))
             {
                 byte[] array15 = new byte[Totallen];
                 Array.Copy(array14, array15, Totallen);
@@ -315,10 +354,12 @@ namespace LJYZN_105
                 arrBlackFlagData = HexStringToByteArray(strBlackFlagString);
 
                 wordPtr = Convert.ToByte("01", 16);
-                fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData, fPassWord, Maskadr, MaskLen, MaskFlag, writtenDataNum, iEPCLenBytes, ref ferrorcode, frmcomportindex);
-                if (fCmdRet != 0)
+                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData,
+                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet != 0)
                 {
-                    if(MessageBox.Show("Failed to write AFI. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
+                    if (MessageBox.Show("Failed to write AFI. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                     {
                         btnDup_WriteCard.Enabled = true;
                         return;
@@ -326,22 +367,24 @@ namespace LJYZN_105
                 }
             }
             MessageBox.Show("Card was written successfully", "Write success");
-            tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wrote card data successfully";
+            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wrote card data successfully";
             btnDup_WriteCard.Enabled = true;
         }
 
 
         private void btnDup_ValidateCard_Click(object sender, EventArgs e)
         {
-            if(!ValidateSingleCardSeen()) return;
+            if (!ValidateSingleCardSeen()) return;
             btnDup_ValidateCard.Enabled = false;
 
             int CardNum = 0;
             int Totallen = 0;
             byte[] array = new byte[5000];
             string txtEPCString = "";
-            fCmdRet = StaticClassReaderB.Inventory_G2(ref fComAdr, 0, 0, 0, array, ref Totallen, ref CardNum, frmcomportindex);
-            if ((fCmdRet == 1) | (fCmdRet == 2) | (fCmdRet == 3) | (fCmdRet == 4) | (fCmdRet == 251))
+            FormSharedData.fCmdRet = StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array, ref Totallen, ref CardNum, FormSharedData.frmcomportindex);
+            if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
+                (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
+                (FormSharedData.fCmdRet == 251))
             {
                 byte[] array2 = new byte[Totallen];
                 Array.Copy(array, array2, Totallen);
@@ -378,7 +421,7 @@ namespace LJYZN_105
             txtDup_Validate_AccessPwd.Text = "";
             txtDup_Validate_UserDataLen.Text = "";
 
-            if (ComboBox_EPC2.Items.Count != 1)
+            if (FormSharedData.Form_6C.ComboBox_EPC2.Items.Count != 1)
             {
                 return;
             }
@@ -433,7 +476,7 @@ namespace LJYZN_105
                         else
                         {
                             MessageBox.Show("Card was validated successfully", "Validation success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            tss_Status.Text = DateTime.Now.ToLongTimeString() + " Validated card data successfully";
+                            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Validated card data successfully";
                         }
                         if (txtDup_Write_FullEPC.Text.Substring(0, 6) != txtDup_Validate_FullEPC.Text.Substring(0, 6))
                         {
@@ -444,7 +487,7 @@ namespace LJYZN_105
                 catch
                 {
                     MessageBox.Show("Card failed validation, one of the fields did not copy over.\nCheck if card types are similar.", "Validation failed");
-                    tss_Status.Text = DateTime.Now.ToLongTimeString() + " Validated card data failed";
+                    FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Validated card data failed";
                 }
             }
             else
@@ -466,7 +509,7 @@ namespace LJYZN_105
             }
 
             btnDup_CreateWaveCard.Enabled = false;
-            string strEPC = ComboBox_EPC2.SelectedItem.ToString();
+            string strEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
 
             //Check if this is already a wave card
             if (isWavev2Card(strEPC))
@@ -477,7 +520,7 @@ namespace LJYZN_105
             }
 
             //Check if card is locked
-            if (!isAccessKeyCorrect(strEPC, strDefaultKey))
+            if (!isAccessKeyCorrect(strEPC, FormSharedData.strDefaultKey))
             {
                 MessageBox.Show("Failed to access card with default key!", "Create Failed");
                 btnDup_CreateWaveCard.Enabled = true;
@@ -486,29 +529,33 @@ namespace LJYZN_105
 
             //Set wave flags
             //Set Mask
-            MaskFlag = 0;
-            Maskadr = Convert.ToByte("00", 16);
-            MaskLen = Convert.ToByte("00", 16);
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
             byte[] arrEPCHexBytes = HexStringToByteArray(strEPC);
             byte iEPCLenBytes = Convert.ToByte(strEPC.Length / 2);
             byte[] arrTemp;
 
             //Write the wave key
-            fPassWord = HexStringToByteArray(strDefaultKey); 
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
             arrTemp = HexStringToByteArray(strWavev2Key); //Set wave key
             byte wordPtr = 2;
             byte writeLen = 4;
-            fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp, fPassWord, Maskadr, MaskLen, MaskFlag, 0, iEPCLenBytes, ref ferrorcode, frmcomportindex);
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, 0,
+                                                                    iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
 
             //Set protection (Readable and writeable from the secured state)
-            fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
+            FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
             byte select = 1;
             byte setprotect = 2;
-            fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref fComAdr, arrEPCHexBytes, select, setprotect, fPassWord, Maskadr, MaskLen, MaskFlag, iEPCLenBytes, ref ferrorcode, frmcomportindex); ;
+            FormSharedData.fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, FormSharedData.fPassWord, 
+                                                                        FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
+                                                                        ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex); ;
 
             MessageBox.Show("This card will now identify as a Wave v2 Card", "Create Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave create success!";
+            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave create success!";
 
             btnDup_CreateWaveCard.Enabled = true;
         }
@@ -522,36 +569,40 @@ namespace LJYZN_105
                 return;
             }
             btnDup_ResetWaveCard.Enabled = false;
-            string strWaveEPC = ComboBox_EPC2.SelectedItem.ToString();
+            string strWaveEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
 
             //Check if card has an access key
             if (isWavev2Card(strWaveEPC))
             {
                 //Set Mask
-                MaskFlag = 0;
-                Maskadr = Convert.ToByte("00", 16);
-                MaskLen = Convert.ToByte("00", 16);
+                FormSharedData.MaskFlag = 0;
+                FormSharedData.Maskadr = Convert.ToByte("00", 16);
+                FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
                 byte[] arrEPCHexBytes = HexStringToByteArray(strWaveEPC);
                 byte iEPCLenBytes = Convert.ToByte(strWaveEPC.Length / 2);
                 byte[] arrTemp;
 
                 //Set No protection (Readable and  writeable from any state)
-                fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
+                FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
                 byte select = 1;
                 byte setprotect = 0;
-                fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref fComAdr, arrEPCHexBytes, select, setprotect, fPassWord, Maskadr, MaskLen, MaskFlag, iEPCLenBytes, ref ferrorcode, frmcomportindex); ;
+                FormSharedData.fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, FormSharedData.fPassWord,
+                                                                            FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
+                                                                            ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex); ;
 
                 //Reset access key to 00000000
-                fPassWord = HexStringToByteArray(strDefaultKey); //Set wave key
-                arrTemp = HexStringToByteArray(strDefaultKey);
+                FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey); //Set wave key
+                arrTemp = HexStringToByteArray(FormSharedData.strDefaultKey);
                 byte wordPtr = 2;
                 byte writeLen = 4;
-                fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp, fPassWord, Maskadr, MaskLen, MaskFlag, 0, iEPCLenBytes, ref ferrorcode, frmcomportindex);
-                if (fCmdRet == 0)
+                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        0, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0)
                 {
                     MessageBox.Show("This card has been reset to an original state\nThe Wave v2 key has been removed", "Reset Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave v2 card reset success!";
+                    FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave v2 card reset success!";
                 }
             }
             else
@@ -649,7 +700,7 @@ namespace LJYZN_105
                             }
 
                             //These are cards that have a different password but arent locked yet
-                            if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != strDefaultKey)
+                            if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != FormSharedData.strDefaultKey)
                             {
                                 waveFlagRed.Visible = true;
                             }
@@ -718,12 +769,13 @@ namespace LJYZN_105
 
                             hasreadcard = "yes";
 
-                            tss_Status.Text = DateTime.Now.ToLongTimeString() + " Loaded card data successfully";
+                            FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Loaded card data successfully";
                             MessageBox.Show("Card was read successfully loaded", "Load success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             btnDup_ReadCard.Enabled = true;
                         }
                     }
-                    catch { };
+                    catch { }
+                    ;
                 }
             }
         }
@@ -739,10 +791,10 @@ namespace LJYZN_105
             }
             btnDup_WriteTID.Enabled = false;
 
-            string txtEPCString = ComboBox_EPC2.SelectedItem.ToString();
-            MaskFlag = 0;
-            Maskadr = Convert.ToByte("00", 16);
-            MaskLen = Convert.ToByte("00", 16);
+            string txtEPCString = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
             byte iEPCLenBytes = Convert.ToByte(txtEPCString.Length / 2); ;
             byte iEPCLenWords = Convert.ToByte(txtEPCString.Length / 4);
@@ -750,22 +802,24 @@ namespace LJYZN_105
             int writtenDataNum = 0;
 
             //fPassWord = HexStringToByteArray(strDefaultKey);
-            fPassWord = HexStringToByteArray(txtDup_Write_TID_PWD.Text);
+            FormSharedData.fPassWord = HexStringToByteArray(txtDup_Write_TID_PWD.Text);
 
             byte[] tidData = HexStringToByteArray(txtDup_Write_TID.Text);
             byte wordPtr = Convert.ToByte("00", 16);
 
-            fCmdRet = StaticClassReaderB.WriteCard_G2(ref fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData, fPassWord, Maskadr, MaskLen, MaskFlag, writtenDataNum, iEPCLenBytes, ref ferrorcode, frmcomportindex);
-            if (fCmdRet != 0 || ferrorcode != -1)
+            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData,
+                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet != 0 || FormSharedData.ferrorcode != -1)
             {
-                AddCmdLog("TID Write", "TID Write Failed", fCmdRet, ferrorcode);
+                FormSharedData.MainForm.AddCmdLog("TID Write", "TID Write Failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
                 MessageBox.Show("TID Write failed.", "Write failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
                 MessageBox.Show("TID Write Success!", "Write success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            
+
             btnDup_WriteTID.Enabled = true;
         }
 
@@ -774,24 +828,26 @@ namespace LJYZN_105
             if (!ValidateSingleCardSeen()) return;
             btnDup_MonzaQTQuery.Enabled = false;
             //Set Mask
-            MaskFlag = 0;
-            Maskadr = Convert.ToByte("00", 16);
-            MaskLen = Convert.ToByte("00", 16);
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
             //Set default password
-            fPassWord = HexStringToByteArray(strDefaultKey);
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
-            string strSearchEPC = ComboBox_EPC2.SelectedItem.ToString();
+            string strSearchEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
             if (strSearchEPC != null && strSearchEPC != "")
             {
                 byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
                 byte iEPCLenBytes = Convert.ToByte(strSearchEPC.Length / 2);
 
-                byte QTControl=0;
-                fCmdRet = StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref fComAdr, arrEPCHexBytes, iEPCLenBytes, fPassWord, Maskadr, MaskLen, MaskFlag, ref QTControl, ref ferrorcode, frmcomportindex);
-                if (fCmdRet == 0 && ferrorcode == -1)
+                byte QTControl = 0;
+                FormSharedData.fCmdRet = StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, FormSharedData.fPassWord,
+                                                                                    FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, ref QTControl,
+                                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
                 {
-                    if ( (QTControl & (byte)MonzaQT.PAGE_PUBLIC) == (byte)MonzaQT.PAGE_PUBLIC)
+                    if ((QTControl & (byte)MonzaQT.PAGE_PUBLIC) == (byte)MonzaQT.PAGE_PUBLIC)
                         cbDup_MonzaQT_Profile.SelectedIndex = 1;
                     else
                         cbDup_MonzaQT_Profile.SelectedIndex = 0;
@@ -804,7 +860,7 @@ namespace LJYZN_105
                     //StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref fComAdr, arrEPCHexBytes, iEPCLenBytes, fPassWord, Maskadr, MaskLen, MaskFlag, QTControl, ref ferrorcode, frmcomportindex);
                 }
                 else
-                    AddCmdLog("MonzaQT Query Failed", "MonzaQT Command failed", fCmdRet, ferrorcode);
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Query Failed", "MonzaQT Command failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
             }
 
             btnDup_MonzaQTQuery.Enabled = true;
@@ -821,14 +877,14 @@ namespace LJYZN_105
 
             btnDup_MonzaQTWrite.Enabled = false;
             //Set Mask
-            MaskFlag = 0;
-            Maskadr = Convert.ToByte("00", 16);
-            MaskLen = Convert.ToByte("00", 16);
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
 
             //Set default password
-            fPassWord = HexStringToByteArray(strDefaultKey);
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
-            string strSearchEPC = ComboBox_EPC2.SelectedItem.ToString();
+            string strSearchEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
             if (strSearchEPC != null && strSearchEPC != "")
             {
                 byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
@@ -842,11 +898,13 @@ namespace LJYZN_105
                 if (cbDup_MonzaQT_Distance.SelectedIndex == 1)
                     QTControl |= (byte)MonzaQT.RANGE_REDUCE;
 
-                fCmdRet = StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref fComAdr, arrEPCHexBytes, iEPCLenBytes, fPassWord, Maskadr, MaskLen, MaskFlag, QTControl, ref ferrorcode, frmcomportindex);
-                if (fCmdRet == 0 && ferrorcode == -1)
-                    AddCmdLog("MonzaQT Write Success", "MonzaQT command successful", fCmdRet);
+                FormSharedData.fCmdRet = StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, FormSharedData.fPassWord,
+                                                                                    FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, QTControl,
+                                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Success", "MonzaQT command successful", FormSharedData.fCmdRet);
                 else
-                    AddCmdLog("MonzaQT Write Failed", "MonzaQT command failed", fCmdRet, ferrorcode);
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Failed", "MonzaQT command failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
             }
 
             btnDup_MonzaQTWrite.Enabled = true;
@@ -861,18 +919,18 @@ namespace LJYZN_105
             btnDup_ReadCard.Enabled = false;
             btnDup_WriteCard.Enabled = false;
             btnDup_ValidateCard.Enabled = false;
-            if (CheckBox_TID.Checked && (textBox4.Text.Length != 2 || textBox5.Text.Length != 2))
+            if (FormSharedData.Form_6C.CheckBox_TID.Checked && (FormSharedData.Form_6C.textBox4.Text.Length != 2 || FormSharedData.Form_6C.textBox5.Text.Length != 2))
             {
-                tss_Status.Text = "TID询查参数错误！";
+                FormSharedData.tss_Status.Text = "TID询查参数错误！";
                 return;
             }
-            Timer_Test_.Enabled = !Timer_Test_.Enabled;
-            if (!Timer_Test_.Enabled)
+            FormSharedData.Form_6C.Timer_Test_.Enabled = !FormSharedData.Form_6C.Timer_Test_.Enabled;
+            if (!FormSharedData.Form_6C.Timer_Test_.Enabled)
             {
-                textBox4.Enabled = true;
-                textBox5.Enabled = true;
-                CheckBox_TID.Enabled = true;
-                if (ListView1_EPC.Items.Count != 0)
+                FormSharedData.Form_6C.textBox4.Enabled = true;
+                FormSharedData.Form_6C.textBox5.Enabled = true;
+                FormSharedData.Form_6C.CheckBox_TID.Enabled = true;
+               /* if (ListView1_EPC.Items.Count != 0)
                 {
                     DestroyCode.Enabled = false;
                     AccessCode.Enabled = false;
@@ -939,15 +997,15 @@ namespace LJYZN_105
                     Button_CheckEASAlarm_G2.Enabled = true;
                     Button_SetProtectState.Enabled = false;
                     checkBox1.Enabled = false;
-                }
-                btnDup_SearchCard.Text = "Search Card";
+                }*/
+                /*btnDup_SearchCard.Text = "Search Card";
                 btnDup_ReadCard.Enabled = true;
                 btnDup_WriteCard.Enabled = true;
-                btnDup_ValidateCard.Enabled = true;
+                btnDup_ValidateCard.Enabled = true;*/
             }
             else
             {
-                textBox4.Enabled = false;
+                /*textBox4.Enabled = false;
                 textBox5.Enabled = false;
                 CheckBox_TID.Enabled = false;
                 DestroyCode.Enabled = false;
@@ -988,9 +1046,286 @@ namespace LJYZN_105
                 ComboBox_EPC5.Items.Clear();
                 ComboBox_EPC6.Items.Clear();
                 btnDup_SearchCard.Text = "Stop Search";
-                checkBox1.Enabled = false;
+                checkBox1.Enabled = false;*/
             }
         }
+        private bool ValidateSingleCardSeen()
+        {
+            if (FormSharedData.Form_6C.ComboBox_EPC2.Items.Count == 0)
+            {
+                MessageBox.Show("No card found in Search. Please put a card on the reader and do Search Card again.", "Write Failed");
+                return false;
+            }
+            if (FormSharedData.Form_6C.ComboBox_EPC2.Items.Count > 1)
+            {
+                MessageBox.Show("Multiple cards detected nearby reader. Please clear area from other cards and then do Search Card again.", "Write Failed");
+                return false;
+            }
+            return true;
+        }
+        public void ResetReadUI()
+        {
+            lblDup_ReadTID.Text = "(XXX Bits) (XXXX Words)";
+            txtDup_Read_TID.Text = "";
+            txtDup_Read_CRC.Text = "";
+            txtDup_Read_PC.Text = "";
+            txtDup_Read_EPC.Text = "";
+            txtDup_Read_FullEPC.Text = "";
+            txtDup_Read_UserData.Text = "";
+            txtDup_Read_UserDataLen.Text = "";
+            txtDup_Read_KillPwd.Text = "";
+            txtDup_Read_AccessPwd.Text = "";
+            txtDup_Read_FullEPCLen.Text = "";
 
+            //Card Flags
+            waveFlagYellow.Visible = false;
+            waveFlagBlue.Visible = false;
+            waveFlagGreen.Visible = false;
+            waveFlagPurple.Visible = false;
+            waveFlagBlack.Visible = false;
+            waveFlagRed.Visible = false;
+            btnWavev2Flag.Visible = false;
+            btnHasLockedUserBlocks.Visible = false;
+
+            //Program Control Flags
+            txtEPCLength.Text = "";
+            cbUMI.Checked = false;
+            cbXPC.Checked = false;
+            cbEPCGA.Checked = false;
+            txtAFI.Text = "";
+
+            //Short Tag Info
+            chkReadXTID.Checked = false;
+            chkReadAuthChlg.Checked = false;
+            chkReadFileOpen.Checked = false;
+            txtReadMDID.Text = "";
+            txtReadTMN.Text = "";
+            txtDup_Read_STI_Manu.Text = "";
+            txtDup_Read_STI_Prod.Text = "";
+        }
+        public bool isAccessKeyCorrect(string? strSearchEPC, string strCardKey)
+        {
+            if (strSearchEPC == null || strSearchEPC == "")
+                return false;
+
+            //Set Mask
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
+
+            byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
+            byte iEPCLenBytes = Convert.ToByte(strSearchEPC.Length / 2);
+            byte readSize = 2;
+            byte[] retArray = new byte[320];
+            byte wordPtr = Convert.ToByte("02", 16);
+            byte[] arrTemp;
+
+            FormSharedData.fPassWord = HexStringToByteArray(strCardKey); //Set wave key
+            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
+            {
+                arrTemp = new byte[readSize * 2];
+                Array.Copy(retArray, arrTemp, readSize * 2);
+                if (ByteArrayToHexString(arrTemp) == strCardKey)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        public bool isWavev2Card(string? strSearchEPC)
+        {
+            return isAccessKeyCorrect(strSearchEPC, strWavev2Key);
+        }
+        public CardInfo QueryCardDetails(string strSearchEPC)
+        {
+            CardInfo ci = new CardInfo();
+
+            //Set Mask
+            FormSharedData.MaskFlag = 0;
+            FormSharedData.Maskadr = Convert.ToByte("00", 16);
+            FormSharedData.MaskLen = Convert.ToByte("00", 16);
+
+            //Set default password
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
+
+            //Get the EPC queried by the tool
+            ci.EPC = strSearchEPC;
+            ci.iEPCLen = ci.EPC.Length / 4;
+
+            //Do some calculations to use for later
+            byte iEPCLenBytes = Convert.ToByte(ci.EPC.Length / 2);
+            byte iEPCLenWords = Convert.ToByte(ci.EPC.Length / 4);
+            byte[] arrEPCHexBytes = HexStringToByteArray(ci.EPC);
+            byte[] retArray = new byte[320];
+            byte readSize = 0;
+            byte[] arrTemp;
+            byte wordPtr = 0;
+            int i;
+
+            //Read the CRC, PC, EPC, and FullEPC
+            FormSharedData.ferrorcode = -1;
+            i = 3;
+            int ctrBadRead = 0;
+
+            while (FormSharedData.ferrorcode == -1)
+            {
+                readSize = (byte)i;
+                Array.Clear(retArray, 0, 320);
+                wordPtr = Convert.ToByte("00", 16);
+                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, readSize, FormSharedData.fPassWord,
+                                                                    FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray, iEPCLenBytes,
+                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0)
+                {
+                    arrTemp = new byte[readSize * 2];
+                    Array.Copy(retArray, arrTemp, readSize * 2);
+
+                    try
+                    {
+                        ci.EPC_CRC = ByteArrayToHexString(arrTemp.Take(2).ToArray());
+                        ci.PC = ByteArrayToHexString(arrTemp.Skip(2).Take(2).ToArray());
+                        ci.FullEPC = ByteArrayToHexString(arrTemp.Skip(2).ToArray());
+                    }
+                    catch { }
+                    i += 1;
+                    ctrBadRead = 0; //Reset if we successfuly read
+                }
+                else
+                {
+                    if (ctrBadRead == 20)
+                        break;
+                    ctrBadRead += 1;
+                }
+
+            }
+
+            if (ci.FullEPC != null && ci.FullEPC != "")
+                ci.iFullEPCLen = (ci.FullEPC.Length / 4) + 1;   //+1 for CRC which isnt included
+
+            //Decode PC flags
+            int iPCBits = Convert.ToUInt16(ci.PC, 16);
+            ci.bPC_UMI = ((iPCBits & 0x400) == 0x400) ? true : false;
+            ci.bPC_XPC = ((iPCBits & 0x200) == 0x200) ? true : false;
+            ci.bPC_Toggle = ((iPCBits & 0x100) == 0x100) ? true : false;
+
+            //Read User Data
+            FormSharedData.ferrorcode = -1;
+            i = 1;
+            while (FormSharedData.ferrorcode == -1)
+            {
+                Array.Clear(retArray, 0, 320);
+                wordPtr = Convert.ToByte("0", 16);
+                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)i,
+                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0)
+                {
+                    arrTemp = new byte[i * 2];
+                    Array.Copy(retArray, arrTemp, i * 2);
+                    ci.UserData = ByteArrayToHexString(arrTemp);
+                }
+                if (FormSharedData.ferrorcode != -1 && FormSharedData.ferrorcode != (int)TagErrCode.ERR_MEM_OVERRUN)
+                {
+                    if (ci.arrUserBlocksLocked == null)
+                        ci.arrUserBlocksLocked = new List<int> { 0 };
+
+                    ci.arrUserBlocksLocked.Add(i);
+                    ci.hasLockedUserBlocks = true;
+                }
+                if (i > 50) break;  //This must be a 1k or 2k card
+                i += 1;
+            }
+            if (ci.UserData != null)
+                ci.iUserLen = ci.UserData.Length / 4;
+
+            //Read card Kill Password
+            Array.Clear(retArray, 0, 320);
+            readSize = 2;
+            wordPtr = Convert.ToByte("00", 16);
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
+            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
+            {
+                arrTemp = new byte[readSize * 2];
+                Array.Copy(retArray, arrTemp, readSize * 2);
+                ci.KillPwd = ByteArrayToHexString(arrTemp);
+            }
+            if (FormSharedData.ferrorcode == 4)
+            {
+                ci.isCardKillPWDLocked = true;
+            }
+
+            //Read card Access Password
+            Array.Clear(retArray, 0, 320);
+            readSize = 2;
+            wordPtr = Convert.ToByte("02", 16);
+            FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
+            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray,
+                                                                iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            if (FormSharedData.fCmdRet == 0)
+            {
+                arrTemp = new byte[readSize * 2];
+                Array.Copy(retArray, arrTemp, readSize * 2);
+                ci.AccessPwd = ByteArrayToHexString(arrTemp);
+            }
+            if (FormSharedData.ferrorcode == 4)
+            {
+                ci.isCardAccessPWDLocked = true;
+            }
+
+            //Is this a Wave v2 Card?
+            if (ci.isCardAccessPWDLocked)
+            {
+                readSize = 2;
+                Array.Clear(retArray, 0, 320);
+                wordPtr = Convert.ToByte("02", 16);
+                FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key);
+                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0)
+                {
+                    arrTemp = new byte[readSize * 2];
+                    Array.Copy(retArray, arrTemp, readSize * 2);
+                    if (ByteArrayToHexString(arrTemp) == strWavev2Key)
+                    {
+                        ci.isWavev2Card = true;
+                    }
+                }
+            }
+
+            //Populate TID
+            FormSharedData.ferrorcode = -1;
+            readSize = 2;
+            wordPtr = Convert.ToByte("00", 16);
+            while (FormSharedData.ferrorcode == -1)
+            {
+
+                Array.Clear(retArray, 0, 320);
+                FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
+                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, readSize, 
+                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                if (FormSharedData.fCmdRet == 0)
+                {
+                    arrTemp = new byte[readSize * 2];
+                    Array.Copy(retArray, arrTemp, readSize * 2);
+                    ci.TID = ByteArrayToHexString(arrTemp);
+                }
+                readSize += 1;
+            }
+
+            if (ci.TID != null && ci.TID != "")
+                ci.iTIDLen = ci.TID.Length / 4;
+
+            return ci;
+        }
     }
 }

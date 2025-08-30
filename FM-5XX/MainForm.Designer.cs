@@ -249,7 +249,7 @@
             groupBox_TagKill.Enabled = false;
             groupBox_TagKill.Location = new Point(649, 315);
             groupBox_TagKill.Name = "groupBox_TagKill";
-            groupBox_TagKill.Size = new Size(260, 77);
+            groupBox_TagKill.Size = new Size(234, 77);
             groupBox_TagKill.TabIndex = 4;
             groupBox_TagKill.TabStop = false;
             groupBox_TagKill.Text = "Tag Kill";
@@ -265,7 +265,7 @@
             // 
             // btn6C_KillTag
             // 
-            btn6C_KillTag.Location = new Point(170, 19);
+            btn6C_KillTag.Location = new Point(151, 22);
             btn6C_KillTag.Name = "btn6C_KillTag";
             btn6C_KillTag.Size = new Size(75, 30);
             btn6C_KillTag.TabIndex = 21;
@@ -275,7 +275,7 @@
             // textBox1
             // 
             textBox1.CharacterCasing = CharacterCasing.Upper;
-            textBox1.Location = new Point(98, 22);
+            textBox1.Location = new Point(77, 26);
             textBox1.MaxLength = 8;
             textBox1.Name = "textBox1";
             textBox1.Size = new Size(68, 23);
