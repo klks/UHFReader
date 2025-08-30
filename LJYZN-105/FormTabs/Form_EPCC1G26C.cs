@@ -291,7 +291,7 @@ namespace LJYZN_105
             Timer_Test_.Enabled = !Timer_Test_.Enabled;
             if (!Timer_Test_.Enabled)
             {
-                FormSharedData.bIsInventoryRunning = false;
+                FormSharedData.bIsInventoryRunning_6C = false;
                 FormSharedData.MainForm.AddCmdLog("Inventory", "Exit Query", 0);
                 Button_QueryTag.Text = "Query Tag";
             }
@@ -304,7 +304,7 @@ namespace LJYZN_105
                 ComboBox_EPC4.Items.Clear();
                 ComboBox_EPC5.Items.Clear();
                 ComboBox_EPC6.Items.Clear();
-                FormSharedData.bIsInventoryRunning = true;
+                FormSharedData.bIsInventoryRunning_6C = true;
                 Button_QueryTag.Text = "Stop";
             }
         }

@@ -99,6 +99,8 @@ namespace LJYZN_105
         }
         private void SpeedButton_Read_6B_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReadyForRead()) return;
+
             if ((Edit_StartAddress_6B.Text == "") | (Edit_Len_6B.Text == ""))
             {
                 MessageBox.Show("Start address or length is empty!Please input!", "Information");
@@ -166,11 +168,11 @@ namespace LJYZN_105
                 temps = Utilities.Utilities.ByteArrayToHexString(data);
                 lb6B_list2.Items.Add(temps);
             }
-            /*if (FormSharedData.fAppClosed)
-                Close();*/
         }
         private void SpeedButton_Write_6B_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReadyForRead()) return;
+
             if ((Edit_WriteData_6B.Text == "") | ((Edit_WriteData_6B.Text.Length % 2) != 0))
             {
                 MessageBox.Show("Please input in bytes in hexadecimal form!", "Information");
@@ -222,55 +224,23 @@ namespace LJYZN_105
         }
         private void SpeedButton_Query_6B_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReadyForInventory6B()) return;
+
             Timer_Test_6B.Enabled = !Timer_Test_6B.Enabled;
             if (!Timer_Test_6B.Enabled)
             {
-                if (lv6B_Tags.Items.Count != 0)
-                {
-                    SpeedButton_Read_6B.Enabled = true;
-                    SpeedButton_Write_6B.Enabled = true;
-                    SpeedButton_Perm_Wr_Prot_6B.Enabled = true;
-                    SpeedButton_Check_6B.Enabled = true;
-                    if (Bycondition_6B.Checked)
-                    {
-                        Same_6B.Enabled = true;
-                        Different_6B.Enabled = true;
-                        Less_6B.Enabled = true;
-                        Greater_6B.Enabled = true;
-                    }
-                }
-                if (lv6B_Tags.Items.Count == 0)
-                {
-                    SpeedButton_Read_6B.Enabled = false;
-                    SpeedButton_Write_6B.Enabled = false;
-                    SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-                    SpeedButton_Check_6B.Enabled = false;
-                    if (Bycondition_6B.Checked)
-                    {
-                        Same_6B.Enabled = true;
-                        Different_6B.Enabled = true;
-                        Less_6B.Enabled = true;
-                        Greater_6B.Enabled = true;
-                    }
-                }
                 FormSharedData.MainForm.AddCmdLog("Inventory", "Exit Query", 0);
                 SpeedButton_Query_6B.Text = "Query ";
+                FormSharedData.bIsInventoryRunning_6B = false;
             }
             else
             {
-                SpeedButton_Read_6B.Enabled = false;
-                SpeedButton_Write_6B.Enabled = false;
-                SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-                SpeedButton_Check_6B.Enabled = false;
-                Same_6B.Enabled = false;
-                Different_6B.Enabled = false;
-                Less_6B.Enabled = false;
-                Greater_6B.Enabled = false;
                 lv6B_Tags.Items.Clear();
                 ComboBox_ID1_6B.Items.Clear();
                 CardNum1 = 0;
                 list.Clear();
                 SpeedButton_Query_6B.Text = "Stop";
+                FormSharedData.bIsInventoryRunning_6B = true;
             }
         }
         private void SpeedButton_PermWriteProtect_6B_Click(object sender, EventArgs e)
@@ -278,6 +248,9 @@ namespace LJYZN_105
             byte Address;
             string temps;
             byte[] ID_6B = new byte[8];
+
+            if (!FormSharedData.IsReadyForRead()) return;
+
             if (ComboBox_ID1_6B.Items.Count == 0)
                 return;
             if (ComboBox_ID1_6B.SelectedItem == null)
@@ -300,6 +273,9 @@ namespace LJYZN_105
             byte Address, ReLockState = 2;
             string temps;
             byte[] ID_6B = new byte[8];
+
+            if (!FormSharedData.IsReadyForRead()) return;
+
             if (ComboBox_ID1_6B.Items.Count == 0)
                 return;
             if (ComboBox_ID1_6B.SelectedItem == null)
@@ -370,19 +346,18 @@ namespace LJYZN_105
                         if (temps == lv6B_Tags.Items[i].SubItems[1].Text)
                         {
                             aListItem = lv6B_Tags.Items[i];
-                            //ChangeSubItem1(aListItem, 1, temps);
+                            ChangeSubItem1(aListItem, 1, temps);
                             isonlistview = true;
                         }
                     }
                     if (!isonlistview)
                     {
-                        //CardNum1 = Convert.ToByte(ListView_ID_6B.Items.Count + 1);
                         aListItem = lv6B_Tags.Items[CardNum1 - 1];
                         s = temps;
                         FormSharedData.Form_6C.ChangeSubItem1(aListItem, 1, s);
                         if (FormSharedData.Form_6C.ComboBox_EPC1.Items.IndexOf(s) == -1)
                         {
-                            //ComboBox_ID1_6B.Items.Add(temps);
+                            ComboBox_ID1_6B.Items.Add(temps);
                         }
 
                     }
@@ -475,7 +450,6 @@ namespace LJYZN_105
                         }
                         if (!isonlistview)
                         {
-                            // CardNum1 = Convert.ToByte(ListView_ID_6B.Items.Count+1);
                             aListItem = lv6B_Tags.Items[i];
                             s = sID;
                             ChangeSubItem1(aListItem, 1, s);
@@ -511,8 +485,6 @@ namespace LJYZN_105
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Query Tag'Command Response=0xee" +
                                 "(Response Command Error)";
             }
-            /*if (fAppClosed)
-                Close();*/
         }
         private void Byone_6B_CheckedChanged(object sender, EventArgs e)
         {

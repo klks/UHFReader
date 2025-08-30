@@ -20,9 +20,12 @@ namespace LJYZN_105
         public static int fCmdRet = 30; //所有执行指令的返回值
         public static int fOpenComIndex; //打开的串口索引号
         public static bool fIsInventoryScan;
-        public static bool bIsInventoryRunning=false;
         public static bool fisinventoryscan_6B;
+
+        public static bool bIsInventoryRunning_6C = false;
+        public static bool bIsInventoryRunning_6B = false;
         public static bool bIsReadInventoryRunning = false;
+
         public static byte[] fOperEPC = new byte[36];
         public static byte[] fPassWord = new byte[4];
         public static byte[] fOperID_6B = new byte[8];
@@ -44,12 +47,12 @@ namespace LJYZN_105
         public static bool IsReadyForRead()
         {
             if (ComOpen == false) return false;
-            if (bIsInventoryRunning == true)
+            if (bIsInventoryRunning_6C == true)
             {
                 MessageBox.Show("Please stop 6C inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
-            if (fisinventoryscan_6B == true)
+            if (bIsInventoryRunning_6B == true)
             {
                 MessageBox.Show("Please stop 6B inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
@@ -61,9 +64,26 @@ namespace LJYZN_105
         {
             if (ComOpen == false) return false;
 
-            if (fisinventoryscan_6B == true)
+            if (bIsInventoryRunning_6B == true)
             {
                 MessageBox.Show("Please stop 6B inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            if (bIsReadInventoryRunning == true)
+            {
+                MessageBox.Show("Please stop read first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
+
+        public static bool IsReadyForInventory6B()
+        {
+            if (ComOpen == false) return false;
+
+            if (bIsInventoryRunning_6C == true)
+            {
+                MessageBox.Show("Please stop 6C inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             if (bIsReadInventoryRunning == true)
@@ -77,12 +97,12 @@ namespace LJYZN_105
         public static bool IsReady()
         {
             if (ComOpen == false) return false;
-            if (bIsInventoryRunning == true)
+            if (bIsInventoryRunning_6C == true)
             {
                 MessageBox.Show("Please stop 6C inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
-            if (fisinventoryscan_6B == true)
+            if (bIsInventoryRunning_6B == true)
             {
                 MessageBox.Show("Please stop 6B inventory first before proceeding", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;

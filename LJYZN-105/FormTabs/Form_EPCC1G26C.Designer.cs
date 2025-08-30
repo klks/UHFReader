@@ -1496,7 +1496,7 @@
         private ComboBox ComboBox_BlockNum;
         private Label label30;
         private Label label29;
-        private ComboBox ComboBox_EPC6;
+        public ComboBox ComboBox_EPC6;
         private GroupBox groupBox16;
         private Label Label_Alarm;
         private Button Button_CheckEASAlarm_G2;
@@ -1506,7 +1506,7 @@
         private RadioButton Alarm_G2;
         private TextBox Edit_AccessCode5;
         private Label label28;
-        private ComboBox ComboBox_EPC5;
+        public ComboBox ComboBox_EPC5;
         private GroupBox groupBox15;
         private Button Button_CheckReadProtected_G2;
         private Button Button_RemoveReadProtect_G2;
@@ -1514,7 +1514,7 @@
         private Button Button_SetReadProtect_G2;
         private TextBox Edit_AccessCode4;
         private Label label27;
-        private ComboBox ComboBox_EPC4;
+        public ComboBox ComboBox_EPC4;
         private GroupBox groupBox14;
         private Button Button_WriteEPC_G2;
         private TextBox Edit_AccessCode3;
@@ -1525,7 +1525,7 @@
         private Button Button_DestroyCard;
         private TextBox Edit_DestroyCode;
         private Label label24;
-        private ComboBox ComboBox_EPC3;
+        public ComboBox ComboBox_EPC3;
         private GroupBox groupBox12;
         public CheckBox CheckBox_TID;
         private GroupBox gbQueryTIDParams;
@@ -1533,7 +1533,7 @@
         private Label label55;
         public TextBox textBox4;
         private Label label54;
-        private Button Button_QueryTag;
+        public Button Button_QueryTag;
         private ComboBox ComboBox_IntervalTime;
         private Label label23;
         private GroupBox gbTagLock;
@@ -1583,7 +1583,7 @@
         private RadioButton C_EPC;
         private RadioButton C_Reserve;
         private GroupBox groupBox4;
-        private ListView ListView1_EPC;
+        public ListView ListView1_EPC;
         private ColumnHeader listViewCol_Number;
         private ColumnHeader listViewCol_ID;
         private ColumnHeader listViewCol_Length;

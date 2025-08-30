@@ -97,7 +97,6 @@ namespace LJYZN_105
             Edit_scantime.Text = "";
             Edit_dminfre.Text = "";
             Edit_dmaxfre.Text = "";
-            //  PageControl1.TabIndex = 0;
         }
 
         private void ComboBox_COM_SelectedIndexChanged(object sender, EventArgs e)
@@ -212,15 +211,6 @@ namespace LJYZN_105
                 btnReader_GetReaderInfo.Enabled = true;
                 btnReader_SetParameter.Enabled = true;
                 btnReader_SetDefaultParameter.Enabled = true;
-                /*
-                Button_QueryTag.Enabled = true;
-                Button_WriteEPC_G2.Enabled = true;
-                Button_SetMultiReadProtect_G2.Enabled = true;
-                Button_RemoveReadProtect_G2.Enabled = true;
-                Button_CheckReadProtected_G2.Enabled = true;
-                Button_CheckEASAlarm_G2.Enabled = true;
-                SpeedButton_Query_6B.Enabled = true;
-                */
                 FormSharedData.ComOpen = true;
             }
             if ((FormSharedData.fOpenComIndex == -1) && (openresult == 0x30))
@@ -286,98 +276,15 @@ namespace LJYZN_105
                 btnReader_GetReaderInfo.Enabled = false;
                 btnReader_SetParameter.Enabled = false;
                 btnReader_SetDefaultParameter.Enabled = false;
-                /*
-                Button_QueryTag.Enabled = false;
-                Button_DestroyCard.Enabled = false;
-                Button_WriteEPC_G2.Enabled = false;
-                Button_SetReadProtect_G2.Enabled = false;
-                Button_SetMultiReadProtect_G2.Enabled = false;
-                Button_RemoveReadProtect_G2.Enabled = false;
-                Button_CheckReadProtected_G2.Enabled = false;
-                Button_SetEASAlarm_G2.Enabled = false;
-                Button_CheckEASAlarm_G2.Enabled = false;
-                Button_LockUserBlock_G2.Enabled = false;
-                SpeedButton_Read_G2.Enabled = false;
-                Button_DataWrite.Enabled = false;
-                Button_BlockWrite.Enabled = false;
-                Button_BlockErase.Enabled = false;
-                Button_SetProtectState.Enabled = false;
-                SpeedButton_Query_6B.Enabled = false;
-                SpeedButton_Read_6B.Enabled = false;
-                SpeedButton_Write_6B.Enabled = false;
-                SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-                SpeedButton_Check_6B.Enabled = false;
-
-                DestroyCode.Enabled = false;
-                AccessCode.Enabled = false;
-                NoProect.Enabled = false;
-                Proect.Enabled = false;
-                Always.Enabled = false;
-                AlwaysNot.Enabled = false;
-                NoProect2.Enabled = false;
-                Proect2.Enabled = false;
-                Always2.Enabled = false;
-                AlwaysNot2.Enabled = false;
-
-                P_Reserve.Enabled = false;
-                P_EPC.Enabled = false;
-                P_TID.Enabled = false;
-                P_User.Enabled = false;
-                Alarm_G2.Enabled = false;
-                NoAlarm_G2.Enabled = false;
-
-                Same_6B.Enabled = false;
-                Different_6B.Enabled = false;
-                Less_6B.Enabled = false;
-                Greater_6B.Enabled = false;
-
-
-                DestroyCode.Enabled = false;
-                AccessCode.Enabled = false;
-                NoProect.Enabled = false;
-                Proect.Enabled = false;
-                Always.Enabled = false;
-                AlwaysNot.Enabled = false;
-                NoProect2.Enabled = false;
-                Proect2.Enabled = false;
-                Always2.Enabled = false;
-                AlwaysNot2.Enabled = false;
-                P_Reserve.Enabled = false;
-                P_EPC.Enabled = false;
-                P_TID.Enabled = false;
-                P_User.Enabled = false;
-                Button_WriteEPC_G2.Enabled = false;
-                Button_SetMultiReadProtect_G2.Enabled = false;
-                Button_RemoveReadProtect_G2.Enabled = false;
-                Button_CheckReadProtected_G2.Enabled = false;
-                Button_CheckEASAlarm_G2.Enabled = false;
-
-                Button_DestroyCard.Enabled = false;
-                Button_SetReadProtect_G2.Enabled = false;
-                Button_SetEASAlarm_G2.Enabled = false;
-                Alarm_G2.Enabled = false;
-                NoAlarm_G2.Enabled = false;
-                Button_LockUserBlock_G2.Enabled = false;
-                SpeedButton_Read_G2.Enabled = false;
-                Button_DataWrite.Enabled = false;
-                Button_BlockWrite.Enabled = false;
-                Button_BlockErase.Enabled = false;
-                Button_SetProtectState.Enabled = false;
-                ListView1_EPC.Items.Clear();
-                ComboBox_EPC1.Items.Clear();
-                ComboBox_EPC2.Items.Clear();
-                ComboBox_EPC3.Items.Clear();
-                ComboBox_EPC4.Items.Clear();
-                ComboBox_EPC5.Items.Clear();
-                ComboBox_EPC6.Items.Clear();
-                Button_QueryTag.Text = "Stop";
-                checkBox1.Enabled = false;
-
-                SpeedButton_Read_6B.Enabled = false;
-                SpeedButton_Write_6B.Enabled = false;
-                SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-                SpeedButton_Check_6B.Enabled = false;
-                lv6B_Tags.Items.Clear();*/
+                FormSharedData.Form_6C.ListView1_EPC.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC1.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC2.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC3.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC4.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC5.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC6.Items.Clear();
+                FormSharedData.Form_6C.Button_QueryTag.Text = "Stop";
+                FormSharedData.Form_6B.lv6B_Tags.Items.Clear();
                 FormSharedData.ComOpen = false;
             }
         }

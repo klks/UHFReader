@@ -302,42 +302,44 @@
             // Greater_6B
             // 
             Greater_6B.AutoSize = true;
+            Greater_6B.Enabled = false;
             Greater_6B.Location = new Point(191, 85);
             Greater_6B.Margin = new Padding(4, 3, 4, 3);
             Greater_6B.Name = "Greater_6B";
             Greater_6B.Size = new Size(146, 19);
             Greater_6B.TabIndex = 3;
-            Greater_6B.TabStop = true;
             Greater_6B.Text = "Greater than Condition";
             Greater_6B.UseVisualStyleBackColor = true;
             // 
             // Less_6B
             // 
             Less_6B.AutoSize = true;
+            Less_6B.Enabled = false;
             Less_6B.Location = new Point(10, 85);
             Less_6B.Margin = new Padding(4, 3, 4, 3);
             Less_6B.Name = "Less_6B";
             Less_6B.Size = new Size(130, 19);
             Less_6B.TabIndex = 2;
-            Less_6B.TabStop = true;
             Less_6B.Text = "Less than Condition";
             Less_6B.UseVisualStyleBackColor = true;
             // 
             // Different_6B
             // 
             Different_6B.AutoSize = true;
+            Different_6B.Enabled = false;
             Different_6B.Location = new Point(191, 37);
             Different_6B.Margin = new Padding(4, 3, 4, 3);
             Different_6B.Name = "Different_6B";
             Different_6B.Size = new Size(125, 19);
             Different_6B.TabIndex = 1;
-            Different_6B.TabStop = true;
             Different_6B.Text = "Unequal Condition";
             Different_6B.UseVisualStyleBackColor = true;
             // 
             // Same_6B
             // 
             Same_6B.AutoSize = true;
+            Same_6B.Checked = true;
+            Same_6B.Enabled = false;
             Same_6B.Location = new Point(10, 37);
             Same_6B.Margin = new Padding(4, 3, 4, 3);
             Same_6B.Name = "Same_6B";
@@ -365,7 +367,6 @@
             // 
             // SpeedButton_Query_6B
             // 
-            SpeedButton_Query_6B.Enabled = false;
             SpeedButton_Query_6B.Location = new Point(248, 80);
             SpeedButton_Query_6B.Margin = new Padding(4, 3, 4, 3);
             SpeedButton_Query_6B.Name = "SpeedButton_Query_6B";
@@ -383,7 +384,6 @@
             Bycondition_6B.Name = "Bycondition_6B";
             Bycondition_6B.Size = new Size(129, 19);
             Bycondition_6B.TabIndex = 3;
-            Bycondition_6B.TabStop = true;
             Bycondition_6B.Text = "Query by Condition";
             Bycondition_6B.UseVisualStyleBackColor = true;
             Bycondition_6B.CheckedChanged += Bycondition_6B_CheckedChanged;
@@ -391,6 +391,7 @@
             // Byone_6B
             // 
             Byone_6B.AutoSize = true;
+            Byone_6B.Checked = true;
             Byone_6B.Location = new Point(10, 80);
             Byone_6B.Margin = new Padding(4, 3, 4, 3);
             Byone_6B.Name = "Byone_6B";
@@ -529,7 +530,7 @@
         private ComboBox ComboBox_IntervalTime_6B;
         private Label label31;
         private GroupBox groupBox19;
-        private ListView lv6B_Tags;
+        public ListView lv6B_Tags;
         private ColumnHeader columnHeader5;
         private ColumnHeader columnHeader6;
         private ColumnHeader columnHeader7;
