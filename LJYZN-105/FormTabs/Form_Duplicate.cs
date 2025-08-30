@@ -67,11 +67,12 @@ namespace LJYZN_105
 
                 lblDup_WriteTID.Text = String.Format("({0} Bits) ({1} Words) {2}", (iTIDLen * 2) * 8, iTIDLen, has_extra);
             }
-
         }
 
         private void btnDup_ReadCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (hassearchcard == "no")
             {
                 MessageBox.Show("You must click Search Card button first and then click Stop Search button. Click this Read Card button again after that.", "Wrong Step");
@@ -221,6 +222,8 @@ namespace LJYZN_105
 
         private void btnDup_WriteCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (hasreadcard == "no")
             {
                 MessageBox.Show("You must Read Card first before attempting to Write Card", "Wrong Step");
@@ -374,6 +377,8 @@ namespace LJYZN_105
 
         private void btnDup_ValidateCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             btnDup_ValidateCard.Enabled = false;
 
@@ -501,6 +506,8 @@ namespace LJYZN_105
 
         private void btnCreateWaveCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             if (MessageBox.Show("Are you sure you want to create a Wave v2 card?", "Confirm?", MessageBoxButtons.YesNo) == DialogResult.No)
             {
@@ -563,6 +570,8 @@ namespace LJYZN_105
 
         private void btnResetWaveCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             if (MessageBox.Show("Are you sure you want to reset this Wave card?", "Confirm?", MessageBoxButtons.YesNo) == DialogResult.No)
             {
@@ -783,6 +792,8 @@ namespace LJYZN_105
 
         private void btnDup_WriteTID_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             //Confirm
             if (MessageBox.Show("Confirm write TID to card?", "Write TID Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
@@ -825,6 +836,8 @@ namespace LJYZN_105
 
         private void btnDup_MonzaQTQuery_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             btnDup_MonzaQTQuery.Enabled = false;
             //Set Mask
@@ -868,6 +881,8 @@ namespace LJYZN_105
 
         private void btnDup_MonzaQTWrite_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReady()) return;
+
             if (!ValidateSingleCardSeen()) return;
             //Confirm
             if (MessageBox.Show("Confirm write QT to card?\nThis could lock you out.", "Are you sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
@@ -911,6 +926,8 @@ namespace LJYZN_105
         }
         private void btnWaveSearchCard_Click(object sender, EventArgs e)
         {
+            if (!FormSharedData.IsReadyForInventory6C()) return;
+
             hassearchcard = "yes";
             if (hasreadcard == "yes")
             {
@@ -921,132 +938,32 @@ namespace LJYZN_105
             btnDup_ValidateCard.Enabled = false;
             if (FormSharedData.Form_6C.CheckBox_TID.Checked && (FormSharedData.Form_6C.textBox4.Text.Length != 2 || FormSharedData.Form_6C.textBox5.Text.Length != 2))
             {
-                FormSharedData.tss_Status.Text = "TID询查参数错误！";
+                FormSharedData.tss_Status.Text = "TID query parameter error!";
                 return;
             }
             FormSharedData.Form_6C.Timer_Test_.Enabled = !FormSharedData.Form_6C.Timer_Test_.Enabled;
             if (!FormSharedData.Form_6C.Timer_Test_.Enabled)
             {
-                FormSharedData.Form_6C.textBox4.Enabled = true;
-                FormSharedData.Form_6C.textBox5.Enabled = true;
-                FormSharedData.Form_6C.CheckBox_TID.Enabled = true;
-               /* if (ListView1_EPC.Items.Count != 0)
-                {
-                    DestroyCode.Enabled = false;
-                    AccessCode.Enabled = false;
-                    NoProect.Enabled = false;
-                    Proect.Enabled = false;
-                    Always.Enabled = false;
-                    AlwaysNot.Enabled = false;
-                    NoProect2.Enabled = true;
-                    Proect2.Enabled = true;
-                    Always2.Enabled = true;
-                    AlwaysNot2.Enabled = true;
-                    P_Reserve.Enabled = true;
-                    P_EPC.Enabled = true;
-                    P_TID.Enabled = true;
-                    P_User.Enabled = true;
-                    Button_DestroyCard.Enabled = true;
-                    Button_SetReadProtect_G2.Enabled = true;
-                    Button_SetEASAlarm_G2.Enabled = true;
-                    Alarm_G2.Enabled = true;
-                    NoAlarm_G2.Enabled = true;
-                    Button_LockUserBlock_G2.Enabled = true;
-                    Button_WriteEPC_G2.Enabled = true;
-                    Button_SetMultiReadProtect_G2.Enabled = true;
-                    Button_RemoveReadProtect_G2.Enabled = true;
-                    Button_CheckReadProtected_G2.Enabled = true;
-                    Button_CheckEASAlarm_G2.Enabled = true;
-                    SpeedButton_Read_G2.Enabled = true;
-                    Button_SetProtectState.Enabled = true;
-                    Button_DataWrite.Enabled = true;
-                    Button_BlockWrite.Enabled = true;
-                    Button_BlockErase.Enabled = true;
-                    checkBox1.Enabled = true;
-                }
-                if (ListView1_EPC.Items.Count == 0)
-                {
-                    DestroyCode.Enabled = false;
-                    AccessCode.Enabled = false;
-                    NoProect.Enabled = false;
-                    Proect.Enabled = false;
-                    Always.Enabled = false;
-                    AlwaysNot.Enabled = false;
-                    NoProect2.Enabled = false;
-                    Proect2.Enabled = false;
-                    Always2.Enabled = false;
-                    AlwaysNot2.Enabled = false;
-                    P_Reserve.Enabled = false;
-                    P_EPC.Enabled = false;
-                    P_TID.Enabled = false;
-                    P_User.Enabled = false;
-                    Button_DestroyCard.Enabled = false;
-                    Button_SetReadProtect_G2.Enabled = false;
-                    Button_SetEASAlarm_G2.Enabled = false;
-                    Alarm_G2.Enabled = false;
-                    NoAlarm_G2.Enabled = false;
-                    Button_LockUserBlock_G2.Enabled = false;
-                    SpeedButton_Read_G2.Enabled = false;
-                    Button_DataWrite.Enabled = false;
-                    Button_BlockWrite.Enabled = false;
-                    Button_BlockErase.Enabled = false;
-                    Button_WriteEPC_G2.Enabled = true;
-                    Button_SetMultiReadProtect_G2.Enabled = true;
-                    Button_RemoveReadProtect_G2.Enabled = true;
-                    Button_CheckReadProtected_G2.Enabled = true;
-                    Button_CheckEASAlarm_G2.Enabled = true;
-                    Button_SetProtectState.Enabled = false;
-                    checkBox1.Enabled = false;
-                }*/
-                /*btnDup_SearchCard.Text = "Search Card";
+                FormSharedData.bIsInventoryRunning_6C = false;
+                
+                btnDup_SearchCard.Text = "Search Card";
                 btnDup_ReadCard.Enabled = true;
                 btnDup_WriteCard.Enabled = true;
-                btnDup_ValidateCard.Enabled = true;*/
+                btnDup_ValidateCard.Enabled = true;
             }
             else
             {
-                /*textBox4.Enabled = false;
-                textBox5.Enabled = false;
-                CheckBox_TID.Enabled = false;
-                DestroyCode.Enabled = false;
-                AccessCode.Enabled = false;
-                NoProect.Enabled = false;
-                Proect.Enabled = false;
-                Always.Enabled = false;
-                AlwaysNot.Enabled = false;
-                NoProect2.Enabled = false;
-                Proect2.Enabled = false;
-                Always2.Enabled = false;
-                AlwaysNot2.Enabled = false;
-                P_Reserve.Enabled = false;
-                P_EPC.Enabled = false;
-                P_TID.Enabled = false;
-                P_User.Enabled = false;
-                Button_WriteEPC_G2.Enabled = false;
-                Button_SetMultiReadProtect_G2.Enabled = false;
-                Button_RemoveReadProtect_G2.Enabled = false;
-                Button_CheckReadProtected_G2.Enabled = false;
-                Button_CheckEASAlarm_G2.Enabled = false;
-                Button_DestroyCard.Enabled = false;
-                Button_SetReadProtect_G2.Enabled = false;
-                Button_SetEASAlarm_G2.Enabled = false;
-                Alarm_G2.Enabled = false;
-                NoAlarm_G2.Enabled = false;
-                Button_LockUserBlock_G2.Enabled = false;
-                SpeedButton_Read_G2.Enabled = false;
-                Button_DataWrite.Enabled = false;
-                Button_BlockWrite.Enabled = false;
-                Button_BlockErase.Enabled = false;
-                Button_SetProtectState.Enabled = false;
-                ListView1_EPC.Items.Clear();
-                ComboBox_EPC1.Items.Clear();
-                ComboBox_EPC2.Items.Clear();
-                ComboBox_EPC3.Items.Clear();
-                ComboBox_EPC4.Items.Clear();
-                ComboBox_EPC5.Items.Clear();
-                ComboBox_EPC6.Items.Clear();
+                FormSharedData.bIsInventoryRunning_6C = true;
+
+                FormSharedData.Form_6C.ListView1_EPC.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC1.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC2.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC3.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC4.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC5.Items.Clear();
+                FormSharedData.Form_6C.ComboBox_EPC6.Items.Clear();
+
                 btnDup_SearchCard.Text = "Stop Search";
-                checkBox1.Enabled = false;*/
             }
         }
         private bool ValidateSingleCardSeen()

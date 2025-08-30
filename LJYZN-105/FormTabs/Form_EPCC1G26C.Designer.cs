@@ -722,7 +722,6 @@
             // 
             // textBox5
             // 
-            textBox5.Enabled = false;
             textBox5.Location = new Point(164, 25);
             textBox5.Margin = new Padding(4, 3, 4, 3);
             textBox5.MaxLength = 2;
@@ -745,7 +744,6 @@
             // 
             // textBox4
             // 
-            textBox4.Enabled = false;
             textBox4.Location = new Point(80, 25);
             textBox4.Margin = new Padding(4, 3, 4, 3);
             textBox4.MaxLength = 2;

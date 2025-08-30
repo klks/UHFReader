@@ -17,7 +17,7 @@ namespace UHFReaderMainApp
     public partial class MDIParent : Form
     {
         private int childFormNumber = 0;
-        string sw_version = "UHFReader 1.0.0 - KLKS (Apr 2025)";
+        string sw_version = "UHFReader 1.0.0 - KLKS (Sept 2025)";
         Form? ChildWindow_TIDParser = null;
 
         /// <summary>

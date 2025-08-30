@@ -201,8 +201,8 @@ namespace LJYZN_105
             str = ComboBox_EPC2.SelectedItem.ToString();
             if (str == "")
             {
-                // fIsInventoryScan = false;
-                //  return;
+                 //FormSharedData.fIsInventoryScan = false;
+                 //return;
             }
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
