@@ -47,7 +47,6 @@ namespace FM_5XX
         ReaderService? readerClient = null;
         private CommandStates DoProcess;
         private bool IsReceiveDataWork = false;
-        private byte[] ReceiveData;
         private string Inventory_TID_Address = "0";
         private string Inventory_TID_Length = "6";
 

@@ -15,8 +15,6 @@ namespace LJYZN_105
 
     public partial class MainForm : Form
     {
-        bool fAppClosed;
-
         public MainForm()
         {
             InitializeComponent();
@@ -167,169 +165,12 @@ namespace LJYZN_105
             FormSharedData.fComAdr = 0;
             FormSharedData.ferrorcode = -1;
             FormSharedData.fBaud = 5;
-
-            /*Byone_6B.Checked = true;
-            Different_6B.Checked = true;*/
-
-            //DestroyCode.Checked = true;
-            fAppClosed = false;
-            /*fIsInventoryScan = false;
-            fisinventoryscan_6B = false;
-            fTimer_6B_ReadWrite = false;*/
-            //Timer_Test_.Enabled = false;
-            //Timer_G2_Read.Enabled = false;
-            //Timer_G2_Alarm.Enabled = false;
-
-            /*
-            Button_QueryTag.Enabled = false;
-            Button_DestroyCard.Enabled = false;
-            Button_WriteEPC_G2.Enabled = false;
-            Button_SetReadProtect_G2.Enabled = false;
-            Button_SetMultiReadProtect_G2.Enabled = false;
-            Button_RemoveReadProtect_G2.Enabled = false;
-            Button_CheckReadProtected_G2.Enabled = false;
-            Button_SetEASAlarm_G2.Enabled = false;
-            Button_CheckEASAlarm_G2.Enabled = false;
-            Button_LockUserBlock_G2.Enabled = false;
-            SpeedButton_Read_G2.Enabled = false;
-            Button_DataWrite.Enabled = false;
-            Button_BlockWrite.Enabled = false;
-            Button_BlockErase.Enabled = false;
-            Button_SetProtectState.Enabled = false;
-            */
-            /*SpeedButton_Query_6B.Enabled = false;
-            SpeedButton_Read_6B.Enabled = false;
-            SpeedButton_Write_6B.Enabled = false;
-            SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-            SpeedButton_Check_6B.Enabled = false;*/
-
-            //gbLockPassword.Enabled = false;
-            //gbLockTIDnUSER.Enabled = false;
-
-            //P_Reserve.Enabled = false;
-            //P_EPC.Enabled = false;
-            //P_TID.Enabled = false;
-            //P_User.Enabled = false;
-            /*Same_6B.Enabled = false;
-            Different_6B.Enabled = false;
-            Less_6B.Enabled = false;
-            Greater_6B.Enabled = false;*/
-            
         }
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //Timer_Test_.Enabled = false;
-            //Timer_G2_Read.Enabled = false;
-            //Timer_G2_Alarm.Enabled = false;
-            fAppClosed = true;
-        }
-
-        private void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
-        {
-            //Timer_G2_Alarm.Enabled = false;
-            //Timer_G2_Read.Enabled = false;
-            //Timer_Test_.Enabled = false;
-            /*
-            SpeedButton_Read_G2.Text = "Read";
-            Button_QueryTag.Text = "Query Tag";
-            Button_CheckEASAlarm_G2.Text = "Check Alarm";
-            if ((ListView1_EPC.Items.Count != 0) && (ComOpen))
-            {
-                Button_QueryTag.Enabled = true;
-                gbLockPassword.Enabled = false;
-                gbLockTIDnUSER.Enabled = true;
-
-                P_Reserve.Enabled = true;
-                P_EPC.Enabled = true;
-                P_TID.Enabled = true;
-                P_User.Enabled = true;
-                Button_DestroyCard.Enabled = true;
-                Button_SetReadProtect_G2.Enabled = true;
-                Button_SetEASAlarm_G2.Enabled = true;
-                Alarm_G2.Enabled = true;
-                NoAlarm_G2.Enabled = true;
-                Button_LockUserBlock_G2.Enabled = true;
-                Button_WriteEPC_G2.Enabled = true;
-                Button_SetMultiReadProtect_G2.Enabled = true;
-                Button_RemoveReadProtect_G2.Enabled = true;
-                Button_CheckReadProtected_G2.Enabled = true;
-                Button_CheckEASAlarm_G2.Enabled = true;
-                SpeedButton_Read_G2.Enabled = true;
-                Button_SetProtectState.Enabled = true;
-                Button_DataWrite.Enabled = true;
-                Button_BlockWrite.Enabled = true;
-                Button_BlockErase.Enabled = true;
-                checkBox1.Enabled = true;
-            }
-            if ((ListView1_EPC.Items.Count == 0) && (ComOpen))
-            {
-                Button_QueryTag.Enabled = true;
-                gbLockPassword.Enabled = false;
-                gbLockTIDnUSER.Enabled = false;
-
-                P_Reserve.Enabled = false;
-                P_EPC.Enabled = false;
-                P_TID.Enabled = false;
-                P_User.Enabled = false;
-                Button_DestroyCard.Enabled = false;
-                Button_SetReadProtect_G2.Enabled = false;
-                Button_SetEASAlarm_G2.Enabled = false;
-                Alarm_G2.Enabled = false;
-                NoAlarm_G2.Enabled = false;
-                Button_LockUserBlock_G2.Enabled = false;
-                SpeedButton_Read_G2.Enabled = false;
-                Button_DataWrite.Enabled = false;
-                Button_BlockWrite.Enabled = false;
-                Button_BlockErase.Enabled = false;
-                Button_WriteEPC_G2.Enabled = true;
-                Button_SetMultiReadProtect_G2.Enabled = true;
-                Button_RemoveReadProtect_G2.Enabled = true;
-                Button_CheckReadProtected_G2.Enabled = true;
-                Button_CheckEASAlarm_G2.Enabled = true;
-                Button_SetProtectState.Enabled = false;
-                checkBox1.Enabled = false;
-            }
-            */
-
-            //Timer_Test_6B.Enabled = false;
-            //Timer_6B_Read.Enabled = false;
-            //Timer_6B_Write.Enabled = false;
-            /*
-            SpeedButton_Query_6B.Text = "Query";
-            SpeedButton_Read_6B.Text = "Read";
-            SpeedButton_Write_6B.Text = "Write";
-            if ((lv6B_Tags.Items.Count != 0) && (ComOpen))
-            {
-                SpeedButton_Query_6B.Enabled = true;
-                SpeedButton_Read_6B.Enabled = true;
-                SpeedButton_Write_6B.Enabled = true;
-                SpeedButton_Perm_Wr_Prot_6B.Enabled = true;
-                SpeedButton_Check_6B.Enabled = true;
-                if (Bycondition_6B.Checked)
-                {
-                    Same_6B.Enabled = true;
-                    Different_6B.Enabled = true;
-                    Less_6B.Enabled = true;
-                    Greater_6B.Enabled = true;
-                }
-            }
-            if ((lv6B_Tags.Items.Count == 0) && (ComOpen))
-            {
-                SpeedButton_Query_6B.Enabled = true;
-                SpeedButton_Read_6B.Enabled = false;
-                SpeedButton_Write_6B.Enabled = false;
-                SpeedButton_Perm_Wr_Prot_6B.Enabled = false;
-                SpeedButton_Check_6B.Enabled = false;
-                if (Bycondition_6B.Checked)
-                {
-                    Same_6B.Enabled = true;
-                    Different_6B.Enabled = true;
-                    Less_6B.Enabled = true;
-                    Greater_6B.Enabled = true;
-                }
-            }
-            */
-
+            FormSharedData.Form_6C.Timer_Test_.Enabled = false;
+            FormSharedData.Form_6C. Timer_G2_Read.Enabled = false;
+            FormSharedData.Form_6C.Timer_G2_Alarm.Enabled = false;
         }
         private void filterOnlyHex_KeyPress(object sender, KeyPressEventArgs e)
         {

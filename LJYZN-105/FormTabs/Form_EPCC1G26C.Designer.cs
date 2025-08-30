@@ -1587,7 +1587,7 @@
         private ColumnHeader listViewCol_Length;
         private ColumnHeader listViewCol_Times;
         public System.Windows.Forms.Timer Timer_Test_;
-        private System.Windows.Forms.Timer Timer_G2_Read;
-        private System.Windows.Forms.Timer Timer_G2_Alarm;
+        public System.Windows.Forms.Timer Timer_G2_Read;
+        public System.Windows.Forms.Timer Timer_G2_Alarm;
     }
 }
