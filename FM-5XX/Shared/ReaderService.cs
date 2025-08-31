@@ -10,9 +10,9 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using Utilities;
+using static Utilities.Utilities;
 
-namespace FM_5XX
+namespace FM_5XX.Shared
 {
     public class ReaderService : IDisposable
     {
@@ -24,25 +24,25 @@ namespace FM_5XX
 
         public class DataRepository
         {
-            public static List<PowerItem> GetPowerGroups(ReaderService.Module.Version v)
+            public static List<PowerItem> GetPowerGroups(Module.Version v)
             {
                 var __list = new List<PowerItem>();
                 int i;
 
                 switch (v)
                 {
-                    case ReaderService.Module.Version.FI_R300T_D1:
-                    case ReaderService.Module.Version.FI_R300T_D2:
+                    case Module.Version.FI_R300T_D1:
+                    case Module.Version.FI_R300T_D2:
                         for (i = 27; i >= 0; i--)
                             __list.Add(new PowerItem() { LocationName = string.Format("{0} dBm", i - 2), LocationValue = i.ToString("X2") });
                         break;
                     default:
-                    case ReaderService.Module.Version.FI_R300A_C1:
-                    case ReaderService.Module.Version.FI_R300A_C2:
+                    case Module.Version.FI_R300A_C1:
+                    case Module.Version.FI_R300A_C2:
                         for (i = 20; i >= 0; i--)
                             __list.Add(new PowerItem() { LocationName = string.Format("{0} dBm", i - 2), LocationValue = i.ToString("X2") });
                         break;
-                    case ReaderService.Module.Version.FI_R300S:
+                    case Module.Version.FI_R300S:
                         for (i = 27; i >= 0; i--)
                             __list.Add(new PowerItem() { LocationName = string.Format("{0} dBm", i), LocationValue = i.ToString("X2") });
                         break;
@@ -161,11 +161,11 @@ namespace FM_5XX
         public delegate void DelegateSerialPortLog(string message, string send_direction);
         public DelegateSerialPortLog? SerialPortLog;
 
-        private Thread ReceiveThread = null;
+        private Thread? ReceiveThread = null;
         private bool IsReceiveEnd = false;
         private string ReceiveBuffer = "";
-        private string SubPacket = null;
-        private byte[] SubReceiveBuffer;
+        private string? SubPacket = null;
+        private byte[]? SubReceiveBuffer;
         private Module.CommandType CommandType = Module.CommandType.Normal;
         private SerialPort SerialPort_;
         private StringBuilder DataBuilder;
@@ -209,7 +209,7 @@ namespace FM_5XX
         {
             try
             {
-                return System.IO.Ports.SerialPort.GetPortNames().ToList();
+                return SerialPort.GetPortNames().ToList();
             }
             catch
             {
@@ -270,10 +270,10 @@ namespace FM_5XX
         }
         private void CombineDataReceive(string s)
         {
-            if (this.CombineDataReceiveEvent != null)
+            if (CombineDataReceiveEvent != null)
             {
                 CombineDataReceiveArgument e = new CombineDataReceiveArgument(s);
-                this.CombineDataReceiveEvent(this, e);
+                CombineDataReceiveEvent(this, e);
             }
         }
         public ReaderService Comma_()
@@ -466,7 +466,7 @@ namespace FM_5XX
                 num ^= paramBytes[i] & 0xFF;
                 do
                 {
-                    num = (((num & 0x80) == 0) ? (num << 1) : ((num << 1) ^ 0x31));
+                    num = (num & 0x80) == 0 ? num << 1 : num << 1 ^ 0x31;
                     num2--;
                 }
                 while (num2 > 0);
@@ -494,11 +494,11 @@ namespace FM_5XX
             {
                 if (i % 8 == 0)
                 {
-                    num ^= (paramBytes[num5++] << 8) & 0xFF00;
+                    num ^= paramBytes[num5++] << 8 & 0xFF00;
                 }
                 if (((uint)num & 0x8000u) != 0)
                 {
-                    num = ((num << 1) & 0xFFFE) ^ num2;
+                    num = num << 1 & 0xFFFE ^ num2;
                     continue;
                 }
                 num <<= 1;
@@ -616,7 +616,7 @@ namespace FM_5XX
         }
         public byte[] HexStringToBytes(string hex)
         {
-            byte[] result = null;
+            byte[] result = [];
             try
             {
                 if (hex.Length % 2 == 0)
@@ -628,7 +628,7 @@ namespace FM_5XX
             }
             catch (Exception)
             {
-                result = null;
+                result = [];
             }
             return result;
         }
@@ -648,11 +648,6 @@ namespace FM_5XX
                 Buffer.BlockCopy(e.Data, 0, data, SubReceiveBuffer.Length, e.Length);
                 length = data.Length;
                 SubReceiveBuffer = null;
-            }
-            else
-            {
-                data = e.Data;
-                length = e.Length;
             }
             do
             {
@@ -706,7 +701,7 @@ namespace FM_5XX
                     }
                     else
                     {
-                        byte[] b = new byte[2] { 10, 10 };
+                        byte[] b = "\n\n"u8.ToArray();
                         lock (packets)
                         {
                             packets.Add(ReductionData(b));
@@ -742,10 +737,10 @@ namespace FM_5XX
         }
         public string MakesUpZero(string str, int lenSize)
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new();
             for (int i = 0; i < lenSize; i++)
             {
-                stringBuilder.Append("0");
+                stringBuilder.Append('0');
             }
             string text = stringBuilder.ToString() + str;
             return text.Substring(text.Length - lenSize);
@@ -798,10 +793,10 @@ namespace FM_5XX
         }
         private void RawRaiseDataReceive(byte[] b)
         {
-            if (this.RawDataReceiveEvent != null)
+            if (RawDataReceiveEvent != null)
             {
                 RawDataReceiveArgument e = new RawDataReceiveArgument(b);
-                this.RawDataReceiveEvent(this, e);
+                RawDataReceiveEvent(this, e);
             }
         }
         public byte[] ReadFrequencyOffset()
@@ -820,11 +815,11 @@ namespace FM_5XX
         {
             return Command_("N4,00").Commit();
         }
-        public byte[] Receive()
+        public byte[]? Receive()
         {
             int num = 256;
             bool flag = false;
-            byte[] array = null;
+            byte[]? array = null;
             do
             {
                 num--;
@@ -836,7 +831,7 @@ namespace FM_5XX
                 {
                     if (ReceiveBuffer != null && ReceiveBuffer.Length > 0)
                     {
-                        array = ((CommandType != Module.CommandType.AA) ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
+                        array = CommandType != Module.CommandType.AA ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer);
                         ReceiveBuffer = "";
                         num = 0;
                     }
@@ -845,16 +840,16 @@ namespace FM_5XX
             }
             while (num > 0);
             CommandType = Module.CommandType.Normal;
-            return (!flag) ? array : null;
+            return !flag ? array : null;
         }
-        public byte[] Receive(int i)
+        public byte[]? Receive(int i)
         {
             if (i < 0 && i > 1000)
             {
                 i = 1000;
             }
             bool flag = false;
-            byte[] array = null;
+            byte[]? array = null;
             do
             {
                 i--;
@@ -864,7 +859,7 @@ namespace FM_5XX
                 }
                 if (ReceiveBuffer != null && ReceiveBuffer.Length > 0)
                 {
-                    array = ((CommandType != Module.CommandType.AA) ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer));
+                    array = CommandType != Module.CommandType.AA ? Utilities.Utilities.StringToBytes(ReceiveBuffer) : HexStringToBytes(ReceiveBuffer);
                     ReceiveBuffer = "";
                     i = 0;
                 }
@@ -872,7 +867,7 @@ namespace FM_5XX
             }
             while (i > 0);
             CommandType = Module.CommandType.Normal;
-            return (!flag) ? array : null;
+            return !flag ? array : null;
         }
         public ReaderService Recom_(byte paramRecom)
         {
@@ -994,7 +989,7 @@ namespace FM_5XX
         {
             return Command_("N1,").Data_(value).Commit();
         }
-        public byte[] SetRegulation(Module.Regulation value)
+        public byte[]? SetRegulation(Module.Regulation value)
         {
             FieldInfo field = value.GetType().GetField(value.ToString());
             if (field == null)
@@ -1008,7 +1003,7 @@ namespace FM_5XX
             }
             return null;
         }
-        public string ShowCRLF(string s)
+        public static string ShowCRLF(string s)
         {
             s = s.Replace("\r", "<CR>").Replace("\n", "<LF>");
             return s;
