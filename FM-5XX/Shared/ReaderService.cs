@@ -1,21 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO.Ports;
-using System.Threading;
 using System.Globalization;
+using System.IO.Ports;
+using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using static Utilities.Utilities;
 
 namespace FM_5XX.Shared
 {
     public class ReaderService : IDisposable
     {
+        public delegate void CombineDataHandler(object sender, CombineDataReceiveArgument e);
+        public delegate void RawDataHandler(object sender, RawDataReceiveArgument e);
+
+        public delegate void DelegateSerialPortLog(string message, string send_direction);
+        public DelegateSerialPortLog? SerialPortLog;
+
+        private Thread? ReceiveThread = null;
+        private bool IsReceiveEnd = false;
+        private string ReceiveBuffer = "";
+        private string? SubPacket = null;
+        private byte[]? SubReceiveBuffer;
+        private Module.CommandType CommandType = Module.CommandType.Normal;
+        private SerialPort SerialPort_;
+        private StringBuilder DataBuilder;
+        public event RawDataHandler RawDataReceiveEvent;
+        public event CombineDataHandler CombineDataReceiveEvent;
+
         public class PowerItem
         {
             public string LocationName { get; set; }
@@ -70,7 +87,6 @@ namespace FM_5XX.Shared
                 return __list;
             }
         }
-
         public class Module
         {
             public enum CommandType
@@ -154,29 +170,10 @@ namespace FM_5XX.Shared
                 data = b;
             }
         }
-
-        public delegate void CombineDataHandler(object sender, CombineDataReceiveArgument e);
-        public delegate void RawDataHandler(object sender, RawDataReceiveArgument e);
-
-        public delegate void DelegateSerialPortLog(string message, string send_direction);
-        public DelegateSerialPortLog? SerialPortLog;
-
-        private Thread? ReceiveThread = null;
-        private bool IsReceiveEnd = false;
-        private string ReceiveBuffer = "";
-        private string? SubPacket = null;
-        private byte[]? SubReceiveBuffer;
-        private Module.CommandType CommandType = Module.CommandType.Normal;
-        private SerialPort SerialPort_;
-        private StringBuilder DataBuilder;
-        public event RawDataHandler RawDataReceiveEvent;
-        public event CombineDataHandler CombineDataReceiveEvent;
-
         public void Dispose()
         {
             Close();
         }
-
         public ReaderService()
         {
             SerialPort_ = new SerialPort();
@@ -185,7 +182,6 @@ namespace FM_5XX.Shared
                 DataBuilder = new StringBuilder();
             }
         }
-
         private async void WriteSerialLog(string message, string send_direction)
         {
             if (SerialPortLog != null)
@@ -194,7 +190,6 @@ namespace FM_5XX.Shared
                 SerialPortLog(message, send_direction);
             }
         }
-
         private async void WriteSerialLog(byte[] bs, string send_direction)
         {
             if (SerialPortLog != null)
@@ -204,7 +199,6 @@ namespace FM_5XX.Shared
                 SerialPortLog(message, send_direction);
             }
         }
-
         public static List<string> GetCOMportList()
         {
             try
@@ -215,6 +209,42 @@ namespace FM_5XX.Shared
             {
                 return new List<string>();
             }
+        }
+
+        public static string GetErrorCodeString(string s)
+        {
+
+            string retString = string.Empty;
+            if (s.Length == 0)
+            {
+                return $"Unknown Error: Empty response";
+            }
+
+            if (s[0] == 'Z' && s.Length >= 3)
+            {
+                // Special handling for 'Z' code with additional characters
+                return $"Z: {s}: {s.Substring(1, 2)} chars written to the memory.";
+            }
+            if (s.Length >= 2 && s.Substring(0, 2) == "3Z")
+            {
+                return $"3Z: {s}: error code and {s.Substring(2, 2)} chars written to the memory.";
+            }
+            // Map error code to description
+            return s switch
+            {
+                "0" => "0: Other error.",
+                "3" => "3: The specified memory location does not exist or the EPC length field is not supported.",
+                "4" => "4: The specified memory location is locked and/or per-malocked.",
+                "B" => "B: The Tag has insufficient power.",
+                "F" => "F: Non-specific error.",
+                "W" => "W: The Tag does not exist or no reply.",
+                "K" => "K: The Tag does not exist or no reply.",
+                "E" => "E: Error.",
+                "X" => "X: Command error or not support.",
+                "L<OK>" => "L<OK>: The Tag has been successfully lock.",
+                "W<OK>" => "W<OK>: The Tag has been successfully written.",
+                _ => $"Unknown err code {s}"
+            };
         }
 
         public ReaderService Action_(string paramAction)
@@ -950,7 +980,6 @@ namespace FM_5XX.Shared
                 WriteSerialLog(bs, "TX");
             }
         }
-
         public void Send(byte[] bs)
         {
             if (bs != null && IsOpen())
@@ -989,19 +1018,19 @@ namespace FM_5XX.Shared
         {
             return Command_("N1,").Data_(value).Commit();
         }
-        public byte[]? SetRegulation(Module.Regulation value)
+        public byte[] SetRegulation(Module.Regulation value)
         {
             FieldInfo field = value.GetType().GetField(value.ToString());
             if (field == null)
             {
-                return null;
+                return [];
             }
             object[] customAttributes = field.GetCustomAttributes(typeof(DescriptionAttribute), inherit: true);
             if (customAttributes != null && customAttributes.Length != 0)
             {
                 return Command_("N5,").Data_(((DescriptionAttribute)customAttributes[0]).Description).Commit();
             }
-            return null;
+            return [];
         }
         public static string ShowCRLF(string s)
         {

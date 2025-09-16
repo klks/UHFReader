@@ -381,6 +381,7 @@
             btnRefreshComPorts.Size = new Size(25, 23);
             btnRefreshComPorts.TabIndex = 1;
             btnRefreshComPorts.UseVisualStyleBackColor = true;
+            btnRefreshComPorts.Click += btnRFFreqRefresh_Click;
             // 
             // cbReader_COM
             // 

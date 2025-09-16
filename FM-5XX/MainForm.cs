@@ -45,11 +45,6 @@ namespace FM_5XX
                 FormSharedData.readerClient.Dispose();
             FormSharedData.readerClient = null;
         }
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-
-        }
-        
         private void btnLogClearStatus_Click(object sender, EventArgs e)
         {
             lbStatusMessage.Items.Clear();

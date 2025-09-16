@@ -43,20 +43,21 @@
             btnInventoryTID = new Button();
             lvInventoryEPC = new ListView();
             lvInvCol_Number = new ColumnHeader();
+            lvInvCol_CRC = new ColumnHeader();
             lvInvCol_PC = new ColumnHeader();
             lvInvCol_EPC = new ColumnHeader();
             lvInvCol_Len = new ColumnHeader();
             lvInvCol_Count = new ColumnHeader();
-            checkBox1 = new CheckBox();
+            cbEnableMask = new CheckBox();
             groupBox3 = new GroupBox();
-            textBox5 = new TextBox();
+            txtMaskData = new TextBox();
             label24 = new Label();
-            textBox3 = new TextBox();
-            textBox4 = new TextBox();
+            txtMaskLen = new TextBox();
+            txtMaskStartAddr = new TextBox();
             label20 = new Label();
             label23 = new Label();
             label21 = new Label();
-            comboBox1 = new ComboBox();
+            cbMaskMemBank = new ComboBox();
             gbTagRW = new GroupBox();
             txtReader_ReadData = new TextBox();
             label6 = new Label();
@@ -235,7 +236,7 @@
             // 
             // lvInventoryEPC
             // 
-            lvInventoryEPC.Columns.AddRange(new ColumnHeader[] { lvInvCol_Number, lvInvCol_PC, lvInvCol_EPC, lvInvCol_Len, lvInvCol_Count });
+            lvInventoryEPC.Columns.AddRange(new ColumnHeader[] { lvInvCol_Number, lvInvCol_CRC, lvInvCol_PC, lvInvCol_EPC, lvInvCol_Len, lvInvCol_Count });
             lvInventoryEPC.FullRowSelect = true;
             lvInventoryEPC.GridLines = true;
             lvInventoryEPC.Location = new Point(6, 22);
@@ -252,59 +253,68 @@
             lvInvCol_Number.Text = "No.";
             lvInvCol_Number.Width = 40;
             // 
+            // lvInvCol_CRC
+            // 
+            lvInvCol_CRC.Text = "CRC";
+            lvInvCol_CRC.Width = 50;
+            // 
             // lvInvCol_PC
             // 
             lvInvCol_PC.Text = "PC";
+            lvInvCol_PC.Width = 50;
             // 
             // lvInvCol_EPC
             // 
             lvInvCol_EPC.Text = "EPC";
-            lvInvCol_EPC.Width = 230;
+            lvInvCol_EPC.Width = 240;
             // 
             // lvInvCol_Len
             // 
             lvInvCol_Len.Text = "Length";
-            lvInvCol_Len.Width = 80;
+            lvInvCol_Len.Width = 50;
             // 
             // lvInvCol_Count
             // 
             lvInvCol_Count.Text = "Count";
-            lvInvCol_Count.Width = 80;
+            lvInvCol_Count.Width = 50;
             // 
-            // checkBox1
+            // cbEnableMask
             // 
-            checkBox1.AutoSize = true;
-            checkBox1.Location = new Point(5, -1);
-            checkBox1.Name = "checkBox1";
-            checkBox1.Size = new Size(214, 19);
-            checkBox1.TabIndex = 30;
-            checkBox1.Text = "Enable Set Select for Pre-Command";
-            checkBox1.UseVisualStyleBackColor = true;
+            cbEnableMask.AutoSize = true;
+            cbEnableMask.Location = new Point(5, -1);
+            cbEnableMask.Name = "cbEnableMask";
+            cbEnableMask.Size = new Size(214, 19);
+            cbEnableMask.TabIndex = 30;
+            cbEnableMask.Text = "Enable Set Select for Pre-Command";
+            cbEnableMask.UseVisualStyleBackColor = true;
+            cbEnableMask.CheckedChanged += cbEnableMask_CheckedChanged;
             // 
             // groupBox3
             // 
-            groupBox3.Controls.Add(checkBox1);
-            groupBox3.Controls.Add(textBox5);
+            groupBox3.Controls.Add(cbEnableMask);
+            groupBox3.Controls.Add(txtMaskData);
             groupBox3.Controls.Add(label24);
-            groupBox3.Controls.Add(textBox3);
-            groupBox3.Controls.Add(textBox4);
+            groupBox3.Controls.Add(txtMaskLen);
+            groupBox3.Controls.Add(txtMaskStartAddr);
             groupBox3.Controls.Add(label20);
             groupBox3.Controls.Add(label23);
             groupBox3.Controls.Add(label21);
-            groupBox3.Controls.Add(comboBox1);
+            groupBox3.Controls.Add(cbMaskMemBank);
             groupBox3.Location = new Point(3, 488);
             groupBox3.Name = "groupBox3";
             groupBox3.Size = new Size(631, 81);
             groupBox3.TabIndex = 20;
             groupBox3.TabStop = false;
             // 
-            // textBox5
+            // txtMaskData
             // 
-            textBox5.CharacterCasing = CharacterCasing.Upper;
-            textBox5.Location = new Point(95, 52);
-            textBox5.Name = "textBox5";
-            textBox5.Size = new Size(530, 23);
-            textBox5.TabIndex = 25;
+            txtMaskData.CharacterCasing = CharacterCasing.Upper;
+            txtMaskData.Location = new Point(95, 52);
+            txtMaskData.Name = "txtMaskData";
+            txtMaskData.Size = new Size(530, 23);
+            txtMaskData.TabIndex = 25;
+            txtMaskData.TextChanged += filterOnlyHex_TextChanged;
+            txtMaskData.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label24
             // 
@@ -315,24 +325,28 @@
             label24.TabIndex = 24;
             label24.Text = "Data (Hex)";
             // 
-            // textBox3
+            // txtMaskLen
             // 
-            textBox3.Location = new Point(552, 24);
-            textBox3.MaxLength = 4;
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(70, 23);
-            textBox3.TabIndex = 29;
-            textBox3.Text = "4";
+            txtMaskLen.Location = new Point(552, 24);
+            txtMaskLen.MaxLength = 4;
+            txtMaskLen.Name = "txtMaskLen";
+            txtMaskLen.Size = new Size(70, 23);
+            txtMaskLen.TabIndex = 29;
+            txtMaskLen.Text = "40";
+            txtMaskLen.TextChanged += filterOnlyHex_TextChanged;
+            txtMaskLen.KeyPress += filterOnlyHex_KeyPress;
             // 
-            // textBox4
+            // txtMaskStartAddr
             // 
-            textBox4.CharacterCasing = CharacterCasing.Upper;
-            textBox4.Location = new Point(351, 24);
-            textBox4.MaxLength = 4;
-            textBox4.Name = "textBox4";
-            textBox4.Size = new Size(70, 23);
-            textBox4.TabIndex = 25;
-            textBox4.Text = "1";
+            txtMaskStartAddr.CharacterCasing = CharacterCasing.Upper;
+            txtMaskStartAddr.Location = new Point(351, 24);
+            txtMaskStartAddr.MaxLength = 4;
+            txtMaskStartAddr.Name = "txtMaskStartAddr";
+            txtMaskStartAddr.Size = new Size(70, 23);
+            txtMaskStartAddr.TabIndex = 25;
+            txtMaskStartAddr.Text = "20";
+            txtMaskStartAddr.TextChanged += filterOnlyHex_TextChanged;
+            txtMaskStartAddr.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label20
             // 
@@ -361,15 +375,15 @@
             label21.TabIndex = 27;
             label21.Text = "Memory Bank";
             // 
-            // comboBox1
+            // cbMaskMemBank
             // 
-            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Items.AddRange(new object[] { "RESERVED", "EPC", "TID", "USER" });
-            comboBox1.Location = new Point(95, 23);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(121, 23);
-            comboBox1.TabIndex = 26;
+            cbMaskMemBank.DropDownStyle = ComboBoxStyle.DropDownList;
+            cbMaskMemBank.FormattingEnabled = true;
+            cbMaskMemBank.Items.AddRange(new object[] { "RESERVED", "EPC", "TID", "USER" });
+            cbMaskMemBank.Location = new Point(95, 23);
+            cbMaskMemBank.Name = "cbMaskMemBank";
+            cbMaskMemBank.Size = new Size(121, 23);
+            cbMaskMemBank.TabIndex = 26;
             // 
             // gbTagRW
             // 
@@ -399,6 +413,7 @@
             txtReader_ReadData.CharacterCasing = CharacterCasing.Upper;
             txtReader_ReadData.Location = new Point(76, 78);
             txtReader_ReadData.Name = "txtReader_ReadData";
+            txtReader_ReadData.ReadOnly = true;
             txtReader_ReadData.Size = new Size(470, 23);
             txtReader_ReadData.TabIndex = 23;
             // 
@@ -418,6 +433,8 @@
             txtReader_WriteData.Name = "txtReader_WriteData";
             txtReader_WriteData.Size = new Size(470, 23);
             txtReader_WriteData.TabIndex = 20;
+            txtReader_WriteData.TextChanged += filterOnlyHex_TextChanged;
+            txtReader_WriteData.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label13
             // 
@@ -430,17 +447,19 @@
             // 
             // txt6C_RWLen
             // 
-            txt6C_RWLen.Location = new Point(371, 48);
+            txt6C_RWLen.Location = new Point(427, 49);
             txt6C_RWLen.MaxLength = 4;
             txt6C_RWLen.Name = "txt6C_RWLen";
             txt6C_RWLen.Size = new Size(70, 23);
             txt6C_RWLen.TabIndex = 18;
             txt6C_RWLen.Text = "4";
+            txt6C_RWLen.TextChanged += filterOnlyHex_TextChanged;
+            txt6C_RWLen.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label12
             // 
             label12.AutoSize = true;
-            label12.Location = new Point(231, 51);
+            label12.Location = new Point(320, 52);
             label12.Name = "label12";
             label12.Size = new Size(101, 15);
             label12.TabIndex = 17;
@@ -454,6 +473,7 @@
             btn6C_Write.TabIndex = 15;
             btn6C_Write.Text = "Write";
             btn6C_Write.UseVisualStyleBackColor = true;
+            btn6C_Write.Click += btn6C_Write_Click;
             // 
             // btn6C_Read
             // 
@@ -463,11 +483,12 @@
             btn6C_Read.TabIndex = 14;
             btn6C_Read.Text = "Read";
             btn6C_Read.UseVisualStyleBackColor = true;
+            btn6C_Read.Click += btn6C_Read_Click;
             // 
             // label11
             // 
             label11.AutoSize = true;
-            label11.Location = new Point(10, 23);
+            label11.Location = new Point(68, 23);
             label11.Name = "label11";
             label11.Size = new Size(81, 15);
             label11.TabIndex = 13;
@@ -478,7 +499,7 @@
             cb6C_MemBank.DropDownStyle = ComboBoxStyle.DropDownList;
             cb6C_MemBank.FormattingEnabled = true;
             cb6C_MemBank.Items.AddRange(new object[] { "RESERVED", "EPC", "TID", "USER" });
-            cb6C_MemBank.Location = new Point(95, 19);
+            cb6C_MemBank.Location = new Point(155, 19);
             cb6C_MemBank.Name = "cb6C_MemBank";
             cb6C_MemBank.Size = new Size(121, 23);
             cb6C_MemBank.TabIndex = 12;
@@ -492,11 +513,13 @@
             txt6C_StartAddr.Size = new Size(70, 23);
             txt6C_StartAddr.TabIndex = 11;
             txt6C_StartAddr.Text = "1";
+            txt6C_StartAddr.TextChanged += filterOnlyHex_TextChanged;
+            txt6C_StartAddr.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(9, 51);
+            label10.Location = new Point(8, 51);
             label10.Name = "label10";
             label10.Size = new Size(141, 15);
             label10.TabIndex = 10;
@@ -505,7 +528,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(228, 22);
+            label9.Location = new Point(294, 23);
             label9.Name = "label9";
             label9.Size = new Size(127, 15);
             label9.TabIndex = 8;
@@ -514,12 +537,13 @@
             // txt6C_AccessPwd
             // 
             txt6C_AccessPwd.CharacterCasing = CharacterCasing.Upper;
-            txt6C_AccessPwd.Location = new Point(364, 19);
+            txt6C_AccessPwd.Location = new Point(427, 21);
             txt6C_AccessPwd.MaxLength = 8;
             txt6C_AccessPwd.Name = "txt6C_AccessPwd";
             txt6C_AccessPwd.Size = new Size(70, 23);
             txt6C_AccessPwd.TabIndex = 7;
             txt6C_AccessPwd.Text = "00000000";
+            txt6C_AccessPwd.KeyPress += filterOnlyHex_KeyPress;
             // 
             // groupBox2
             // 
@@ -542,6 +566,7 @@
             btnLogClearSerial.TabIndex = 12;
             btnLogClearSerial.Text = "Clear";
             btnLogClearSerial.UseVisualStyleBackColor = true;
+            btnLogClearSerial.Click += btnLogClearSerial_Click;
             // 
             // textSerialInput
             // 
@@ -558,6 +583,7 @@
             btnSerialSend.TabIndex = 10;
             btnSerialSend.Text = "Send";
             btnSerialSend.UseVisualStyleBackColor = true;
+            btnSerialSend.Click += btnSerialSend_Click;
             // 
             // lbSerialLog
             // 
@@ -610,6 +636,7 @@
             btn6C_KillTag.TabIndex = 21;
             btn6C_KillTag.Text = "Kill";
             btn6C_KillTag.UseVisualStyleBackColor = true;
+            btn6C_KillTag.Click += btn6C_KillTag_Click;
             // 
             // textBox1
             // 
@@ -620,6 +647,8 @@
             textBox1.Size = new Size(68, 23);
             textBox1.TabIndex = 21;
             textBox1.Text = "00000000";
+            textBox1.TextChanged += filterOnlyHex_TextChanged;
+            textBox1.KeyPress += filterOnlyHex_KeyPress;
             // 
             // label15
             // 
@@ -666,6 +695,7 @@
             btnSetProtectState.TabIndex = 15;
             btnSetProtectState.Text = "Set Protect";
             btnSetProtectState.UseVisualStyleBackColor = true;
+            btnSetProtectState.Click += btnSetProtectState_Click;
             // 
             // groupBox10
             // 
@@ -979,18 +1009,18 @@
         private ColumnHeader lvInvCol_EPC;
         private ColumnHeader lvInvCol_Len;
         private ColumnHeader lvInvCol_Count;
-        private CheckBox checkBox1;
+        private CheckBox cbEnableMask;
         private GroupBox groupBox3;
-        private TextBox textBox5;
+        private TextBox txtMaskData;
         private Label label24;
-        private TextBox textBox3;
-        private TextBox textBox4;
+        private TextBox txtMaskLen;
+        private TextBox txtMaskStartAddr;
         private Label label20;
         private Label label23;
         private Label label21;
-        private ComboBox comboBox1;
+        private ComboBox cbMaskMemBank;
         private GroupBox gbTagRW;
-        private TextBox txtReader_ReadData;
+        public TextBox txtReader_ReadData;
         private Label label6;
         private TextBox txtReader_WriteData;
         private Label label13;
@@ -1040,5 +1070,6 @@
         private RadioButton NoProect2;
         private System.Windows.Forms.Timer timer_InventoryTID;
         private System.Windows.Forms.Timer timer_InventoryEPC;
+        private ColumnHeader lvInvCol_CRC;
     }
 }

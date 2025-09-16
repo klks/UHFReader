@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static FM_5XX.Shared.FormSharedData;
 
 namespace FM_5XX.FormTabs
 {
@@ -89,7 +88,7 @@ namespace FM_5XX.FormTabs
         }
         private void btnInventoryTID_Click(object sender, EventArgs e)
         {
-            if (readerClient == null || IsReceiveDataWork) return;
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
 
             if (btnInventoryTID.Text == "Stop")
             {
@@ -123,24 +122,24 @@ namespace FM_5XX.FormTabs
         }
         private void btnSerialSend_Click(object sender, EventArgs e)
         {
-            if (readerClient == null || IsReceiveDataWork) return;
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
 
             if (textSerialInput.Text.Length > 0)
             {
                 string s = textSerialInput.Text;
                 if (s.Length > 0)
                 {
-                    DoProcess = CommandStates.INFO;
-                    IsReceiveDataWork = true;
-                    readerClient.Send(s);
+                    FormSharedData.DoProcess = FormSharedData.CommandStates.INFO;
+                    FormSharedData.IsReceiveDataWork = true;
+                    FormSharedData.readerClient.Send(s);
                 }
-                AddStatusMessage("SerialSend Called");
+                FormSharedData.AddStatusMessage("SerialSend Called");
             }
         }
         private bool isTimer6C_EPCReadProcessing = false;
         private void timer_InventoryEPC_Tick(object sender, EventArgs e)
         {
-            if (readerClient == null)
+            if (FormSharedData.readerClient == null)
             {
                 timer_InventoryEPC.Enabled = false;
                 return;
@@ -148,15 +147,15 @@ namespace FM_5XX.FormTabs
             if (isTimer6C_EPCReadProcessing) return;
 
             isTimer6C_EPCReadProcessing = true;
-            DoProcess = CommandStates.INV_EPC;
-            readerClient.Send(readerClient.Command_U(), ReaderService.Module.CommandType.Normal);
+            FormSharedData.DoProcess = FormSharedData.CommandStates.INV_EPC;
+            FormSharedData.readerClient.Send(FormSharedData.readerClient.Command_U(), ReaderService.Module.CommandType.Normal);
             isTimer6C_EPCReadProcessing = false;
         }
 
         private bool isTimer6C_TIDReadProcessing = false;
         private void timer_InventoryTID_Tick(object sender, EventArgs e)
         {
-            if (readerClient == null)
+            if (FormSharedData.readerClient == null)
             {
                 timer_InventoryEPC.Enabled = false;
                 return;
@@ -164,8 +163,11 @@ namespace FM_5XX.FormTabs
             if (isTimer6C_TIDReadProcessing) return;
             isTimer6C_TIDReadProcessing = true;
 
-            DoProcess = CommandStates.INV_TID;
-            readerClient.Send(readerClient.Command_R("2", Inventory_TID_Address, Inventory_TID_Length), ReaderService.Module.CommandType.Normal);
+            FormSharedData.DoProcess = FormSharedData.CommandStates.INV_TID;
+            FormSharedData.readerClient.Send(
+                FormSharedData.readerClient.Command_R("2", Inventory_TID_Address, Inventory_TID_Length),
+                ReaderService.Module.CommandType.Normal
+                );
 
             isTimer6C_TIDReadProcessing = false;
         }
@@ -187,21 +189,130 @@ namespace FM_5XX.FormTabs
             gbLockPassword.Enabled = false;
             gbLockTIDnUSER.Enabled = true;
         }
+
+        private void WaitForDone()
+        {
+            while (FormSharedData.IsReceiveDataWork)
+            {
+                Application.DoEvents();
+                System.Threading.Thread.Sleep(50);
+            }
+        }
+        private bool PasswordCheck()
+        {
+            // Should be cone on the commands below
+            // R, W, L
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return false;
+
+            if (txt6C_AccessPwd.Text != "" && txt6C_AccessPwd.Text != "00000000" &&
+                txt6C_AccessPwd.Text.Length == 8)
+            {
+                FormSharedData.DoProcess = FormSharedData.CommandStates.PASSWORD;
+                FormSharedData.IsReceiveDataWork = true;
+                FormSharedData.readerClient.Send(
+                        FormSharedData.readerClient.Command_P(txt6C_AccessPwd.Text),
+                        ReaderService.Module.CommandType.Normal
+                    );
+                WaitForDone();
+                return FormSharedData.SuccessStatus;
+            }
+            return true;
+        }
+        private bool MaskCheck()
+        {
+            // Should be cone on the commands below (should be done after P where applicable)
+            // Q, R, W, K, L, P, U
+            if(cbEnableMask.Checked)
+            {
+                if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork)
+                    return false;
+                if (cbMaskMemBank.SelectedIndex != -1 && txtMaskData.Text != "" &&
+                    txtMaskLen.Text != "" && txtMaskStartAddr.Text != "")
+                {
+                    FormSharedData.DoProcess = FormSharedData.CommandStates.MASK;
+                    FormSharedData.IsReceiveDataWork = true;
+                    FormSharedData.readerClient.Send(
+                            FormSharedData.readerClient.Command_T(
+                                cbMaskMemBank.SelectedIndex.ToString(), //MemBank
+                                txtMaskStartAddr.Text, //Pointer
+                                txtMaskLen.Text, //Length
+                                txtMaskData.Text  //Mask Data
+                                ),
+                            ReaderService.Module.CommandType.Normal
+                        );
+                    WaitForDone();
+                    return FormSharedData.SuccessStatus;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        private bool CheckRWInputFields()
+        {
+            if (cb6C_MemBank.SelectedIndex == -1)
+            {
+                FormSharedData.AddStatusMessage("Please Select a memory bank");
+                return false;
+            }
+            if (txt6C_StartAddr.Text == "")
+            {
+                FormSharedData.AddStatusMessage("Please enter a starting address");
+                return false;
+            }
+            if (txt6C_RWLen.Text == "")
+            {
+                FormSharedData.AddStatusMessage("Please enter a length");
+                return false;
+            }
+            return true;
+        }
         private void btn6C_Read_Click(object sender, EventArgs e)
         {
-            if (readerClient == null || IsReceiveDataWork) return;
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
+            if (!CheckRWInputFields()) return;
 
-            //IsReceiveDataWork = true;
-            //Check if access password is not 00000000
+            if (!PasswordCheck()) return;
+            if (!MaskCheck()) return;
+
+            string membank = cb6C_MemBank.SelectedIndex.ToString();     //Memory Bank
+            string startAddr = txt6C_StartAddr.Text;                    //Start Address
+            string length = txt6C_RWLen.Text;                           //Length
+
+            FormSharedData.IsReceiveDataWork = true;
+            FormSharedData.DoProcess = FormSharedData.CommandStates.READ;
+            FormSharedData.readerClient.Send(FormSharedData.readerClient.Command_R(membank, startAddr, length), ReaderService.Module.CommandType.Normal);
+            WaitForDone();
         }
         private void btn6C_Write_Click(object sender, EventArgs e)
         {
-            if (readerClient == null || IsReceiveDataWork) return;
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
+            if (!CheckRWInputFields()) return;
+            if (txtReader_WriteData.Text == "")
+            {
+                FormSharedData.AddStatusMessage("Please enter data to write");
+                return;
+            }
+            if (txtReader_WriteData.Text.Length % 4 != 0)
+            {
+                FormSharedData.AddStatusMessage("Data length must be a multiple of 4");
+                return;
+            }
 
-            //IsReceiveDataWork = true;
-            //Check if access password is not 00000000
+            if (!PasswordCheck()) return;
+            if (!MaskCheck()) return;
+
+            string membank = cb6C_MemBank.SelectedIndex.ToString();     //Memory Bank
+            string startAddr = txt6C_StartAddr.Text;                    //Start Address
+            string length = txt6C_RWLen.Text;                           //Length
+            string writeData = txtReader_WriteData.Text;                    //Write Data
+
+            FormSharedData.IsReceiveDataWork = true;
+            FormSharedData.DoProcess = FormSharedData.CommandStates.WRITE;
+            FormSharedData.readerClient.Send(FormSharedData.readerClient.Command_W(membank, startAddr, length, writeData), ReaderService.Module.CommandType.Normal);
+            WaitForDone();
         }
-        private void btnLogClearSerial_Click_1(object sender, EventArgs e)
+        private void btnLogClearSerial_Click(object sender, EventArgs e)
         {
             lbSerialLog.Items.Clear();
         }
@@ -225,6 +336,24 @@ namespace FM_5XX.FormTabs
                 {
                     Clipboard.SetText(TIDValue);
                 }
+            }
+        }
+
+        private void btnSetProtectState_Click(object sender, EventArgs e)
+        {
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
+        }
+
+        private void btn6C_KillTag_Click(object sender, EventArgs e)
+        {
+            if (FormSharedData.readerClient == null || FormSharedData.IsReceiveDataWork) return;
+        }
+
+        private void cbEnableMask_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cbEnableMask.Checked)
+            {
+                //Validate fields TODO
             }
         }
     }

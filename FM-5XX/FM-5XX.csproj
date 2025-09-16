@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="FormTabs\Form_EPCC1G26C.resx~RFfcf9b.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="9.0.4" />
   </ItemGroup>
 

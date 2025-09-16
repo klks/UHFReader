@@ -99,7 +99,6 @@
             Name = "MainForm";
             Text = "FM-5XX";
             FormClosed += MainForm_FormClosed;
-            Load += MainForm_Load;
             tabControl1.ResumeLayout(false);
             ResumeLayout(false);
         }
