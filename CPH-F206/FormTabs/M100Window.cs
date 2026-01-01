@@ -13,7 +13,9 @@ using System.Timers;
 using System.Windows.Forms;
 using static System.Windows.Forms.DataFormats;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 namespace CPH_F206.FormTabs
 {
     public partial class M100Window : Form
@@ -35,10 +37,10 @@ namespace CPH_F206.FormTabs
         private string mWriteFilePath;
         private int mWriteStartLine;
         public int mFileWriteMode;
-        //private IWorkbook mFileWorkBook;
-        //private IRow mFileRow;
-        //private ICell mFileCell;
-        //private ISheet mFileSheet;
+        private IWorkbook mFileWorkBook;
+        private IRow mFileRow;
+        private ICell mFileCell;
+        private ISheet mFileSheet;
         private CheckBox[] mFreqBoxs;
         private byte[] mLastWriteData = new byte[128];
         private byte mLastWriteDataLen;
@@ -181,32 +183,32 @@ namespace CPH_F206.FormTabs
 
         private void skinButton_save_Click(object sender, EventArgs e)
         {
-            //string text = null;
-            //int num = 0;
-            //SaveFileDialog saveFileDialog = new SaveFileDialog();
-            //saveFileDialog.Filter = "Excel files (*.xls)|*.xls|Excel files (*.xlsx)|*.xlsx";
-            //saveFileDialog.FilterIndex = 1;
-            //if (saveFileDialog.ShowDialog() != DialogResult.OK)
-            //{
-            //    return;
-            //}
-            //text = saveFileDialog.FileName;
-            //HSSFWorkbook hSSFWorkbook = new HSSFWorkbook();
-            //ISheet sheet = hSSFWorkbook.CreateSheet("UHF Data" + $"{DateTime.Now:yyyy-MM-dd}");
-            //foreach (ListViewItem item in skinListView_tags.Items)
-            //{
-            //    if (item.SubItems[1].Text.Trim().Length != 0)
-            //    {
-            //        sheet.CreateRow(num).CreateCell(0).SetCellValue(item.SubItems[1].Text);
-            //        item.SubItems[2].Text.Trim();
-            //        num++;
-            //    }
-            //}
-            //sheet.AutoSizeColumn(0);
-            //FileStream fileStream = new FileStream(text, FileMode.Create, FileAccess.Write);
-            //hSSFWorkbook.Write(fileStream);
-            //fileStream.Close();
-            //parentWindow.AddResultItem("文件：" + text + " 成功", MessageType.Normal);
+            string text = null;
+            int num = 0;
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Excel files (*.xls)|*.xls|Excel files (*.xlsx)|*.xlsx";
+            saveFileDialog.FilterIndex = 1;
+            if (saveFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+            text = saveFileDialog.FileName;
+            HSSFWorkbook hSSFWorkbook = new HSSFWorkbook();
+            ISheet sheet = hSSFWorkbook.CreateSheet("UHF Data" + $"{DateTime.Now:yyyy-MM-dd}");
+            foreach (ListViewItem item in skinListView_tags.Items)
+            {
+                if (item.SubItems[1].Text.Trim().Length != 0)
+                {
+                    sheet.CreateRow(num).CreateCell(0).SetCellValue(item.SubItems[1].Text);
+                    item.SubItems[2].Text.Trim();
+                    num++;
+                }
+            }
+            sheet.AutoSizeColumn(0);
+            FileStream fileStream = new FileStream(text, FileMode.Create, FileAccess.Write);
+            hSSFWorkbook.Write(fileStream);
+            fileStream.Close();
+            parentWindow.AddResultItem("文件：" + text + " 成功", MessageType.Normal);
         }
 
         private void DisplayOneTag(string epcStr, string tidStr, string userStr, string ext_msg)
@@ -1777,104 +1779,104 @@ namespace CPH_F206.FormTabs
 
         private void button_write_file_hand_Click(object sender, EventArgs e)
         {
-            //mWriteFilePath = textBox_write_file_path.Text.Trim();
-            //mWriteStartLine = (int)numericUpDown_write_file_row.Value;
-            //if (reader == null)
-            //{
-            //    return;
-            //}
-            //if (mWriteFilePath.Length == 0)
-            //{
-            //    parentWindow.AddResultItem("请选择要加载的写入文件", MessageType.Error);
-            //    return;
-            //}
-            //try
-            //{
-            //    if (mFileWriteStream != null)
-            //    {
-            //        mFileWriteStream.Close();
-            //        mFileWriteStream = null;
-            //    }
-            //    mFileWriteStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
-            //}
-            //catch (Exception)
-            //{
-            //    parentWindow.AddResultItem("打开文件失败.", MessageType.Error);
-            //    return;
-            //}
-            //string extension = Path.GetExtension(mWriteFilePath);
-            //if (extension.Equals(".xls"))
-            //{
-            //    mFileWorkBook = new HSSFWorkbook(mFileWriteStream);
-            //}
-            //else if (extension.Equals(".xlsx"))
-            //{
-            //    mFileWorkBook = new XSSFWorkbook((Stream)mFileWriteStream);
-            //}
-            //mFileSheet = mFileWorkBook.GetSheetAt(0);
-            //mFileWriteMode = 1;
-            //mFileWriteTimer.Start();
+            mWriteFilePath = textBox_write_file_path.Text.Trim();
+            mWriteStartLine = (int)numericUpDown_write_file_row.Value;
+            if (reader == null)
+            {
+                return;
+            }
+            if (mWriteFilePath.Length == 0)
+            {
+                parentWindow.AddResultItem("Please select the file to load.", MessageType.Error);
+                return;
+            }
+            try
+            {
+                if (mFileWriteStream != null)
+                {
+                    mFileWriteStream.Close();
+                    mFileWriteStream = null;
+                }
+                mFileWriteStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
+            }
+            catch (Exception)
+            {
+                parentWindow.AddResultItem("Failed to open file.", MessageType.Error);
+                return;
+            }
+            string extension = Path.GetExtension(mWriteFilePath);
+            if (extension.Equals(".xls"))
+            {
+                mFileWorkBook = new HSSFWorkbook(mFileWriteStream);
+            }
+            else if (extension.Equals(".xlsx"))
+            {
+                mFileWorkBook = new XSSFWorkbook((Stream)mFileWriteStream);
+            }
+            mFileSheet = mFileWorkBook.GetSheetAt(0);
+            mFileWriteMode = 1;
+            mFileWriteTimer.Start();
         }
 
         private void button_write_file_reload_Click(object sender, EventArgs e)
         {
-            //int num = 0;
-            //if (textBox_write_file_path.Text.Trim().Length == 0)
-            //{
-            //    parentWindow.AddResultItem("文件路径为空，不能获取该行数据", MessageType.Error);
-            //    return;
-            //}
-            //mWriteFilePath = textBox_write_file_path.Text.Trim();
-            //num = (mWriteStartLine = (int)numericUpDown_write_file_row.Value);
-            //try
-            //{
-            //    FileStream fileStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
-            //    string extension = Path.GetExtension(mWriteFilePath);
-            //    IWorkbook workbook;
-            //    if (extension.Equals(".xls"))
-            //    {
-            //        workbook = new HSSFWorkbook(fileStream);
-            //    }
-            //    else
-            //    {
-            //        if (!extension.Equals(".xlsx"))
-            //        {
-            //            fileStream.Close();
-            //            return;
-            //        }
-            //        workbook = new XSSFWorkbook((Stream)fileStream);
-            //    }
-            //    IRow row = workbook.GetSheetAt(0).GetRow(num - 1);
-            //    if (row == null)
-            //    {
-            //        parentWindow.AddResultItem("第" + num + "行不存在，请检查", MessageType.Error);
-            //        fileStream.Close();
-            //        return;
-            //    }
-            //    string text = row.GetCell(0).StringCellValue.Trim();
-            //    int hexlen = 0;
-            //    byte[] array = StringToHex(text, out hexlen);
-            //    if (hexlen == 0)
-            //    {
-            //        parentWindow.AddResultItem("第" + num + "行数据为非法数据，数据内容：" + text, MessageType.Error);
-            //        textBox_write_file_data.Text = "";
-            //    }
-            //    else
-            //    {
-            //        StringBuilder stringBuilder = new StringBuilder();
-            //        for (int i = 0; i < hexlen; i++)
-            //        {
-            //            stringBuilder.AppendFormat("{0:X2} ", array[i]);
-            //        }
-            //        textBox_write_file_data.Text = stringBuilder.ToString().Trim();
-            //        parentWindow.AddResultItem("读取第" + num + "行数据成功，数据内容：" + stringBuilder.ToString().Trim(), MessageType.Normal);
-            //    }
-            //    fileStream.Close();
-            //}
-            //catch (Exception)
-            //{
-            //    parentWindow.AddResultItem("打开文件失败,请检查文件是否已经被其它程序打开", MessageType.Error);
-            //}
+            int num = 0;
+            if (textBox_write_file_path.Text.Trim().Length == 0)
+            {
+                parentWindow.AddResultItem("The file path is empty, so this line of data cannot be retrieved.", MessageType.Error);
+                return;
+            }
+            mWriteFilePath = textBox_write_file_path.Text.Trim();
+            num = (mWriteStartLine = (int)numericUpDown_write_file_row.Value);
+            try
+            {
+                FileStream fileStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
+                string extension = Path.GetExtension(mWriteFilePath);
+                IWorkbook workbook;
+                if (extension.Equals(".xls"))
+                {
+                    workbook = new HSSFWorkbook(fileStream);
+                }
+                else
+                {
+                    if (!extension.Equals(".xlsx"))
+                    {
+                        fileStream.Close();
+                        return;
+                    }
+                    workbook = new XSSFWorkbook((Stream)fileStream);
+                }
+                IRow row = workbook.GetSheetAt(0).GetRow(num - 1);
+                if (row == null)
+                {
+                    parentWindow.AddResultItem("Line " + num + " does not exist. Please check.", MessageType.Error);
+                    fileStream.Close();
+                    return;
+                }
+                string text = row.GetCell(0).StringCellValue.Trim();
+                int hexlen = 0;
+                byte[] array = StringToHex(text, out hexlen);
+                if (hexlen == 0)
+                {
+                    parentWindow.AddResultItem("The data in line " + num + " is invalid. Data content:" + text, MessageType.Error);
+                    textBox_write_file_data.Text = "";
+                }
+                else
+                {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int i = 0; i < hexlen; i++)
+                    {
+                        stringBuilder.AppendFormat("{0:X2} ", array[i]);
+                    }
+                    textBox_write_file_data.Text = stringBuilder.ToString().Trim();
+                    parentWindow.AddResultItem("Successfully read line " + num + " data. Data content:" + stringBuilder.ToString().Trim(), MessageType.Normal);
+                }
+                fileStream.Close();
+            }
+            catch (Exception)
+            {
+                parentWindow.AddResultItem("File failed to open. Please check if the file is already open by another program.", MessageType.Error);
+            }
         }
 
         public int ArrayByteCompare(byte[] array1, byte[] array2, int compareLen)
@@ -1928,90 +1930,90 @@ namespace CPH_F206.FormTabs
 
         public void OnRecvFileWriteEpc(int status)
         {
-            //byte[] array = null;
-            //int hexlen = 0;
-            //parentWindow.AddResultItem("成功写入第" + mWriteStartLine + "行数据[" + textBox_write_file_data.Text.Trim() + "]", MessageType.Normal);
-            //while (true)
-            //{
-            //    mWriteStartLine++;
-            //    numericUpDown_write_file_row.Value = mWriteStartLine;
-            //    mFileRow = mFileSheet.GetRow(mWriteStartLine - 1);
-            //    if (mFileRow == null)
-            //    {
-            //        parentWindow.AddResultItem("第" + mWriteStartLine + "行在文件中不存在,文件读取结束", MessageType.Normal);
-            //        textBox_write_file_data.Text = "";
-            //        ButtonEnableWrite();
-            //        if (mFileWriteStream != null)
-            //        {
-            //            mFileWriteStream.Close();
-            //            mFileWriteStream = null;
-            //        }
-            //        mFileWriteTimer.Stop();
-            //    }
-            //    mFileCell = mFileRow.GetCell(0);
-            //    array = StringToHex(mFileCell.StringCellValue.Trim(), out hexlen);
-            //    if (hexlen == 0)
-            //    {
-            //        parentWindow.AddResultItem("第" + mWriteStartLine + "行检测到错误的数据格式[" + mFileCell.StringCellValue.Trim() + "]，切换到第" + (mWriteStartLine + 1) + "行数据", MessageType.Error);
-            //        mWriteStartLine++;
-            //        continue;
-            //    }
-            //    if (hexlen % 2 == 0)
-            //    {
-            //        break;
-            //    }
-            //    parentWindow.AddResultItem("第" + mWriteStartLine + "行检测到错误的数据格式[" + mFileCell.StringCellValue.Trim() + "]的长度为" + hexlen + "(必须是2的整数倍)切换到第" + (mWriteStartLine + 1) + "行数据", MessageType.Error);
-            //    mWriteStartLine++;
-            //}
-            //StringBuilder stringBuilder = new StringBuilder();
-            //for (int i = 0; i < hexlen; i++)
-            //{
-            //    stringBuilder.AppendFormat("{0:X2}", array[i]);
-            //}
-            //textBox_write_file_data.Text = stringBuilder.ToString().Trim();
+            byte[] array = null;
+            int hexlen = 0;
+            parentWindow.AddResultItem("Successfully wrote the " + mWriteStartLine + " line of data[" + textBox_write_file_data.Text.Trim() + "]", MessageType.Normal);
+            while (true)
+            {
+                mWriteStartLine++;
+                numericUpDown_write_file_row.Value = mWriteStartLine;
+                mFileRow = mFileSheet.GetRow(mWriteStartLine - 1);
+                if (mFileRow == null)
+                {
+                    parentWindow.AddResultItem("Line " + mWriteStartLine + " does not exist in the file; file reading has ended.", MessageType.Normal);
+                    textBox_write_file_data.Text = "";
+                    ButtonEnableWrite();
+                    if (mFileWriteStream != null)
+                    {
+                        mFileWriteStream.Close();
+                        mFileWriteStream = null;
+                    }
+                    mFileWriteTimer.Stop();
+                }
+                mFileCell = mFileRow.GetCell(0);
+                array = StringToHex(mFileCell.StringCellValue.Trim(), out hexlen);
+                if (hexlen == 0)
+                {
+                    parentWindow.AddResultItem("Line " + mWriteStartLine + " detected an incorrect data format.[" + mFileCell.StringCellValue.Trim() + "]，Switch to row " + (mWriteStartLine + 1) + " data.", MessageType.Error);
+                    mWriteStartLine++;
+                    continue;
+                }
+                if (hexlen % 2 == 0)
+                {
+                    break;
+                }
+                parentWindow.AddResultItem("Line " + mWriteStartLine + " detected an incorrect data format." + mFileCell.StringCellValue.Trim() + "] The length is " + hexlen + " (must be a multiple of 2). Switch to row " + (mWriteStartLine + 1) + " data.", MessageType.Error);
+                mWriteStartLine++;
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < hexlen; i++)
+            {
+                stringBuilder.AppendFormat("{0:X2}", array[i]);
+            }
+            textBox_write_file_data.Text = stringBuilder.ToString().Trim();
         }
 
         public int TimerFileWrite()
         {
-            //byte[] array = null;
-            //int hexlen = 0;
-            //while (true)
-            //{
-            //    mFileRow = mFileSheet.GetRow(mWriteStartLine - 1);
-            //    if (mFileRow == null)
-            //    {
-            //        parentWindow.AddResultItem("第" + mWriteStartLine + "行在文件中不存在", MessageType.Normal);
-            //        return 1;
-            //    }
-            //    mFileCell = mFileRow.GetCell(0);
-            //    array = StringToHex(mFileCell.StringCellValue.Trim(), out hexlen);
-            //    if (hexlen == 0)
-            //    {
-            //        parentWindow.AddResultItem("第" + mWriteStartLine + "行检测到错误的数据格式[" + mFileCell.StringCellValue.Trim() + "]，切换到第" + (mWriteStartLine + 1) + "行数据", MessageType.Error);
-            //        mWriteStartLine++;
-            //        continue;
-            //    }
-            //    if (hexlen % 2 == 0)
-            //    {
-            //        break;
-            //    }
-            //    parentWindow.AddResultItem("第" + mWriteStartLine + "行检测到错误的数据格式[" + mFileCell.StringCellValue.Trim() + "]的长度为" + hexlen + "(必须是2的整数倍)切换到第" + (mWriteStartLine + 1) + "行数据", MessageType.Error);
-            //    mWriteStartLine++;
-            //}
-            //StringBuilder stringBuilder = new StringBuilder();
-            //for (int i = 0; i < hexlen; i++)
-            //{
-            //    stringBuilder.AppendFormat("{0:X2} ", array[i]);
-            //}
-            //textBox_write_file_data.Text = stringBuilder.ToString().Trim();
-            //if (array != null && hexlen != 0 && hexlen % 2 == 0)
-            //{
-            //    Array.Copy(array, 0, mLastWriteData, 0, hexlen);
-            //    mLastWriteDataLen = (byte)hexlen;
-            //    reader.WriteEpc(1, 2, (byte)(hexlen / 2), array, null);
-            //    return 0;
-            //}
-            //parentWindow.AddResultItem("第" + mWriteStartLine + "行检测到错误的数据，停止写卡", MessageType.Error);
+            byte[] array = null;
+            int hexlen = 0;
+            while (true)
+            {
+                mFileRow = mFileSheet.GetRow(mWriteStartLine - 1);
+                if (mFileRow == null)
+                {
+                    parentWindow.AddResultItem("Line " + mWriteStartLine + " does not exist in the file.", MessageType.Normal);
+                    return 1;
+                }
+                mFileCell = mFileRow.GetCell(0);
+                array = StringToHex(mFileCell.StringCellValue.Trim(), out hexlen);
+                if (hexlen == 0)
+                {
+                    parentWindow.AddResultItem("Line " + mWriteStartLine + " detected an incorrect data format.[" + mFileCell.StringCellValue.Trim() + "]，Switch to row " + (mWriteStartLine + 1) + " data.", MessageType.Error);
+                    mWriteStartLine++;
+                    continue;
+                }
+                if (hexlen % 2 == 0)
+                {
+                    break;
+                }
+                parentWindow.AddResultItem("Line " + mWriteStartLine + " detected an incorrect data format.[" + mFileCell.StringCellValue.Trim() + "] The length is " + hexlen + " (must be a multiple of 2). Switch to row " + (mWriteStartLine + 1) + " data.", MessageType.Error);
+                mWriteStartLine++;
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < hexlen; i++)
+            {
+                stringBuilder.AppendFormat("{0:X2} ", array[i]);
+            }
+            textBox_write_file_data.Text = stringBuilder.ToString().Trim();
+            if (array != null && hexlen != 0 && hexlen % 2 == 0)
+            {
+                Array.Copy(array, 0, mLastWriteData, 0, hexlen);
+                mLastWriteDataLen = (byte)hexlen;
+                reader.WriteEpc(1, 2, (byte)(hexlen / 2), array, null);
+                return 0;
+            }
+            parentWindow.AddResultItem("Error data was detected in line " + mWriteStartLine + "; card writing has stopped.", MessageType.Error);
             return 1;
         }
 
@@ -2065,47 +2067,47 @@ namespace CPH_F206.FormTabs
 
         private void button_write_file_auto_Click(object sender, EventArgs e)
         {
-            //mWriteFilePath = textBox_write_file_path.Text.Trim();
-            //mWriteStartLine = (int)numericUpDown_write_file_row.Value;
-            //if (reader == null)
-            //{
-            //    return;
-            //}
-            //if (mFileWriteMode == 2)
-            //{
-            //    button_write_file_auto.Text = "自动写卡";
-            //    ButtonEnableWrite();
-            //    mFileWriteTimer.Stop();
-            //    mFileWriteStream.Close();
-            //}
-            //if (mWriteFilePath.Length == 0)
-            //{
-            //    parentWindow.AddResultItem("请选择要加载的写入文件", MessageType.Error);
-            //    return;
-            //}
-            //try
-            //{
-            //    mFileWriteStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
-            //}
-            //catch (Exception)
-            //{
-            //    parentWindow.AddResultItem("打开文件失败.", MessageType.Error);
-            //    return;
-            //}
-            //string extension = Path.GetExtension(mWriteFilePath);
-            //if (extension.Equals(".xls"))
-            //{
-            //    mFileWorkBook = new HSSFWorkbook(mFileWriteStream);
-            //}
-            //else if (extension.Equals(".xlsx"))
-            //{
-            //    mFileWorkBook = new XSSFWorkbook((Stream)mFileWriteStream);
-            //}
-            //mFileSheet = mFileWorkBook.GetSheetAt(0);
-            //mFileWriteMode = 2;
-            //ButtonDisableOnWrite(3);
-            //button_write_file_auto.Text = "停止";
-            //mFileWriteTimer.Start();
+            mWriteFilePath = textBox_write_file_path.Text.Trim();
+            mWriteStartLine = (int)numericUpDown_write_file_row.Value;
+            if (reader == null)
+            {
+                return;
+            }
+            if (mFileWriteMode == 2)
+            {
+                button_write_file_auto.Text = "Automatic card writing";
+                ButtonEnableWrite();
+                mFileWriteTimer.Stop();
+                mFileWriteStream.Close();
+            }
+            if (mWriteFilePath.Length == 0)
+            {
+                parentWindow.AddResultItem("Please select the file to load.", MessageType.Error);
+                return;
+            }
+            try
+            {
+                mFileWriteStream = new FileStream(mWriteFilePath, FileMode.Open, FileAccess.Read);
+            }
+            catch (Exception)
+            {
+                parentWindow.AddResultItem("Failed to open file.", MessageType.Error);
+                return;
+            }
+            string extension = Path.GetExtension(mWriteFilePath);
+            if (extension.Equals(".xls"))
+            {
+                mFileWorkBook = new HSSFWorkbook(mFileWriteStream);
+            }
+            else if (extension.Equals(".xlsx"))
+            {
+                mFileWorkBook = new XSSFWorkbook((Stream)mFileWriteStream);
+            }
+            mFileSheet = mFileWorkBook.GetSheetAt(0);
+            mFileWriteMode = 2;
+            ButtonDisableOnWrite(3);
+            button_write_file_auto.Text = "Stop";
+            mFileWriteTimer.Start();
         }
 
         private void FreshFreqCheckBoxs(byte regionIndex)
