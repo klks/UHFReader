@@ -159,5 +159,12 @@ namespace UHFReaderMainApp
                 ChildWindow_TIDParser.BringToFront();
             }
         }
+
+        private void cPHF206ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form childForm = new CPH_F206.MainForm();
+            childForm.MdiParent = this;
+            childForm.Show();
+        }
     }
 }

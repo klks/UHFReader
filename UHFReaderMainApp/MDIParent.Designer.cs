@@ -42,13 +42,14 @@
             utilitiesToolStripMenuItem = new ToolStripMenuItem();
             compareCardsToolStripMenuItem = new ToolStripMenuItem();
             tagsDatabaseToolStripMenuItem = new ToolStripMenuItem();
+            tIDParserToolStripMenuItem = new ToolStripMenuItem();
             windowsMenu = new ToolStripMenuItem();
             cascadeToolStripMenuItem = new ToolStripMenuItem();
             tileVerticalToolStripMenuItem = new ToolStripMenuItem();
             tileHorizontalToolStripMenuItem = new ToolStripMenuItem();
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             arrangeIconsToolStripMenuItem = new ToolStripMenuItem();
-            tIDParserToolStripMenuItem = new ToolStripMenuItem();
+            cPHF206ToolStripMenuItem = new ToolStripMenuItem();
             menuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -85,7 +86,7 @@
             // 
             // uHFReaderToolStripMenuItem
             // 
-            uHFReaderToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lJYZN105ToolStripMenuItem, eSF3105UUCM601ToolStripMenuItem, yRM100MagicRFQM100ToolStripMenuItem, fM5XXToolStripMenuItem, yPDR200ToolStripMenuItem });
+            uHFReaderToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lJYZN105ToolStripMenuItem, eSF3105UUCM601ToolStripMenuItem, yRM100MagicRFQM100ToolStripMenuItem, fM5XXToolStripMenuItem, yPDR200ToolStripMenuItem, cPHF206ToolStripMenuItem });
             uHFReaderToolStripMenuItem.Name = "uHFReaderToolStripMenuItem";
             uHFReaderToolStripMenuItem.Size = new Size(81, 20);
             uHFReaderToolStripMenuItem.Text = "UHF Reader";
@@ -136,16 +137,23 @@
             // compareCardsToolStripMenuItem
             // 
             compareCardsToolStripMenuItem.Name = "compareCardsToolStripMenuItem";
-            compareCardsToolStripMenuItem.Size = new Size(180, 22);
+            compareCardsToolStripMenuItem.Size = new Size(156, 22);
             compareCardsToolStripMenuItem.Text = "Compare Cards";
             compareCardsToolStripMenuItem.Click += compareCardsToolStripMenuItem_Click;
             // 
             // tagsDatabaseToolStripMenuItem
             // 
             tagsDatabaseToolStripMenuItem.Name = "tagsDatabaseToolStripMenuItem";
-            tagsDatabaseToolStripMenuItem.Size = new Size(180, 22);
+            tagsDatabaseToolStripMenuItem.Size = new Size(156, 22);
             tagsDatabaseToolStripMenuItem.Text = "Tags Database";
             tagsDatabaseToolStripMenuItem.Click += tagsDatabaseToolStripMenuItem_Click;
+            // 
+            // tIDParserToolStripMenuItem
+            // 
+            tIDParserToolStripMenuItem.Name = "tIDParserToolStripMenuItem";
+            tIDParserToolStripMenuItem.Size = new Size(156, 22);
+            tIDParserToolStripMenuItem.Text = "TID Parser";
+            tIDParserToolStripMenuItem.Click += tIDParserToolStripMenuItem_Click;
             // 
             // windowsMenu
             // 
@@ -189,12 +197,12 @@
             arrangeIconsToolStripMenuItem.Text = "&Arrange Icons";
             arrangeIconsToolStripMenuItem.Click += ArrangeIconsToolStripMenuItem_Click;
             // 
-            // tIDParserToolStripMenuItem
+            // cPHF206ToolStripMenuItem
             // 
-            tIDParserToolStripMenuItem.Name = "tIDParserToolStripMenuItem";
-            tIDParserToolStripMenuItem.Size = new Size(180, 22);
-            tIDParserToolStripMenuItem.Text = "TID Parser";
-            tIDParserToolStripMenuItem.Click += tIDParserToolStripMenuItem_Click;
+            cPHF206ToolStripMenuItem.Name = "cPHF206ToolStripMenuItem";
+            cPHF206ToolStripMenuItem.Size = new Size(223, 22);
+            cPHF206ToolStripMenuItem.Text = "CPH-F206";
+            cPHF206ToolStripMenuItem.Click += cPHF206ToolStripMenuItem_Click;
             // 
             // MDIParent
             // 
@@ -238,6 +246,7 @@
         private ToolStripMenuItem tagsDatabaseToolStripMenuItem;
         private ToolStripMenuItem yPDR200ToolStripMenuItem;
         private ToolStripMenuItem tIDParserToolStripMenuItem;
+        private ToolStripMenuItem cPHF206ToolStripMenuItem;
     }
 }
 

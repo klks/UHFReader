@@ -5,6 +5,7 @@ VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UHFReaderMainApp", "UHFReaderMainApp\UHFReaderMainApp.csproj", "{3D69EF29-7362-4042-AFC6-93D5CFA814EE}"
 	ProjectSection(ProjectDependencies) = postProject
+		{89FF3FDF-5545-474C-8406-42523813022E} = {89FF3FDF-5545-474C-8406-42523813022E}
 		{D4CFAEF6-2355-42D3-B5F7-9EC3E36DE0EE} = {D4CFAEF6-2355-42D3-B5F7-9EC3E36DE0EE}
 		{F1C8CFFC-FAB2-4C21-8EA5-D02E99D7460B} = {F1C8CFFC-FAB2-4C21-8EA5-D02E99D7460B}
 	EndProjectSection
@@ -23,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPH-F206", "CPH-F206\CPH-F206.csproj", "{89FF3FDF-5545-474C-8406-42523813022E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +83,14 @@ Global
 		{004CCB5D-725E-4322-85B2-A62D691FC4E3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{004CCB5D-725E-4322-85B2-A62D691FC4E3}.Release|x64.ActiveCfg = Release|Any CPU
 		{004CCB5D-725E-4322-85B2-A62D691FC4E3}.Release|x64.Build.0 = Release|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Debug|x64.Build.0 = Debug|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Release|x64.ActiveCfg = Release|Any CPU
+		{89FF3FDF-5545-474C-8406-42523813022E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
