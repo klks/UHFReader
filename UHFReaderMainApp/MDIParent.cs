@@ -17,7 +17,7 @@ namespace UHFReaderMainApp
     public partial class MDIParent : Form
     {
         private int childFormNumber = 0;
-        string sw_version = "UHFReader 1.0.0 - KLKS (Sept 2025)";
+        string sw_version = "UHFReader 1.0.0 - KLKS (Jan 2026)";
         Form? ChildWindow_TIDParser = null;
 
         /// <summary>
@@ -113,7 +113,10 @@ namespace UHFReaderMainApp
 
         private void yRM100MagicRFQM100ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            var childForm = new YRM100.MainForm();
+            childForm.MdiParent = this;
+            childForm.SetWorkingMode_YRM100();
+            childForm.Show();
         }
 
         private void fM5XXToolStripMenuItem_Click(object sender, EventArgs e)
@@ -164,6 +167,14 @@ namespace UHFReaderMainApp
         {
             Form childForm = new CPH_F206.MainForm();
             childForm.MdiParent = this;
+            childForm.Show();
+        }
+
+        private void yPDR200ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var childForm = new YRM100.MainForm();
+            childForm.MdiParent = this;
+            childForm.SetWorkingMode_YPDR200();
             childForm.Show();
         }
     }

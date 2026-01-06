@@ -38,6 +38,7 @@
             eSF3105UUCM601ToolStripMenuItem = new ToolStripMenuItem();
             yRM100MagicRFQM100ToolStripMenuItem = new ToolStripMenuItem();
             fM5XXToolStripMenuItem = new ToolStripMenuItem();
+            cPHF206ToolStripMenuItem = new ToolStripMenuItem();
             yPDR200ToolStripMenuItem = new ToolStripMenuItem();
             utilitiesToolStripMenuItem = new ToolStripMenuItem();
             compareCardsToolStripMenuItem = new ToolStripMenuItem();
@@ -49,7 +50,6 @@
             tileHorizontalToolStripMenuItem = new ToolStripMenuItem();
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             arrangeIconsToolStripMenuItem = new ToolStripMenuItem();
-            cPHF206ToolStripMenuItem = new ToolStripMenuItem();
             menuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -86,7 +86,7 @@
             // 
             // uHFReaderToolStripMenuItem
             // 
-            uHFReaderToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lJYZN105ToolStripMenuItem, eSF3105UUCM601ToolStripMenuItem, yRM100MagicRFQM100ToolStripMenuItem, fM5XXToolStripMenuItem, yPDR200ToolStripMenuItem, cPHF206ToolStripMenuItem });
+            uHFReaderToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lJYZN105ToolStripMenuItem, eSF3105UUCM601ToolStripMenuItem, yRM100MagicRFQM100ToolStripMenuItem, fM5XXToolStripMenuItem, cPHF206ToolStripMenuItem, yPDR200ToolStripMenuItem });
             uHFReaderToolStripMenuItem.Name = "uHFReaderToolStripMenuItem";
             uHFReaderToolStripMenuItem.Size = new Size(81, 20);
             uHFReaderToolStripMenuItem.Text = "UHF Reader";
@@ -94,38 +94,44 @@
             // lJYZN105ToolStripMenuItem
             // 
             lJYZN105ToolStripMenuItem.Name = "lJYZN105ToolStripMenuItem";
-            lJYZN105ToolStripMenuItem.Size = new Size(223, 22);
+            lJYZN105ToolStripMenuItem.Size = new Size(276, 22);
             lJYZN105ToolStripMenuItem.Text = "LJYZN-105 / BY-RFID105";
             lJYZN105ToolStripMenuItem.Click += lJYZN105ToolStripMenuItem_Click;
             // 
             // eSF3105UUCM601ToolStripMenuItem
             // 
             eSF3105UUCM601ToolStripMenuItem.Name = "eSF3105UUCM601ToolStripMenuItem";
-            eSF3105UUCM601ToolStripMenuItem.Size = new Size(223, 22);
+            eSF3105UUCM601ToolStripMenuItem.Size = new Size(276, 22);
             eSF3105UUCM601ToolStripMenuItem.Text = "ES-F3105U / UCM601";
             eSF3105UUCM601ToolStripMenuItem.Click += eSF3105UUCM601ToolStripMenuItem_Click;
             // 
             // yRM100MagicRFQM100ToolStripMenuItem
             // 
-            yRM100MagicRFQM100ToolStripMenuItem.Enabled = false;
             yRM100MagicRFQM100ToolStripMenuItem.Name = "yRM100MagicRFQM100ToolStripMenuItem";
-            yRM100MagicRFQM100ToolStripMenuItem.Size = new Size(223, 22);
-            yRM100MagicRFQM100ToolStripMenuItem.Text = "YRM100 / MagicRF (Q)M100";
+            yRM100MagicRFQM100ToolStripMenuItem.Size = new Size(276, 22);
+            yRM100MagicRFQM100ToolStripMenuItem.Text = "YRM100 / MagicRF (Q)M100 / JRD-100";
             yRM100MagicRFQM100ToolStripMenuItem.Click += yRM100MagicRFQM100ToolStripMenuItem_Click;
             // 
             // fM5XXToolStripMenuItem
             // 
             fM5XXToolStripMenuItem.Name = "fM5XXToolStripMenuItem";
-            fM5XXToolStripMenuItem.Size = new Size(223, 22);
+            fM5XXToolStripMenuItem.Size = new Size(276, 22);
             fM5XXToolStripMenuItem.Text = "FM-5XX";
             fM5XXToolStripMenuItem.Click += fM5XXToolStripMenuItem_Click;
             // 
+            // cPHF206ToolStripMenuItem
+            // 
+            cPHF206ToolStripMenuItem.Name = "cPHF206ToolStripMenuItem";
+            cPHF206ToolStripMenuItem.Size = new Size(276, 22);
+            cPHF206ToolStripMenuItem.Text = "CPH-F206";
+            cPHF206ToolStripMenuItem.Click += cPHF206ToolStripMenuItem_Click;
+            // 
             // yPDR200ToolStripMenuItem
             // 
-            yPDR200ToolStripMenuItem.Enabled = false;
             yPDR200ToolStripMenuItem.Name = "yPDR200ToolStripMenuItem";
-            yPDR200ToolStripMenuItem.Size = new Size(223, 22);
+            yPDR200ToolStripMenuItem.Size = new Size(276, 22);
             yPDR200ToolStripMenuItem.Text = "YPD-R200";
+            yPDR200ToolStripMenuItem.Click += yPDR200ToolStripMenuItem_Click;
             // 
             // utilitiesToolStripMenuItem
             // 
@@ -197,13 +203,6 @@
             arrangeIconsToolStripMenuItem.Text = "&Arrange Icons";
             arrangeIconsToolStripMenuItem.Click += ArrangeIconsToolStripMenuItem_Click;
             // 
-            // cPHF206ToolStripMenuItem
-            // 
-            cPHF206ToolStripMenuItem.Name = "cPHF206ToolStripMenuItem";
-            cPHF206ToolStripMenuItem.Size = new Size(223, 22);
-            cPHF206ToolStripMenuItem.Text = "CPH-F206";
-            cPHF206ToolStripMenuItem.Click += cPHF206ToolStripMenuItem_Click;
-            // 
             // MDIParent
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -244,9 +243,9 @@
         private ToolStripMenuItem utilitiesToolStripMenuItem;
         private ToolStripMenuItem compareCardsToolStripMenuItem;
         private ToolStripMenuItem tagsDatabaseToolStripMenuItem;
-        private ToolStripMenuItem yPDR200ToolStripMenuItem;
         private ToolStripMenuItem tIDParserToolStripMenuItem;
         private ToolStripMenuItem cPHF206ToolStripMenuItem;
+        private ToolStripMenuItem yPDR200ToolStripMenuItem;
     }
 }
 
