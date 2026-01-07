@@ -10,19 +10,21 @@ namespace YRM100.Shared
     public class ReceiveParser
     {
         private static bool frameBeginFlag = false;
-
         private static bool frameEndFlag = true;
-
         private static long frameLength;
-
         private static long strNum;
-
         private static string[] strBuff = new string[4096];
+        private ModuleType device_mt;
 
         /// <summary>
         /// When a valid Packet Got, this event will be sent
         /// </summary>
         public event EventHandler<StrArrEventArgs> PacketReceived;
+
+        public ReceiveParser(ModuleType mt)
+        {
+            device_mt = mt;
+        }
 
         /// <summary>
         /// Try to Parse a Valid Packet from Serial Port Received Data
@@ -36,6 +38,15 @@ namespace YRM100.Shared
             {
                 return;
             }
+
+            string frame_start = "AA";
+            string frame_end = "DD";
+            if (device_mt == ModuleType.YRM100)
+            {
+                frame_start = "BB";
+                frame_end = "7E";
+            }
+
             int n = Sp.GetInstance().ComDevice.BytesToRead;
             try
             {
@@ -65,7 +76,7 @@ namespace YRM100.Shared
                                 continue;
                             }
                         }
-                        else if (strNum == frameLength + 6 && strBuff[strNum] == "DD")
+                        else if (strNum == frameLength + 6 && strBuff[strNum] == frame_end)
                         {
                             int checksum = 0;
                             for (int i = 1; i < strNum - 1; i++)
@@ -92,7 +103,7 @@ namespace YRM100.Shared
                                 this.PacketReceived(this, new StrArrEventArgs(packet));
                             }
                         }
-                        else if (strNum == frameLength + 6 && strBuff[strNum] != "DD")
+                        else if (strNum == frameLength + 6 && strBuff[strNum] != frame_end)
                         {
                             Console.WriteLine("ERROR FRAME, cannot get FRAME_END when extends frameLength");
                             frameBeginFlag = false;
@@ -101,7 +112,7 @@ namespace YRM100.Shared
                         }
                         strNum++;
                     }
-                    else if (DataRX[j] == "AA" && !frameBeginFlag)
+                    else if (DataRX[j] == frame_start && !frameBeginFlag)
                     {
                         strNum = 0L;
                         strBuff[strNum] = DataRX[j];

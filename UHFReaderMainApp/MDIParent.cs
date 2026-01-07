@@ -113,9 +113,8 @@ namespace UHFReaderMainApp
 
         private void yRM100MagicRFQM100ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var childForm = new YRM100.MainForm();
+            var childForm = new YRM100.MainForm(YRM100.ModuleType.YRM100);
             childForm.MdiParent = this;
-            childForm.SetWorkingMode_YRM100();
             childForm.Show();
         }
 
@@ -172,9 +171,8 @@ namespace UHFReaderMainApp
 
         private void yPDR200ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var childForm = new YRM100.MainForm();
+            var childForm = new YRM100.MainForm(YRM100.ModuleType.YPD_R200);
             childForm.MdiParent = this;
-            childForm.SetWorkingMode_YPDR200();
             childForm.Show();
         }
     }

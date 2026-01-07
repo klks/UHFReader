@@ -41,9 +41,11 @@ namespace YRM100
         private bool readerConnected;
         private int lastRecCnt;
         private Commands CommandModule = new Commands(ModuleType.YRM100);
+        private ModuleType moduleType;
 
-        public MainForm()
+        public MainForm(ModuleType mt)
         {
+            moduleType = mt;
             InitializeComponent();
             setTip();
             cbxRegion.SelectedIndex = 0;
@@ -73,6 +75,15 @@ namespace YRM100
             cbxLockEPCAction.SelectedIndex = 0;
             cbxLockTIDAction.SelectedIndex = 0;
             cbxLockUserAction.SelectedIndex = 0;
+
+            if(moduleType == ModuleType.YPD_R200)
+            {
+                SetWorkingMode_YPDR200();
+            }
+            else if(moduleType == ModuleType.YRM100)
+            {
+                SetWorkingMode_YRM100();
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -89,7 +100,7 @@ namespace YRM100
                 btnConn.Enabled = true;
             }
             cbxBaudRate.SelectedIndex = 2;
-            rp = new ReceiveParser();
+            rp = new ReceiveParser(moduleType);
             Sp.GetInstance().ComDevice.DataReceived += rp.DataReceived;
             rp.PacketReceived += rp_PaketReceived;
             Sp.GetInstance().DataSent += ComDataSent;
