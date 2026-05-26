@@ -79,19 +79,19 @@ namespace LJYZN_105
             }
 
             ListViewItem aListItem = new ListViewItem();
-            FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_G2(
-                            ref FormSharedData.fComAdr, AdrTID, LenTID, TIDFlag,
+            FormSharedData.cmdRet = (int)StaticClassReaderB.Inventory_G2(
+                            ref FormSharedData.comAdr, AdrTID, LenTID, TIDFlag,
                             EPC, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex
                             );
             CardNum = (int)cardNumUInt;
 
-            if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) | (FormSharedData.fCmdRet == 3) |
-                (FormSharedData.fCmdRet == 4) | (FormSharedData.fCmdRet == 0xFB))//代表已查找结束，
+            if ((FormSharedData.cmdRet == 1) || (FormSharedData.cmdRet == 2) || (FormSharedData.cmdRet == 3) ||
+                (FormSharedData.cmdRet == 4) || (FormSharedData.cmdRet == 0xFB))// Inventory scan complete
             {
                 byte[] daw = new byte[Totallen];
                 Array.Copy(EPC, daw, Totallen);
                 temps = Utilities.Utilities.ByteArrayToHexString(daw);
-                FormSharedData.fInventory_EPC_List = temps;            //存贮记录
+                FormSharedData.fInventory_EPC_List = temps;            // Store inventory record
                 m = 0;
 
                 if (CardNum == 0)
@@ -102,12 +102,12 @@ namespace LJYZN_105
                 for (CardIndex = 0; CardIndex < CardNum; CardIndex++)
                 {
                     EPClen = daw[m];
+                    if (m * 2 + 2 + EPClen * 2 > temps.Length)
+                        return;
                     sEPC = temps.Substring(m * 2 + 2, EPClen * 2);
                     m = m + EPClen + 1;
-                    if (sEPC.Length != EPClen * 2)
-                        return;
                     isonlistview = false;
-                    for (i = 0; i < ListView1_EPC.Items.Count; i++)     //判断是否在Listview列表内
+                    for (i = 0; i < ListView1_EPC.Items.Count; i++)     // Check whether the tag is already in the ListView list
                     {
                         if (sEPC == ListView1_EPC.Items[i].SubItems[1].Text)
                         {
@@ -174,7 +174,7 @@ namespace LJYZN_105
             byte EPClength = 0;
             string str;
             byte[] CardData = new byte[320];
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -185,7 +185,7 @@ namespace LJYZN_105
                 FormSharedData.MaskFlag = 0;
             FormSharedData.Maskadr = Convert.ToByte(maskadr_textbox.Text, 16);
             FormSharedData.MaskLen = Convert.ToByte(maskLen_textBox.Text, 16);
-            if (txtDataLen.Text == "")
+            if (string.IsNullOrEmpty(txtDataLen.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -201,15 +201,14 @@ namespace LJYZN_105
                 return;
             }
             str = ComboBox_EPC2.SelectedItem.ToString();
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
             {
                  //FormSharedData.fIsInventoryScan = false;
                  //return;
             }
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             if (C_Reserve.Checked)
                 Mem = 0;
             if (C_EPC.Checked)
@@ -218,12 +217,12 @@ namespace LJYZN_105
                 Mem = 2;
             if (C_User.Checked)
                 Mem = 3;
-            if (Edit_AccessCode2.Text == "")
+            if (string.IsNullOrEmpty(Edit_AccessCode2.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
             }
-            if (txtDataAddr.Text == "")
+            if (string.IsNullOrEmpty(txtDataAddr.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -239,20 +238,20 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(
-                    ref FormSharedData.fComAdr, EPC, Mem, WordPtr, Num, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(
+                    ref FormSharedData.comAdr, EPC, Mem, WordPtr, Num, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     CardData, EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
 
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 byte[] daw = new byte[Num * 2];
                 Array.Copy(CardData, daw, Num * 2);
                 listBox1.Items.Add(Utilities.Utilities.ByteArrayToHexString(daw));
                 listBox1.SelectedIndex = listBox1.Items.Count - 1;
-                FormSharedData.MainForm.AddCmdLog("ReadData", "Read", FormSharedData.fCmdRet);
+                FormSharedData.MainForm.AddCmdLog("ReadData", "Read", FormSharedData.cmdRet);
             }
             if (FormSharedData.ferrorcode != -1)
             {
@@ -270,11 +269,11 @@ namespace LJYZN_105
             FormSharedData.fIsInventoryScan = true;
             {
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.CheckEASAlarm_G2(
-                    ref FormSharedData.fComAdr, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.CheckEASAlarm_G2(
+                    ref FormSharedData.comAdr, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Check EAS Alarm'Command Response=0x00" +
                           "(EAS alarm detected)";
@@ -283,7 +282,7 @@ namespace LJYZN_105
             else
             {
                 Label_Alarm.Visible = false;                       //v2.1 add
-                FormSharedData.MainForm.AddCmdLog("CheckEASAlarm_G2", "Check EAS Alarm", FormSharedData.fCmdRet);
+                FormSharedData.MainForm.AddCmdLog("CheckEASAlarm_G2", "Check EAS Alarm", FormSharedData.cmdRet);
             }
             FormSharedData.fIsInventoryScan = false;
         }
@@ -323,17 +322,17 @@ namespace LJYZN_105
         {
             if (!FormSharedData.IsReadyForRead()) return;
 
-            if (txtDataAddr.Text == "")
+            if (string.IsNullOrEmpty(txtDataAddr.Text))
             {
                 MessageBox.Show("Address of Tag Data is NULL", "Information");
                 return;
             }
-            if (txtDataLen.Text == "")
+            if (string.IsNullOrEmpty(txtDataLen.Text))
             {
                 MessageBox.Show("Length of Data(Read/Block Erase) is NULL", "Information");
                 return;
             }
-            if (Edit_AccessCode2.Text == "")
+            if (string.IsNullOrEmpty(Edit_AccessCode2.Text))
             {
                 MessageBox.Show("(PassWord) is NULL", "Information");
                 return;
@@ -362,12 +361,10 @@ namespace LJYZN_105
             byte Writedatalen = 0;
             int WrittenDataNum = 0;
             string s2, str;
-            byte[] CardData = new byte[320];
-            byte[] writedata = new byte[230];
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -383,12 +380,11 @@ namespace LJYZN_105
             if (ComboBox_EPC2.SelectedItem == null)
                 return;
             str = ComboBox_EPC2.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(ENum * 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             if (C_Reserve.Checked)
                 Mem = 0;
             if (C_EPC.Checked)
@@ -397,30 +393,30 @@ namespace LJYZN_105
                 Mem = 2;
             if (C_User.Checked)
                 Mem = 3;
-            if (txtDataAddr.Text == "")
+            if (string.IsNullOrEmpty(txtDataAddr.Text))
             {
                 MessageBox.Show("Address of Tag Data is NULL", "Information");
                 return;
             }
-            if (txtDataLen.Text == "")
+            if (string.IsNullOrEmpty(txtDataLen.Text))
             {
                 MessageBox.Show("Length of Data(Read/Block Erase) is NULL", "Information");
                 return;
             }
             if (Convert.ToInt32(txtDataAddr.Text, 16) + Convert.ToInt32(txtDataLen.Text) > 120)
                 return;
-            if (Edit_AccessCode2.Text == "")
+            if (string.IsNullOrEmpty(Edit_AccessCode2.Text))
             {
                 return;
             }
             WordPtr = Convert.ToByte(txtDataAddr.Text, 16);
-            Num = Convert.ToByte(txtDataLen.Text, 16);
+            Num = Convert.ToByte(txtDataLen.Text);
             if (Edit_AccessCode2.Text.Length != 8)
             {
                 return;
             }
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode2.Text);
-            if (Edit_WriteData.Text == "")
+            if (string.IsNullOrEmpty(Edit_WriteData.Text))
                 return;
             s2 = Edit_WriteData.Text;
             if (s2.Length % 4 != 0)
@@ -429,10 +425,9 @@ namespace LJYZN_105
                 return;
             }
             WNum = Convert.ToByte(s2.Length / 4);
-            byte[] Writedata = new byte[WNum * 2];
-            Writedata = Utilities.Utilities.HexStringToByteArray(s2);
+            byte[] Writedata = Utilities.Utilities.HexStringToByteArray(s2);
             Writedatalen = Convert.ToByte(WNum * 2);
-            if ((checkBox_pc.Checked) && (C_EPC.Checked))
+            if (checkBox_pc.Checked && C_EPC.Checked)
             {
                 WordPtr = 1;
                 Writedatalen = Convert.ToByte(Edit_WriteData.Text.Length / 2 + 2);
@@ -441,15 +436,15 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(
-                    ref FormSharedData.fComAdr, EPC, Mem, WordPtr, Writedatalen, Writedata, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(
+                    ref FormSharedData.comAdr, EPC, Mem, WordPtr, Writedatalen, Writedata, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     WrittenDataNum, EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
 
-            FormSharedData.MainForm.AddCmdLog("Write data", "Write", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("Write data", "Write", FormSharedData.cmdRet, FormSharedData.ferrorcode);
+            if (FormSharedData.cmdRet == 0)
             {
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + "'Write'Command Response=0x00" +
                      "(completely write Data successfully)";
@@ -462,11 +457,10 @@ namespace LJYZN_105
             byte Mem = 0;
             byte EPClength = 0;
             string str;
-            byte[] CardData = new byte[320];
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -482,12 +476,11 @@ namespace LJYZN_105
             if (ComboBox_EPC2.SelectedItem == null)
                 return;
             str = ComboBox_EPC2.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             if (C_Reserve.Checked)
                 Mem = 0;
             if (C_EPC.Checked)
@@ -496,22 +489,22 @@ namespace LJYZN_105
                 Mem = 2;
             if (C_User.Checked)
                 Mem = 3;
-            if (txtDataAddr.Text == "")
+            if (string.IsNullOrEmpty(txtDataAddr.Text))
             {
                 MessageBox.Show("Address of Tag Data is NULL", "Information");
                 return;
             }
-            if (txtDataLen.Text == "")
+            if (string.IsNullOrEmpty(txtDataLen.Text))
             {
                 MessageBox.Show("Length of Data(Read/Block Erase) is NULL", "Information");
                 return;
             }
             if (Convert.ToInt32(txtDataAddr.Text, 16) + Convert.ToInt32(txtDataLen.Text) > 120)
                 return;
-            if (Edit_AccessCode2.Text == "")
+            if (string.IsNullOrEmpty(Edit_AccessCode2.Text))
                 return;
             WordPtr = Convert.ToByte(txtDataAddr.Text, 16);
-            if ((Mem == 1) & (WordPtr < 2))
+            if ((Mem == 1) && (WordPtr < 2))
             {
                 MessageBox.Show("the length of start Address of erasing EPC area is equal or greater than 0x01!", "Information");
                 return;
@@ -525,14 +518,14 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.EraseCard_G2(
-                    ref FormSharedData.fComAdr, EPC, Mem, WordPtr, Num, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.EraseCard_G2(
+                    ref FormSharedData.comAdr, EPC, Mem, WordPtr, Num, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("EraseCard", "Erase data", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("EraseCard", "Erase data", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
             {
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Block Erase'Command Response=0x00" +
                      "(Block Erase successfully)";
@@ -552,12 +545,10 @@ namespace LJYZN_105
             byte Writedatalen = 0;
             int WrittenDataNum = 0;
             string s2, str;
-            byte[] CardData = new byte[320];
-            byte[] writedata = new byte[230];
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -573,12 +564,11 @@ namespace LJYZN_105
             if (ComboBox_EPC2.SelectedItem == null)
                 return;
             str = ComboBox_EPC2.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(ENum * 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             if (C_Reserve.Checked)
                 Mem = 0;
             if (C_EPC.Checked)
@@ -587,19 +577,19 @@ namespace LJYZN_105
                 Mem = 2;
             if (C_User.Checked)
                 Mem = 3;
-            if (txtDataAddr.Text == "")
+            if (string.IsNullOrEmpty(txtDataAddr.Text))
             {
                 MessageBox.Show("Address of Tag Data is NULL", "Information");
                 return;
             }
-            if (txtDataLen.Text == "")
+            if (string.IsNullOrEmpty(txtDataLen.Text))
             {
                 MessageBox.Show("Length of Data(Read/Block Erase) is NULL", "Information");
                 return;
             }
             if (Convert.ToInt32(txtDataAddr.Text, 16) + Convert.ToInt32(txtDataLen.Text) > 120)
                 return;
-            if (Edit_AccessCode2.Text == "")
+            if (string.IsNullOrEmpty(Edit_AccessCode2.Text))
             {
                 return;
             }
@@ -610,7 +600,7 @@ namespace LJYZN_105
                 return;
             }
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode2.Text);
-            if (Edit_WriteData.Text == "")
+            if (string.IsNullOrEmpty(Edit_WriteData.Text))
                 return;
             s2 = Edit_WriteData.Text;
             if (s2.Length % 4 != 0)
@@ -619,10 +609,9 @@ namespace LJYZN_105
                 return;
             }
             WNum = Convert.ToByte(s2.Length / 4);
-            byte[] Writedata = new byte[WNum * 2];
-            Writedata = Utilities.Utilities.HexStringToByteArray(s2);
+            byte[] Writedata = Utilities.Utilities.HexStringToByteArray(s2);
             Writedatalen = Convert.ToByte(WNum * 2);
-            if ((checkBox_pc.Checked) && (C_EPC.Checked))
+            if (checkBox_pc.Checked && C_EPC.Checked)
             {
                 WordPtr = 1;
                 Writedatalen = Convert.ToByte(Edit_WriteData.Text.Length / 2 + 2);
@@ -631,14 +620,14 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteBlock_G2(
-                    ref FormSharedData.fComAdr, EPC, Mem, WordPtr, Writedatalen, Writedata, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteBlock_G2(
+                    ref FormSharedData.comAdr, EPC, Mem, WordPtr, Writedatalen, Writedata, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     WrittenDataNum, EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("Write Block", "WriteBlock", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("Write Block", "WriteBlock", FormSharedData.cmdRet, FormSharedData.ferrorcode);
+            if (FormSharedData.cmdRet == 0)
             {
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + "'WriteBlock'Command Response=0x00" +
                      "(completely write Data successfully)";
@@ -655,7 +644,7 @@ namespace LJYZN_105
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -675,13 +664,12 @@ namespace LJYZN_105
                 return;
 
             str = ComboBox_EPC1.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
 
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
 
             if (textBox2.Text.Length != 8)
             {
@@ -690,9 +678,9 @@ namespace LJYZN_105
             }
 
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(textBox2.Text);
-            if ((P_Reserve.Checked) & (DestroyCode.Checked))
+            if ((P_Reserve.Checked) && (DestroyCode.Checked))
                 select = 0;
-            else if ((P_Reserve.Checked) & (AccessCode.Checked))
+            else if ((P_Reserve.Checked) && (AccessCode.Checked))
                 select = 0x01;
             else if (P_EPC.Checked)
                 select = 0x02;
@@ -743,13 +731,13 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetCardProtect_G2(
-                    ref FormSharedData.fComAdr, EPC, select, setprotect, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetCardProtect_G2(
+                    ref FormSharedData.comAdr, EPC, select, setprotect, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("SetCardProtect", "SetProtect", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
+            FormSharedData.MainForm.AddCmdLog("SetCardProtect", "SetProtect", FormSharedData.cmdRet, FormSharedData.ferrorcode);
         }
 
         private void Button_DestroyCard_Click(object sender, EventArgs e)
@@ -760,7 +748,7 @@ namespace LJYZN_105
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -784,24 +772,23 @@ namespace LJYZN_105
             if (ComboBox_EPC3.SelectedItem == null)
                 return;
             str = ComboBox_EPC3.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_DestroyCode.Text);
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.DestroyCard_G2(
-                    ref FormSharedData.fComAdr, EPC, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.DestroyCard_G2(
+                    ref FormSharedData.comAdr, EPC, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("DestroyCard", "Kill Tag", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("DestroyCard", "Kill Tag", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Kill Tag'Command Response=0x00" +
                           "(Kill successfully)";
         }
@@ -825,19 +812,18 @@ namespace LJYZN_105
             }
             WriteEPClen = Convert.ToByte(Edit_WriteEPC.Text.Length / 2);
             ENum = Convert.ToByte(Edit_WriteEPC.Text.Length / 4);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(Edit_WriteEPC.Text);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(Edit_WriteEPC.Text);
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode3.Text);
             {
-                uint oldEpc = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteEPC_G2(
-                    ref FormSharedData.fComAdr, ref oldEpc, EPC, WriteEPClen,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteEPC_G2(
+                    ref FormSharedData.comAdr, ref pwd, EPC, WriteEPClen,
                     ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("WriteEPC_G2", "Write EPC", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("WriteEPC_G2", "Write EPC", FormSharedData.cmdRet, FormSharedData.ferrorcode);
+            if (FormSharedData.cmdRet == 0)
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Write EPC'Command Response=0x00" +
                             "(Write EPC successfully)";
         }
@@ -850,7 +836,7 @@ namespace LJYZN_105
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -871,24 +857,23 @@ namespace LJYZN_105
             if (ComboBox_EPC4.SelectedItem == null)
                 return;
             str = ComboBox_EPC4.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode4.Text);
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetReadProtect_G2(
-                    ref FormSharedData.fComAdr, EPC, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetReadProtect_G2(
+                    ref FormSharedData.comAdr, EPC, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("SetReadProtect_G2", "Set Single Tag Read Protection", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("SetReadProtect_G2", "Set Single Tag Read Protection", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
             {
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Set Single Tag Read Protection'Command Response=0x00" +
                         "Set Single Tag Read Protection successfully";
@@ -907,12 +892,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetMultiReadProtect_G2(
-                    ref FormSharedData.fComAdr, ref pwd, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetMultiReadProtect_G2(
+                    ref FormSharedData.comAdr, ref pwd, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("SetMultiReadProtect_G2", "Set Single Tag Read Protection without EPC", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("SetMultiReadProtect_G2", "Set Single Tag Read Protection without EPC", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Set Single Tag Read Protection without EPC'Command Response=0x00" +
                         "(Set Single Tag Read Protection without EPC successfully)";
         }
@@ -930,12 +915,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.RemoveReadProtect_G2(
-                    ref FormSharedData.fComAdr, ref pwd, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.RemoveReadProtect_G2(
+                    ref FormSharedData.comAdr, ref pwd, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("RemoveReadProtect_G2", "Reset Single Tag Read Protection", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("RemoveReadProtect_G2", "Reset Single Tag Read Protection", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Reset Single Tag Read Protection'Command Response=0x00" +
                           "(Reset Single Tag Read Protection successfully)";
         }
@@ -947,12 +932,12 @@ namespace LJYZN_105
             byte readpro = 2;
             {
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.CheckReadProtected_G2(
-                    ref FormSharedData.fComAdr, ref readpro, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.CheckReadProtected_G2(
+                    ref FormSharedData.comAdr, ref readpro, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("CheckReadProtected_G2", "Detect Single Tag Read Protection", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("CheckReadProtected_G2", "Detect Single Tag Read Protection", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
             {
                 if (readpro == 0)
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Detect Single Tag Read Protection'Command Response=0x00" +
@@ -972,7 +957,7 @@ namespace LJYZN_105
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -993,12 +978,11 @@ namespace LJYZN_105
             if (ComboBox_EPC5.SelectedItem == null)
                 return;
             str = ComboBox_EPC5.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode5.Text);
             if (Alarm_G2.Checked)
                 EAS = 1;
@@ -1008,14 +992,14 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetEASAlarm_G2(
-                    ref FormSharedData.fComAdr, EPC, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetEASAlarm_G2(
+                    ref FormSharedData.comAdr, EPC, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     EAS, EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("SetEASAlarm_G2", "Alarm Setting", FormSharedData.fCmdRet);     //v2.1 change
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("SetEASAlarm_G2", "Alarm Setting", FormSharedData.cmdRet);     //v2.1 change
+            if (FormSharedData.cmdRet == 0)
             {
                 if (Alarm_G2.Checked)                                //v2.1 add
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Alarm Setting'Command Response=0x00" +
@@ -1051,7 +1035,7 @@ namespace LJYZN_105
 
             if (!FormSharedData.IsReady()) return;
 
-            if ((maskadr_textbox.Text == "") || (maskLen_textBox.Text == ""))
+            if (string.IsNullOrEmpty(maskadr_textbox.Text) || string.IsNullOrEmpty(maskLen_textBox.Text))
             {
                 FormSharedData.fIsInventoryScan = false;
                 return;
@@ -1072,40 +1056,37 @@ namespace LJYZN_105
             if (ComboBox_EPC6.SelectedItem == null)
                 return;
             str = ComboBox_EPC6.SelectedItem.ToString() ?? "";
-            if (str == "")
+            if (string.IsNullOrEmpty(str))
                 return;
             ENum = Convert.ToByte(str.Length / 4);
             EPClength = Convert.ToByte(str.Length / 2);
-            byte[] EPC = new byte[ENum];
-            EPC = Utilities.Utilities.HexStringToByteArray(str);
+            byte[] EPC = Utilities.Utilities.HexStringToByteArray(str);
             FormSharedData.fPassWord = Utilities.Utilities.HexStringToByteArray(Edit_AccessCode6.Text);
             BlockNum = Convert.ToByte(ComboBox_BlockNum.SelectedIndex * 2);
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.LockUserBlock_G2(
-                    ref FormSharedData.fComAdr, EPC, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.LockUserBlock_G2(
+                    ref FormSharedData.comAdr, EPC, ref pwd,
                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                     BlockNum, EPClength, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("LockUserBlock_G2", "Lock User Block", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("LockUserBlock_G2", "Lock User Block", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
                 FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Lock User Block'Command Response=0x00" +
                         "(Lock successfully)";
         }
         private void ComboBox_IntervalTime_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (ComboBox_IntervalTime.SelectedIndex < 6)
-                Timer_Test_.Interval = 100;
-            else
-                Timer_Test_.Interval = (ComboBox_IntervalTime.SelectedIndex + 4) * 10;
+            Timer_Test_.Interval = (ComboBox_IntervalTime.SelectedIndex + 4) * 10;
         }
 
         public void ChangeSubItem1(ListViewItem ListItem, int subItemIndex, string ItemText)
         {
             if (subItemIndex == 1)
             {
+                if (ListItem.SubItems.Count < 3) return;
                 if (ListItem.SubItems[subItemIndex].Text != ItemText)
                 {
                     ListItem.SubItems[subItemIndex].Text = ItemText;
@@ -1170,7 +1151,7 @@ namespace LJYZN_105
             if (ListView1_EPC.SelectedItems.Count == 1)
             {
                 string EPCValue = ListView1_EPC.SelectedItems[0].SubItems[1].Text;
-                if (EPCValue != null && EPCValue != "")
+                if (!string.IsNullOrEmpty(EPCValue))
                 {
                     Clipboard.SetText(EPCValue);
                 }
@@ -1188,7 +1169,7 @@ namespace LJYZN_105
             {
                 txtDataAddr.ReadOnly = false;
             }
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) & (!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) && (!Timer_G2_Alarm.Enabled) && (!Timer_G2_Read.Enabled))
             {
                 //    Button_DataWrite.Enabled = false;
             }
@@ -1196,7 +1177,7 @@ namespace LJYZN_105
 
         private void C_TID_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) & (!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) && (!Timer_G2_Alarm.Enabled) && (!Timer_G2_Read.Enabled))
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1206,7 +1187,7 @@ namespace LJYZN_105
 
         private void C_User_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) & (!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) && (!Timer_G2_Alarm.Enabled) && (!Timer_G2_Read.Enabled))
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1216,7 +1197,7 @@ namespace LJYZN_105
 
         private void C_Reserve_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) & (!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) && (!Timer_G2_Alarm.Enabled) && (!Timer_G2_Read.Enabled))
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1234,7 +1215,7 @@ namespace LJYZN_105
                 }
                 int m, n;
                 n = Edit_WriteData.Text.Length;
-                if ((checkBox_pc.Checked) && (n % 4 == 0) && (C_EPC.Checked))
+                if (checkBox_pc.Checked && n % 4 == 0 && C_EPC.Checked)
                 {
                     m = n / 4;
                     m = (m & 0x3F) << 3;
@@ -1252,7 +1233,7 @@ namespace LJYZN_105
             Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
             int m, n;
             n = Edit_WriteData.Text.Length;
-            if ((checkBox_pc.Checked) && (n % 4 == 0) && (C_EPC.Checked))
+            if (checkBox_pc.Checked && n % 4 == 0 && C_EPC.Checked)
             {
                 m = n / 4;
                 m = (m & 0x3F) << 3;
@@ -1280,10 +1261,11 @@ namespace LJYZN_105
         {
             if (subItemIndex == 1)
             {
-                if (ItemText == "")
+                if (ListItem.SubItems.Count < 4) return;
+                if (string.IsNullOrEmpty(ItemText))
                 {
                     ListItem.SubItems[subItemIndex].Text = ItemText;
-                    if (ListItem.SubItems[subItemIndex + 2].Text == "")
+                    if (string.IsNullOrEmpty(ListItem.SubItems[subItemIndex + 2].Text))
                     {
                         ListItem.SubItems[subItemIndex + 2].Text = "1";
                     }
@@ -1308,6 +1290,7 @@ namespace LJYZN_105
             }
             if (subItemIndex == 2)
             {
+                if (ListItem.SubItems.Count < 3) return;
                 if (ListItem.SubItems[subItemIndex].Text != ItemText)
                 {
                     ListItem.SubItems[subItemIndex].Text = ItemText;

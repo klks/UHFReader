@@ -9,7 +9,7 @@ namespace LJYZN_105
 {
     public static class FormSharedData
     {
-        public static byte fComAdr = 0xff; //当前操作的ComAdr
+        public static byte comAdr = 0xff; // ComAdr for the current operation
         public static int ferrorcode;
         public static byte fBaud;
         public static double fdminfre;
@@ -17,10 +17,10 @@ namespace LJYZN_105
         public static byte Maskadr;
         public static byte MaskLen;
         public static byte MaskFlag;
-        public static int fCmdRet = 30; //所有执行指令的返回值
-        public static int fOpenComIndex; //打开的串口索引号
+        public static int cmdRet = 30; // Return value for all executed commands
+        public static int openComIndex; // Index of the open serial port
         public static bool fIsInventoryScan;
-        public static bool fisinventoryscan_6B;
+        public static bool fIsInventoryScan6B;
 
         public static bool bIsInventoryRunning_6C = false;
         public static bool bIsInventoryRunning_6B = false;

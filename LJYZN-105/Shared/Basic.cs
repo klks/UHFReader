@@ -805,14 +805,14 @@ namespace ReaderB
 
         /// <summary>Write EPC to a Gen 2 tag.</summary>
         public static long WriteEPC_G2(
-            ref byte addr, ref uint oldEpc, byte[] newEpc,
+            ref byte addr, ref uint pwd, byte[] newEpc,
             byte newEpcLen, ref uint errorCode, int portNum)
         {
             lock (_lock)
             {
                 byte[] data = new byte[1 + 4 + newEpcLen];
                 data[0] = (byte)(newEpcLen >> 1);
-                WriteUInt32LE(data, 1, oldEpc);
+                WriteUInt32LE(data, 1, pwd);
                 Array.Copy(newEpc, 0, data, 5, newEpcLen);
 
                 byte[] pkt = new byte[data.Length + 8];

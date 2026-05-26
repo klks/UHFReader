@@ -23,7 +23,7 @@ namespace LJYZN_105
         private string hassearchcard = "no";
         private string hasreadcard = "no";
         private string hasresearchcard = "no";
-        private string strWavev2Key = "E6FA3C97";
+        private const string WaveV2Key = "E6FA3C97";
 
         public Form_Duplicate()
         {
@@ -56,7 +56,7 @@ namespace LJYZN_105
         {
             Utilities.Utilities.filterOnlyHex_TextChanged(sender, e);
             string tid = txtDup_Write_TID.Text;
-            if (tid != null && tid != "")
+            if (!string.IsNullOrEmpty(tid))
             {
                 string has_extra = "";
                 int iTIDLen = tid.Length / 4;
@@ -149,25 +149,25 @@ namespace LJYZN_105
                 }
 
                 string cardUserData = "";
-                if (ci.UserData != null && ci.UserData != "" && ci.UserData.Length > 8)
+                if (!string.IsNullOrEmpty(ci.UserData) && ci.UserData.Length > 8)
                 {
                     cardUserData = ci.UserData.Substring(0, 8);
                 }
 
                 //This are for cards that contain user data
-                if (cardUserData != "" && cardUserData != null && cardUserData != "00000000" && cardUserData != "0000")
+                if (!string.IsNullOrEmpty(cardUserData) && cardUserData != "00000000" && cardUserData != "0000")
                 {
                     waveFlagGreen.Visible = true;
                 }
 
                 //These are cards that have a different password but arent locked yet
-                if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != FormSharedData.strDefaultKey)
+                if (!string.IsNullOrEmpty(ci.AccessPwd) && ci.AccessPwd != FormSharedData.strDefaultKey)
                 {
                     waveFlagRed.Visible = true;
                 }
 
                 //These are cards locked with a different password
-                if (!ci.isWavev2Card && ci.isCardAccessPWDLocked && (ci.AccessPwd == "" || ci.AccessPwd == null))
+                if (!ci.isWavev2Card && ci.isCardAccessPWDLocked && string.IsNullOrEmpty(ci.AccessPwd))
                 {
                     waveFlagPurple.Visible = true;
                 }
@@ -261,7 +261,7 @@ namespace LJYZN_105
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
             //Write EPC w/ Extended parts
-            if (txtDup_Write_FullEPC.Text == "")
+            if (string.IsNullOrEmpty(txtDup_Write_FullEPC.Text))
             {
                 MessageBox.Show("Write attempt failed. No flag found. Please try again, remember to do Search Card first.", "Write failed");
                 btnDup_WriteCard.Enabled = true;
@@ -273,12 +273,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length,
                                                                     arrJustEPC, ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                     writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet != 0)
+            if (FormSharedData.cmdRet != 0)
             {
                 if (MessageBox.Show("Failed to write Full EPC value. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
@@ -293,11 +293,11 @@ namespace LJYZN_105
             {
                 uint oldEpc = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteEPC_G2(ref FormSharedData.fComAdr, ref oldEpc, arrJustEPC, (byte)arrJustEPC.Length,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteEPC_G2(ref FormSharedData.comAdr, ref oldEpc, arrJustEPC, (byte)arrJustEPC.Length,
                                                                     ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet != 0)
+            if (FormSharedData.cmdRet != 0)
             {
                 if (MessageBox.Show("Failed to write just EPC. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
@@ -308,7 +308,7 @@ namespace LJYZN_105
             }
 
             //Write user data
-            if (txtDup_Write_UserData.Text != "")
+            if (!string.IsNullOrEmpty(txtDup_Write_UserData.Text))
             {
                 byte[] userData = HexStringToByteArray(txtDup_Write_UserData.Text);
                 Array.Clear(retArray, 0, 320);
@@ -317,12 +317,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData,
                                                                         ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                         writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet != 0)
+                if (FormSharedData.cmdRet != 0)
                 {
                     if (MessageBox.Show("Failed to write User Data. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                     {
@@ -337,12 +337,12 @@ namespace LJYZN_105
             byte[] array14 = new byte[5000];
             {
                 uint cardNumUInt = 0;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array14, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.comAdr, 0, 0, 0, array14, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
                 CardNum = (int)cardNumUInt;
             }
-            if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
-                (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
-                (FormSharedData.fCmdRet == 251))
+            if ((FormSharedData.cmdRet == 1) || (FormSharedData.cmdRet == 2) ||
+                (FormSharedData.cmdRet == 3) || (FormSharedData.cmdRet == 4) ||
+                (FormSharedData.cmdRet == 251))
             {
                 byte[] array15 = new byte[Totallen];
                 Array.Copy(array14, array15, Totallen);
@@ -379,12 +379,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData,
                                                                         ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                         writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet != 0)
+                if (FormSharedData.cmdRet != 0)
                 {
                     if (MessageBox.Show("Failed to write AFI. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
                     {
@@ -412,12 +412,12 @@ namespace LJYZN_105
             string txtEPCString = "";
             {
                 uint cardNumUInt = 0;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
+                FormSharedData.cmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.comAdr, 0, 0, 0, array, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
                 CardNum = (int)cardNumUInt;
             }
-            if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
-                (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
-                (FormSharedData.fCmdRet == 251))
+            if ((FormSharedData.cmdRet == 1) || (FormSharedData.cmdRet == 2) ||
+                (FormSharedData.cmdRet == 3) || (FormSharedData.cmdRet == 4) ||
+                (FormSharedData.cmdRet == 251))
             {
                 byte[] array2 = new byte[Totallen];
                 Array.Copy(array, array2, Totallen);
@@ -473,7 +473,7 @@ namespace LJYZN_105
             txtDup_Validate_AccessPwd.Text = ci.AccessPwd;
 
             hasresearchcard = "no";
-            if (ci.FullEPC != null && ci.FullEPC != "")
+            if (!string.IsNullOrEmpty(ci.FullEPC))
             {
                 try
                 {
@@ -481,7 +481,8 @@ namespace LJYZN_105
                     {
                         MessageBox.Show("Failed to validate this card. EPC does not match", "Validation failed");
                     }
-                    else if (waveFlagBlue.Visible && txtDup_Write_FullEPC.Text.Substring(8, txtDup_Write_FullEPC.Text.Length - 8) != txtDup_Validate_FullEPC.Text.Substring(8, txtDup_Write_FullEPC.Text.Length - 8))
+                    else if (waveFlagBlue.Visible && txtDup_Write_FullEPC.Text.Length >= 8 && txtDup_Validate_FullEPC.Text.Length >= 8 &&
+                             txtDup_Write_FullEPC.Text.Substring(8, txtDup_Write_FullEPC.Text.Length - 8) != txtDup_Validate_FullEPC.Text.Substring(8, txtDup_Write_FullEPC.Text.Length - 8))
                     {
                         MessageBox.Show("Failed to validate this card. Blue Flag error. Try to write the card again. Start the process again for clean start.", "Validation Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -574,26 +575,26 @@ namespace LJYZN_105
 
             //Write the wave key
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
-            arrTemp = HexStringToByteArray(strWavev2Key); //Set wave key
+            arrTemp = HexStringToByteArray(WaveV2Key); //Set wave key
             byte wordPtr = 2;
             byte writeLen = 4;
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
                                                                     ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, 0,
                                                                     iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
 
             //Set protection (Readable and writeable from the secured state)
-            FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
+            FormSharedData.fPassWord = HexStringToByteArray(WaveV2Key); //Set wave key
             byte select = 1;
             byte setprotect = 2;
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, ref pwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.comAdr, arrEPCHexBytes, select, setprotect, ref pwd,
                                                                         FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
                                                                         ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
@@ -631,13 +632,13 @@ namespace LJYZN_105
                 byte[] arrTemp;
 
                 //Set No protection (Readable and  writeable from any state)
-                FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
+                FormSharedData.fPassWord = HexStringToByteArray(WaveV2Key); //Set wave key
                 byte select = 1;
                 byte setprotect = 0;
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, ref pwd,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.comAdr, arrEPCHexBytes, select, setprotect, ref pwd,
                                                                             FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
                                                                             ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
@@ -651,12 +652,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
                                                                         ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                         0, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet == 0)
+                if (FormSharedData.cmdRet == 0)
                 {
                     MessageBox.Show("This card has been reset to an original state\nThe Wave v2 key has been removed", "Reset Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave v2 card reset success!";
@@ -681,8 +682,8 @@ namespace LJYZN_105
                 UserData = txtDup_Read_UserData.Text,
                 KillKey = txtDup_Read_KillPwd.Text,
                 AccessKey = txtDup_Read_AccessPwd.Text,
-                isCardAccessPWDLocked = (txtDup_Read_AccessPwd.Text == null || txtDup_Read_AccessPwd.Text == "") ? true : false,
-                isCardKillPWDLocked = (txtDup_Read_KillPwd.Text == null || txtDup_Read_KillPwd.Text == "") ? true : false,
+                isCardAccessPWDLocked = string.IsNullOrEmpty(txtDup_Read_AccessPwd.Text),
+                isCardKillPWDLocked = string.IsNullOrEmpty(txtDup_Read_KillPwd.Text),
                 isWavev2Card = btnWavev2Flag.Visible == true ? true : false
             };
 
@@ -745,25 +746,25 @@ namespace LJYZN_105
                             }
 
                             string cardUserData = "";
-                            if (ci.UserData != null && ci.UserData != "" && ci.UserData.Length > 8)
+                            if (!string.IsNullOrEmpty(ci.UserData) && ci.UserData.Length > 8)
                             {
                                 cardUserData = ci.UserData.Substring(0, 8);
                             }
 
                             //This are for cards that contain user data
-                            if (cardUserData != "" && cardUserData != null && cardUserData != "00000000" && cardUserData != "0000")
+                            if (!string.IsNullOrEmpty(cardUserData) && cardUserData != "00000000" && cardUserData != "0000")
                             {
                                 waveFlagGreen.Visible = true;
                             }
 
                             //These are cards that have a different password but arent locked yet
-                            if (ci.AccessPwd != "" && ci.AccessPwd != null && ci.AccessPwd != FormSharedData.strDefaultKey)
+                            if (!string.IsNullOrEmpty(ci.AccessPwd) && ci.AccessPwd != FormSharedData.strDefaultKey)
                             {
                                 waveFlagRed.Visible = true;
                             }
 
                             //These are cards locked with a different password
-                            if (!ci.isWavev2Card && ci.isCardAccessPWDLocked && (ci.AccessPwd == "" || ci.AccessPwd == null))
+                            if (!ci.isWavev2Card && ci.isCardAccessPWDLocked && string.IsNullOrEmpty(ci.AccessPwd))
                             {
                                 waveFlagPurple.Visible = true;
                             }
@@ -869,14 +870,14 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData,
                                                                     ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                     writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet != 0 || FormSharedData.ferrorcode != -1)
+            if (FormSharedData.cmdRet != 0 || FormSharedData.ferrorcode != -1)
             {
-                FormSharedData.MainForm.AddCmdLog("TID Write", "TID Write Failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
+                FormSharedData.MainForm.AddCmdLog("TID Write", "TID Write Failed", FormSharedData.cmdRet, FormSharedData.ferrorcode);
                 MessageBox.Show("TID Write failed.", "Write failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
@@ -902,7 +903,7 @@ namespace LJYZN_105
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
             string strSearchEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
-            if (strSearchEPC != null && strSearchEPC != "")
+            if (!string.IsNullOrEmpty(strSearchEPC))
             {
                 byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
                 byte iEPCLenBytes = Convert.ToByte(strSearchEPC.Length / 2);
@@ -910,12 +911,12 @@ namespace LJYZN_105
                 uint qtPwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint qtErrCode = uint.MaxValue;
                 byte[] paramOut = new byte[4];
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref FormSharedData.comAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
                                                                                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, paramOut,
                                                                                     ref qtErrCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = qtErrCode == uint.MaxValue ? -1 : (int)qtErrCode;
                 byte QTControl = paramOut[0];
-                if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
+                if (FormSharedData.cmdRet == 0 && FormSharedData.ferrorcode == -1)
                 {
                     if ((QTControl & (byte)MonzaQT.PAGE_PUBLIC) == (byte)MonzaQT.PAGE_PUBLIC)
                         cbDup_MonzaQT_Profile.SelectedIndex = 1;
@@ -927,10 +928,10 @@ namespace LJYZN_105
                     else
                         cbDup_MonzaQT_Distance.SelectedIndex = 0;
 
-                    //StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref fComAdr, arrEPCHexBytes, iEPCLenBytes, fPassWord, Maskadr, MaskLen, MaskFlag, QTControl, ref ferrorcode, frmcomportindex);
+                    //StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref comAdr, arrEPCHexBytes, iEPCLenBytes, fPassWord, Maskadr, MaskLen, MaskFlag, QTControl, ref ferrorcode, frmcomportindex);
                 }
                 else
-                    FormSharedData.MainForm.AddCmdLog("MonzaQT Query Failed", "MonzaQT Command failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Query Failed", "MonzaQT Command failed", FormSharedData.cmdRet, FormSharedData.ferrorcode);
             }
 
             btnDup_MonzaQTQuery.Enabled = true;
@@ -957,7 +958,7 @@ namespace LJYZN_105
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
 
             string strSearchEPC = FormSharedData.Form_6C.ComboBox_EPC2.SelectedItem.ToString();
-            if (strSearchEPC != null && strSearchEPC != "")
+            if (!string.IsNullOrEmpty(strSearchEPC))
             {
                 byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
                 byte iEPCLenBytes = Convert.ToByte(strSearchEPC.Length / 2);
@@ -972,14 +973,14 @@ namespace LJYZN_105
 
                 uint qtPwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint qtErrCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref FormSharedData.comAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
                                                                                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, QTControl,
                                                                                     ref qtErrCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = qtErrCode == uint.MaxValue ? -1 : (int)qtErrCode;
-                if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
-                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Success", "MonzaQT command successful", FormSharedData.fCmdRet);
+                if (FormSharedData.cmdRet == 0 && FormSharedData.ferrorcode == -1)
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Success", "MonzaQT command successful", FormSharedData.cmdRet);
                 else
-                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Failed", "MonzaQT command failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
+                    FormSharedData.MainForm.AddCmdLog("MonzaQT Write Failed", "MonzaQT command failed", FormSharedData.cmdRet, FormSharedData.ferrorcode);
             }
 
             btnDup_MonzaQTWrite.Enabled = true;
@@ -1082,7 +1083,7 @@ namespace LJYZN_105
         }
         public bool isAccessKeyCorrect(string? strSearchEPC, string strCardKey)
         {
-            if (strSearchEPC == null || strSearchEPC == "")
+            if (string.IsNullOrEmpty(strSearchEPC))
                 return false;
 
             //Set Mask
@@ -1101,12 +1102,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
                                                                     ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                     retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
                 Array.Copy(retArray, arrTemp, readSize * 2);
@@ -1120,7 +1121,7 @@ namespace LJYZN_105
         }
         public bool isWavev2Card(string? strSearchEPC)
         {
-            return isAccessKeyCorrect(strSearchEPC, strWavev2Key);
+            return isAccessKeyCorrect(strSearchEPC, WaveV2Key);
         }
         public CardInfo QueryCardDetails(string strSearchEPC)
         {
@@ -1161,12 +1162,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, readSize, ref pwd,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, readSize, ref pwd,
                                                                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray, iEPCLenBytes,
                                                                     ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet == 0)
+                if (FormSharedData.cmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
                     Array.Copy(retArray, arrTemp, readSize * 2);
@@ -1190,7 +1191,7 @@ namespace LJYZN_105
 
             }
 
-            if (ci.FullEPC != null && ci.FullEPC != "")
+            if (!string.IsNullOrEmpty(ci.FullEPC))
                 ci.iFullEPCLen = (ci.FullEPC.Length / 4) + 1;   //+1 for CRC which isnt included
 
             //Decode PC flags
@@ -1209,12 +1210,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)i,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)i,
                                                                     ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                     retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet == 0)
+                if (FormSharedData.cmdRet == 0)
                 {
                     arrTemp = new byte[i * 2];
                     Array.Copy(retArray, arrTemp, i * 2);
@@ -1242,12 +1243,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
                                                                 ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                 retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
                 Array.Copy(retArray, arrTemp, readSize * 2);
@@ -1266,12 +1267,12 @@ namespace LJYZN_105
             {
                 uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
                                                                 ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray,
                                                                 iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
                 Array.Copy(retArray, arrTemp, readSize * 2);
@@ -1288,20 +1289,20 @@ namespace LJYZN_105
                 readSize = 2;
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("02", 16);
-                FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key);
+                FormSharedData.fPassWord = HexStringToByteArray(WaveV2Key);
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
                                                                     ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                     retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet == 0)
+                if (FormSharedData.cmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
                     Array.Copy(retArray, arrTemp, readSize * 2);
-                    if (ByteArrayToHexString(arrTemp) == strWavev2Key)
+                    if (ByteArrayToHexString(arrTemp) == WaveV2Key)
                     {
                         ci.isWavev2Card = true;
                     }
@@ -1320,12 +1321,12 @@ namespace LJYZN_105
                 {
                     uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
                     uint errCode = uint.MaxValue;
-                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, readSize,
+                    FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.comAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, readSize,
                                                                         ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
                                                                         retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
                     FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
                 }
-                if (FormSharedData.fCmdRet == 0)
+                if (FormSharedData.cmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
                     Array.Copy(retArray, arrTemp, readSize * 2);
@@ -1334,7 +1335,7 @@ namespace LJYZN_105
                 readSize += 1;
             }
 
-            if (ci.TID != null && ci.TID != "")
+            if (!string.IsNullOrEmpty(ci.TID))
                 ci.iTIDLen = ci.TID.Length / 4;
 
             return ci;

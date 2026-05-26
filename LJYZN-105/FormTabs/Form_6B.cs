@@ -75,11 +75,11 @@ namespace LJYZN_105
 
         private void Timer_Test_6B_Tick(object sender, EventArgs e)
         {
-            if (FormSharedData.fisinventoryscan_6B)
+            if (FormSharedData.fIsInventoryScan6B)
                 return;
-            FormSharedData.fisinventoryscan_6B = true;
+            FormSharedData.fIsInventoryScan6B = true;
             Inventory_6B();
-            FormSharedData.fisinventoryscan_6B = false;
+            FormSharedData.fIsInventoryScan6B = false;
         }
         private void Timer_6B_Read_Tick(object sender, EventArgs e)
         {
@@ -101,7 +101,7 @@ namespace LJYZN_105
         {
             if (!FormSharedData.IsReadyForRead()) return;
 
-            if ((Edit_StartAddress_6B.Text == "") | (Edit_Len_6B.Text == ""))
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text) || string.IsNullOrEmpty(Edit_Len_6B.Text))
             {
                 MessageBox.Show("Start address or length is empty!Please input!", "Information");
                 return;
@@ -150,24 +150,24 @@ namespace LJYZN_105
             if (ComboBox_ID1_6B.SelectedItem == null)
                 return;
             temp = ComboBox_ID1_6B.SelectedItem.ToString() ?? "";
-            if (temp == "")
+            if (string.IsNullOrEmpty(temp))
                 return;
             ID_6B = Utilities.Utilities.HexStringToByteArray(temp);
-            if (Edit_StartAddress_6B.Text == "")
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text))
                 return;
             StartAddress = Convert.ToByte(Edit_StartAddress_6B.Text, 16);
-            if (Edit_Len_6B.Text == "")
+            if (string.IsNullOrEmpty(Edit_Len_6B.Text))
                 return;
             Num = Convert.ToByte(Edit_Len_6B.Text);
             {
                 ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_6B(
-                    ref FormSharedData.fComAdr, ref tagId6B, StartAddress, Num, CardData,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.ReadCard_6B(
+                    ref FormSharedData.comAdr, ref tagId6B, StartAddress, Num, CardData,
                     ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            if (FormSharedData.fCmdRet == 0)
+            if (FormSharedData.cmdRet == 0)
             {
                 byte[] data = new byte[Num];
                 Array.Copy(CardData, data, Num);
@@ -179,12 +179,12 @@ namespace LJYZN_105
         {
             if (!FormSharedData.IsReadyForRead()) return;
 
-            if ((Edit_WriteData_6B.Text == "") | ((Edit_WriteData_6B.Text.Length % 2) != 0))
+            if (string.IsNullOrEmpty(Edit_WriteData_6B.Text) || (Edit_WriteData_6B.Text.Length % 2) != 0)
             {
                 MessageBox.Show("Please input in bytes in hexadecimal form!", "Information");
                 return;
             }
-            if ((Edit_StartAddress_6B.Text == "") | (Edit_Len_6B.Text == ""))
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text) || string.IsNullOrEmpty(Edit_Len_6B.Text))
             {
                 MessageBox.Show("Start address or length is empty!Please input!", "Information");
                 return;
@@ -213,13 +213,13 @@ namespace LJYZN_105
             if (ComboBox_ID1_6B.SelectedItem == null)
                 return;
             temp = ComboBox_ID1_6B.SelectedItem.ToString() ?? "";
-            if (temp == "")
+            if (string.IsNullOrEmpty(temp))
                 return;
             ID_6B = Utilities.Utilities.HexStringToByteArray(temp);
-            if (Edit_StartAddress_6B.Text == "")
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text))
                 return;
             StartAddress = Convert.ToByte(Edit_StartAddress_6B.Text);
-            if ((Edit_WriteData_6B.Text == "") | (Edit_WriteData_6B.Text.Length % 2) != 0)
+            if (string.IsNullOrEmpty(Edit_WriteData_6B.Text) || (Edit_WriteData_6B.Text.Length % 2) != 0)
                 return;
             Writedatalen = Convert.ToByte(Edit_WriteData_6B.Text.Length / 2);
             byte[] Writedata = new byte[Writedatalen];
@@ -228,13 +228,13 @@ namespace LJYZN_105
                 ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
                 byte writtenCount = 0;
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_6B(
-                    ref FormSharedData.fComAdr, ref tagId6B, StartAddress, Writedata, Writedatalen,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.WriteCard_6B(
+                    ref FormSharedData.comAdr, ref tagId6B, StartAddress, Writedata, Writedatalen,
                     ref writtenCount, ref errCode, FormSharedData.frmcomportindex);
                 writtenbyte = writtenCount;
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("WriteCard", "Write", FormSharedData.fCmdRet);
+            FormSharedData.MainForm.AddCmdLog("WriteCard", "Write", FormSharedData.cmdRet);
         }
         private void SpeedButton_Query_6B_Click(object sender, EventArgs e)
         {
@@ -270,10 +270,10 @@ namespace LJYZN_105
             if (ComboBox_ID1_6B.SelectedItem == null)
                 return;
             temps = ComboBox_ID1_6B.SelectedItem.ToString() ?? "";
-            if (temps == "")
+            if (string.IsNullOrEmpty(temps))
                 return;
             ID_6B = Utilities.Utilities.HexStringToByteArray(temps);
-            if (Edit_StartAddress_6B.Text == "")
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text))
                 return;
             Address = Convert.ToByte(Edit_StartAddress_6B.Text);
             if (MessageBox.Show(this, "permanently Lock the address Confirmed?", "Information", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
@@ -281,12 +281,12 @@ namespace LJYZN_105
             {
                 ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.LockByte_6B(
-                    ref FormSharedData.fComAdr, ref tagId6B, Address,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.LockByte_6B(
+                    ref FormSharedData.comAdr, ref tagId6B, Address,
                     ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("LockByte_6B", "Lock", FormSharedData.fCmdRet);
+            FormSharedData.MainForm.AddCmdLog("LockByte_6B", "Lock", FormSharedData.cmdRet);
         }
         private void SpeedButton_Check_6B_Click(object sender, EventArgs e)
         {
@@ -301,22 +301,22 @@ namespace LJYZN_105
             if (ComboBox_ID1_6B.SelectedItem == null)
                 return;
             temps = ComboBox_ID1_6B.SelectedItem.ToString() ?? "";
-            if (temps == "")
+            if (string.IsNullOrEmpty(temps))
                 return;
             ID_6B = Utilities.Utilities.HexStringToByteArray(temps);
-            if (Edit_StartAddress_6B.Text == "")
+            if (string.IsNullOrEmpty(Edit_StartAddress_6B.Text))
                 return;
             Address = Convert.ToByte(Edit_StartAddress_6B.Text);
             {
                 ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
                 uint errCode = uint.MaxValue;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.CheckLock_6B(
-                    ref FormSharedData.fComAdr, ref tagId6B, Address, ref ReLockState,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.CheckLock_6B(
+                    ref FormSharedData.comAdr, ref tagId6B, Address, ref ReLockState,
                     ref errCode, FormSharedData.frmcomportindex);
                 FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
             }
-            FormSharedData.MainForm.AddCmdLog("CheckLock_6B", "Check Lock", FormSharedData.fCmdRet);
-            if (FormSharedData.fCmdRet == 0)
+            FormSharedData.MainForm.AddCmdLog("CheckLock_6B", "Check Lock", FormSharedData.cmdRet);
+            if (FormSharedData.cmdRet == 0)
             {
                 if (ReLockState == 0)
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Check Lock'Command Response=0x00" +
@@ -349,8 +349,8 @@ namespace LJYZN_105
             if (Byone_6B.Checked)
             {
                 ulong tagId6B = 0;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_6B(ref FormSharedData.fComAdr, ref tagId6B, FormSharedData.frmcomportindex);
-                if (FormSharedData.fCmdRet == 0)
+                FormSharedData.cmdRet = (int)StaticClassReaderB.Inventory_6B(ref FormSharedData.comAdr, ref tagId6B, FormSharedData.frmcomportindex);
+                if (FormSharedData.cmdRet == 0)
                 {
                     byte[] daw = BitConverter.GetBytes(tagId6B);
                     temps = Utilities.Utilities.ByteArrayToHexString(daw);
@@ -367,7 +367,7 @@ namespace LJYZN_105
                         aListItem.SubItems.Add("");
                     }
                     isonlistview = false;
-                    for (i = 0; i < CardNum1; i++)     //判断是否在Listview列表内
+                    for (i = 0; i < CardNum1; i++)     // Check whether the tag is already in the ListView list
                     {
                         if (temps == lv6B_Tags.Items[i].SubItems[1].Text)
                         {
@@ -402,7 +402,7 @@ namespace LJYZN_105
                     Condition = 2;
                 else if (Less_6B.Checked)
                     Condition = 3;
-                if (Edit_ConditionContent_6B.Text == "")
+                if (string.IsNullOrEmpty(Edit_ConditionContent_6B.Text))
                     return;
                 ss = Edit_ConditionContent_6B.Text;
                 Contentlen = Convert.ToByte((Edit_ConditionContent_6B.Text).Length);
@@ -438,18 +438,19 @@ namespace LJYZN_105
                         mask = 0XFF;
                         break;
                 }
-                if (Edit_Query_StartAddress_6B.Text == "")
+                if (string.IsNullOrEmpty(Edit_Query_StartAddress_6B.Text))
                     return;
                 StartAddress = Convert.ToByte(Edit_Query_StartAddress_6B.Text);
                 ulong condContent = BitConverter.ToUInt64(daw, 0);
                 uint cardNumUInt2 = 0;
-                FormSharedData.fCmdRet = (int)StaticClassReaderB.inventory2_6B(ref FormSharedData.fComAdr, Condition, StartAddress, mask, ref condContent, ID2_6B,
+                FormSharedData.cmdRet = (int)StaticClassReaderB.inventory2_6B(ref FormSharedData.comAdr, Condition, StartAddress, mask, ref condContent, ID2_6B,
                                                                             ref cardNumUInt2, FormSharedData.frmcomportindex);
                 CardNum = (int)cardNumUInt2;
-                if ((FormSharedData.fCmdRet == 0x15) | (FormSharedData.fCmdRet == 0x16) |
-                    (FormSharedData.fCmdRet == 0x17) | (FormSharedData.fCmdRet == 0x18) |
-                    (FormSharedData.fCmdRet == 0xFB))
+                if ((FormSharedData.cmdRet == 0x15) || (FormSharedData.cmdRet == 0x16) ||
+                    (FormSharedData.cmdRet == 0x17) || (FormSharedData.cmdRet == 0x18) ||
+                    (FormSharedData.cmdRet == 0xFB))
                 {
+                    if (CardNum * 8 > ID2_6B.Length) return;
                     byte[] daw1 = new byte[CardNum * 8];
                     Array.Copy(ID2_6B, daw1, CardNum * 8);
                     temps = Utilities.Utilities.ByteArrayToHexString(daw1);
@@ -468,7 +469,7 @@ namespace LJYZN_105
                             aListItem.SubItems.Add("");
                         }
                         isonlistview = false;
-                        for (j = 0; j < lv6B_Tags.Items.Count; j++)     //判断是否在Listview列表内
+                        for (j = 0; j < lv6B_Tags.Items.Count; j++)     // Check whether the tag is already in the ListView list
                         {
                             if (sID == lv6B_Tags.Items[j].SubItems[1].Text)
                             {
@@ -496,28 +497,28 @@ namespace LJYZN_105
             {
                 if (Bycondition_6B.Checked)
                 {
-                    if (FormSharedData.fCmdRet != 0)
-                        FormSharedData.MainForm.AddCmdLog("Inventory", "Query tag", FormSharedData.fCmdRet);
+                    if (FormSharedData.cmdRet != 0)
+                        FormSharedData.MainForm.AddCmdLog("Inventory", "Query tag", FormSharedData.cmdRet);
                 }
-                else if (FormSharedData.fCmdRet == 0XFB) //说明还未将所有卡读取完
+                else if (FormSharedData.cmdRet == 0XFB) // Not all cards have been read yet
                 {
 
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Query Tag'Command Response=0xFB" +
                            "(No Tag Operable)";
                 }
-                else if (FormSharedData.fCmdRet == 0)
+                else if (FormSharedData.cmdRet == 0)
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Query Tag'Command Response=0x00" +
                            "(Find a Tag)";
                 else
-                    FormSharedData.MainForm.AddCmdLog("Inventory", "Query Tag", FormSharedData.fCmdRet);
-                if (FormSharedData.fCmdRet == 0xEE)
+                    FormSharedData.MainForm.AddCmdLog("Inventory", "Query Tag", FormSharedData.cmdRet);
+                if (FormSharedData.cmdRet == 0xEE)
                     FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " 'Query Tag'Command Response=0xee" +
                                 "(Response Command Error)";
             }
         }
         private void Byone_6B_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_6B_Read.Enabled) & (!Timer_6B_Write.Enabled) & (!Timer_Test_6B.Enabled))
+            if ((!Timer_6B_Read.Enabled) && (!Timer_6B_Write.Enabled) && (!Timer_Test_6B.Enabled))
             {
                 Same_6B.Enabled = false;
                 Different_6B.Enabled = false;
@@ -528,7 +529,7 @@ namespace LJYZN_105
 
         private void Bycondition_6B_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_6B_Read.Enabled) & (!Timer_6B_Write.Enabled) & (!Timer_Test_6B.Enabled))
+            if ((!Timer_6B_Read.Enabled) && (!Timer_6B_Write.Enabled) && (!Timer_Test_6B.Enabled))
             {
                 Same_6B.Enabled = true;
                 Different_6B.Enabled = true;

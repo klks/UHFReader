@@ -108,7 +108,7 @@ namespace LJYZN_105
 
         private byte[] HexStringToByteArray(string? s)
         {
-            if (s == null || s == "")
+            if (string.IsNullOrEmpty(s))
                 return [];
 
             s = s.Replace(" ", "");
@@ -161,8 +161,8 @@ namespace LJYZN_105
         
         private void Form1_Load(object sender, EventArgs e)
         {
-            FormSharedData.fOpenComIndex = -1;
-            FormSharedData.fComAdr = 0;
+            FormSharedData.openComIndex = -1;
+            FormSharedData.comAdr = 0;
             FormSharedData.ferrorcode = -1;
             FormSharedData.fBaud = 5;
         }
@@ -194,7 +194,7 @@ namespace LJYZN_105
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (FormSharedData.fOpenComIndex != -1)
+            if (FormSharedData.openComIndex != -1)
             {
                 StaticClassReaderB.CloseComPort();
             }
