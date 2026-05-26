@@ -20,6 +20,7 @@ namespace ReaderB
         private const int ERR_BUSY    = 53;   // 0x35 port already open
         private const int ERR_INVALID = 55;   // 0x37 port not open / invalid
         private const int ERR_CMD     = 238;  // 0xEE command echo mismatch
+        private const byte ERR_ANTICOLL = 0xFC; // anti-collision error — next byte holds tag count
 
         // ── global state (mirrors the original DLL's static data segment) ────────
         private static readonly object _lock = new object();
@@ -65,11 +66,9 @@ namespace ReaderB
         /// </summary>
         public static long CheckCRC(byte[] buf, int length)
         {
-            // mirrors original: recompute CRC over 'length' bytes, write at [length]
-            // and [length+1], then check for zero — equivalent to verifying that
-            // CRC(full packet including appended CRC) == 0 for this residue-0 algorithm
-            GetCRC(buf, length);
-            return (buf[length + 1] != 0 || buf[length] != 0) ? ERR_CRC : ERR_OK;
+            ushort computed = ComputeCrc(buf, length);
+            ushort received = (ushort)(buf[length] | (buf[length + 1] << 8));
+            return computed == received ? ERR_OK : ERR_CRC;
         }
 
         private static ushort ComputeCrc(byte[] buf, int length)
@@ -102,11 +101,17 @@ namespace ReaderB
         /// </summary>
         public static long OpenCom(int portNum, byte baudCode)
         {
-            if (portNum > 50) return ERR_INVALID;
+            if (portNum < 1 || portNum > 50) return ERR_INVALID;
+            long r = OpenComCore(portNum, baudCode);
+            return r;
+        }
+
+        // Opens the physical serial port without acquiring _lock; caller must hold _lock.
+        private static long OpenComCore(int portNum, byte baudCode)
+        {
             if (baudCode == 3 || baudCode >= BaudRates.Length) return ERR_COMM;
 
             int baud = BaudRates[baudCode];
-
             var sp = new SerialPort($"COM{portNum}", baud, Parity.None, 8, StopBits.One)
             {
                 ReadTimeout  = 1000,
@@ -118,15 +123,11 @@ namespace ReaderB
             try { sp.Open(); }
             catch { return ERR_COMM; }
 
-            // discard any stale data
             sp.DiscardInBuffer();
             sp.DiscardOutBuffer();
 
-            lock (_lock)
-            {
-                _ports[portNum]?.Close();
-                _ports[portNum] = sp;
-            }
+            _ports[portNum]?.Close();
+            _ports[portNum] = sp;
             return ERR_OK;
         }
 
@@ -153,6 +154,7 @@ namespace ReaderB
         {
             lock (_lock)
             {
+                if (portNum < 1 || portNum > 50) return ERR_INVALID;
                 if (_ports[portNum] == null || !_ports[portNum]!.IsOpen)
                     return ERR_OK;
                 try
@@ -176,6 +178,7 @@ namespace ReaderB
         /// </summary>
         public static long SendDataToPort(byte[] data, uint count, int portNum)
         {
+            if (portNum < 1 || portNum > 50) return ERR_INVALID;
             var sp = _ports[portNum];
             if (sp == null || !sp.IsOpen) return ERR_INVALID;
             sp.DiscardInBuffer();
@@ -196,12 +199,13 @@ namespace ReaderB
         /// </summary>
         public static long GetDataFromPort(byte[] buf, ref int count, int portNum)
         {
+            if (portNum < 1 || portNum > 50) return ERR_INVALID;
             var sp = _ports[portNum];
             if (sp == null || !sp.IsOpen) return ERR_INVALID;
 
             int timeoutMs = _useScanTimeMult ? (100 * _scanTimeMult) : 1000;
             count = 0;
-            Array.Clear(buf, 0, Math.Min(buf.Length, 8400));
+            Array.Clear(buf, 0, buf.Length);
 
             long start = Environment.TickCount64;
 
@@ -216,8 +220,8 @@ namespace ReaderB
                         int n = sp.Read(tmp, 0, tmp.Length);
                         if (n > 0)
                         {
-                            Array.Copy(tmp, 0, buf, count, n);
-                            count += n;
+                            int canCopy = Math.Min(n, buf.Length - count);
+                            if (canCopy > 0) { Array.Copy(tmp, 0, buf, count, canCopy); count += canCopy; }
                         }
                     }
                 }
@@ -246,12 +250,13 @@ namespace ReaderB
         /// </summary>
         public static long GetQueryDataFromPort(byte[] buf, ref int count, int portNum)
         {
+            if (portNum < 1 || portNum > 50) return ERR_INVALID;
             var sp = _ports[portNum];
             if (sp == null || !sp.IsOpen) return ERR_INVALID;
 
             int timeoutMs = _useScanTimeMult ? (100 * _scanTimeMult) : 1000;
             count = 0;
-            Array.Clear(buf, 0, Math.Min(buf.Length, 5000));
+            Array.Clear(buf, 0, buf.Length);
 
             int parsedUpTo = 0;
             long start = Environment.TickCount64;
@@ -267,8 +272,8 @@ namespace ReaderB
                         int n = sp.Read(tmp, 0, tmp.Length);
                         if (n > 0)
                         {
-                            Array.Copy(tmp, 0, buf, count, n);
-                            count += n;
+                            int canCopy = Math.Min(n, buf.Length - count);
+                            if (canCopy > 0) { Array.Copy(tmp, 0, buf, count, canCopy); count += canCopy; }
                         }
                     }
                 }
@@ -343,7 +348,7 @@ namespace ReaderB
             if (sleepBeforeReceiveMs > 0)
                 Thread.Sleep(sleepBeforeReceiveMs);
 
-            Array.Clear(_rxBuf, 0, Math.Min(_rxBuf.Length, 8400));
+            Array.Clear(_rxBuf, 0, _rxBuf.Length);
             _rxLen = 0;
 
             long result;
@@ -413,8 +418,8 @@ namespace ReaderB
                 beepEnable    = _rxBuf[10];
                 antennaConf   = _rxBuf[11];
 
-                // store scan-time multiplier for inventory timeout; flag is set only inside Inventory_G2
-                _scanTimeMult = (byte)(100 * antennaConf);
+                // store raw antennaConf byte; timeout = 100 * _scanTimeMult ms, flag set in Inventory_G2
+                _scanTimeMult = antennaConf;
 
                 return ERR_OK;
             }
@@ -432,43 +437,29 @@ namespace ReaderB
                 if (portNum < 1 || portNum > 50) { portHandle = uint.MaxValue; return ERR_COMM; }
                 if (_portOpen[portNum]) { portHandle = (uint)portNum; return ERR_BUSY; }
 
-                // try to open the physical port up to 5 times
+                // open the physical port (up to 5 tries)
                 int openTries = 0;
-                while (OpenCom(portNum, baudCode) != ERR_OK)
+                while (OpenComCore(portNum, baudCode) != ERR_OK)
                 {
                     if (++openTries >= 5) { portHandle = uint.MaxValue; return ERR_COMM; }
                 }
 
-                // handshake: send GetReaderInformation and verify response
-                byte queryAddr = 0xFF;
+                // handshake: confirm reader responds with valid GetReaderInformation reply
                 for (int attempt = 0; attempt < 2; attempt++)
                 {
-                    byte[] pkt = new byte[8];
-                    int n = BuildPacket(pkt, queryAddr, 0x21);
-                    var sp = _ports[portNum];
-                    if (sp == null || !sp.IsOpen) { portHandle = uint.MaxValue; return ERR_COMM; }
-
-                    sp.DiscardInBuffer();
-                    sp.DiscardOutBuffer();
-                    try { sp.Write(pkt, 0, n); } catch { portHandle = uint.MaxValue; return ERR_COMM; }
-
-                    Array.Clear(_rxBuf, 0, _rxBuf.Length);
-                    _rxLen = 0;
-                    long r = GetDataFromPort(_rxBuf, ref _rxLen, portNum);
-
+                    ushort fwVersion = 0; ushort trType = 0;
+                    byte readerType = 0, inventScanTime = 0, rfPower = 0, beepEnable = 0, antennaConf = 0;
+                    byte a = addr;
+                    // GetReaderInformation re-acquires _lock; safe because Monitor is reentrant
+                    long r = GetReaderInformation(ref a, ref fwVersion, ref readerType, ref trType,
+                                                  ref inventScanTime, ref rfPower, ref beepEnable,
+                                                  ref antennaConf, portNum);
                     if (r == ERR_OK)
                     {
-                        ushort crc = ComputeCrc(_rxBuf, _rxLen - 2);
-                        ushort recv = (ushort)(_rxBuf[_rxLen - 2] | (_rxBuf[_rxLen - 1] << 8));
-                        if (crc == recv && _rxBuf[2] == 0x21 && _rxBuf[3] == 0)
-                        {
-                            queryAddr = _rxBuf[1];
-                            _scanTimeMult = (byte)(100 * _rxBuf[11]); // antennaConf, stored as 100*value; flag set only in Inventory_G2
-                            addr = queryAddr;
-                            _portOpen[portNum] = true;
-                            portHandle = (uint)portNum;
-                            return ERR_OK;
-                        }
+                        addr = a;
+                        _portOpen[portNum] = true;
+                        portHandle = (uint)portNum;
+                        return ERR_OK;
                     }
                 }
 
@@ -487,7 +478,7 @@ namespace ReaderB
         {
             lock (_lock)
             {
-                for (int p = 1; p <= 12; p++)
+                for (int p = 1; p <= 50; p++)
                 {
                     uint ph = 0;
                     byte a = addr;
@@ -527,29 +518,30 @@ namespace ReaderB
         {
             lock (_lock)
             {
-                _useScanTimeMult = true;
+                var sp = _ports[portNum];
+                if (sp == null || !sp.IsOpen) return ERR_INVALID;
+
                 byte[] data = maskFlag == 1 ? new byte[] { q, session } : Array.Empty<byte>();
                 byte[] pkt  = new byte[16];
                 int pktLen  = BuildPacket(pkt, addr, 0x01, data, 0, data.Length);
 
-                var sp = _ports[portNum];
-                if (sp == null || !sp.IsOpen) return ERR_INVALID;
                 sp.DiscardInBuffer();
                 sp.DiscardOutBuffer();
-                try { sp.Write(pkt, 0, pktLen); } catch { _useScanTimeMult = false; return ERR_COMM; }
+                try { sp.Write(pkt, 0, pktLen); } catch { return ERR_COMM; }
 
                 Array.Clear(_rxBuf, 0, _rxBuf.Length);
                 _rxLen = 0;
-                long r = GetQueryDataFromPort(_rxBuf, ref _rxLen, portNum);
-                _useScanTimeMult = false;
+                long r;
+                _useScanTimeMult = true;
+                try   { r = GetQueryDataFromPort(_rxBuf, ref _rxLen, portNum); }
+                finally { _useScanTimeMult = false; }
 
                 if (r != ERR_OK) return r;
 
-                // collect all EPC payloads from multi-frame response
-                byte[] acc  = new byte[5000];
-                int    accLen = 0;
-                int    remaining = _rxLen;
-                int    pos = 0;
+                // collect all EPC payloads from multi-frame response directly into epcBuf
+                int accLen    = 0;
+                int remaining = _rxLen;
+                int pos       = 0;
 
                 while (remaining > 0 && pos < _rxLen)
                 {
@@ -564,17 +556,15 @@ namespace ReaderB
                         int epcBytes = frameLenByte - 6; // payload: skip addr,cmd,err,tagCnt + 2 CRC
                         if (epcBytes > 0)
                         {
-                            Array.Copy(_rxBuf, pos + 5, acc, accLen, epcBytes);
-                            accLen += epcBytes;
+                            int canCopy = Math.Min(epcBytes, epcBuf.Length - accLen);
+                            if (canCopy > 0) { Array.Copy(_rxBuf, pos + 5, epcBuf, accLen, canCopy); accLen += canCopy; }
                         }
                     }
                     pos       += frameTotal;
                     remaining -= frameTotal;
                 }
 
-                Array.Copy(acc, 0, epcBuf, 0, Math.Min(accLen, epcBuf.Length));
                 epcLen = accLen;
-
                 return _rxBuf[3]; // error code from first frame
             }
         }
@@ -585,7 +575,7 @@ namespace ReaderB
         {
             if (_rxBuf[3] != 0)
             {
-                if ((sbyte)_rxBuf[3] == -4) // 0xFC
+                if (_rxBuf[3] == ERR_ANTICOLL)
                     errorCode = _rxBuf[4];
                 return (byte)_rxBuf[3];
             }
@@ -686,7 +676,7 @@ namespace ReaderB
 
                 if (_rxBuf[3] != 0)
                 {
-                    if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4];
+                    if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4];
                     else errorCode = uint.MaxValue;
                     return (byte)_rxBuf[3];
                 }
@@ -751,7 +741,7 @@ namespace ReaderB
             {
                 long r = SimpleCommand(addr, 0x0D, portNum);
                 if (r != ERR_OK) return r;
-                if (_rxBuf[3] != 0) { if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
+                if (_rxBuf[3] != 0) { if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
                 addr      = _rxBuf[1];
                 errorCode = uint.MaxValue;
                 return ERR_OK;
@@ -922,7 +912,7 @@ namespace ReaderB
             {
                 long r = SimpleCommand(addr, 0x0B, portNum);
                 if (r != ERR_OK) return r;
-                if (_rxBuf[3] != 0) { if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
+                if (_rxBuf[3] != 0) { if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
                 addr          = _rxBuf[1];
                 protectStatus = _rxBuf[4];
                 errorCode     = uint.MaxValue;
@@ -985,7 +975,7 @@ namespace ReaderB
 
                 if (_rxBuf[3] != 0)
                 {
-                    if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4];
+                    if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4];
                     return (byte)_rxBuf[3];
                 }
                 addr = _rxBuf[1];
@@ -1036,7 +1026,6 @@ namespace ReaderB
             {
                 long r = SimpleCommand(addr, 0x50, portNum);
                 if (r != ERR_OK) return r;
-                VerifyCrcInline();
                 if (_rxBuf[0] == 13) // length = 13 means 8-byte tag ID returned
                     tagId = ReadUInt64LE(_rxBuf, 4);
                 return (byte)_rxBuf[3];
@@ -1088,7 +1077,7 @@ namespace ReaderB
                 long r = SendReceive(pkt, pktLen, portNum);
                 if (r != ERR_OK) return r;
 
-                if (_rxBuf[3] != 0) { if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
+                if (_rxBuf[3] != 0) { if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
                 if (_rxLen > 6 && dataBuf != null)
                     Array.Copy(_rxBuf, 4, dataBuf, 0, Math.Min(_rxLen - 6, dataBuf.Length));
                 errorCode = uint.MaxValue;
@@ -1116,7 +1105,7 @@ namespace ReaderB
                 long r = SendReceive(pkt, pktLen, portNum);
                 if (r != ERR_OK) return r;
 
-                if (_rxBuf[3] != 0) { if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
+                if (_rxBuf[3] != 0) { if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
                 errorCode    = uint.MaxValue;
                 writtenCount = (byte)wL;
                 return ERR_OK;
@@ -1156,7 +1145,7 @@ namespace ReaderB
                 long r = SendReceive(pkt, pktLen, portNum);
                 if (r != ERR_OK) return r;
 
-                if (_rxBuf[3] != 0) { if ((sbyte)_rxBuf[3] == -4) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
+                if (_rxBuf[3] != 0) { if (_rxBuf[3] == ERR_ANTICOLL) errorCode = _rxBuf[4]; return (byte)_rxBuf[3]; }
                 lockStatus = _rxBuf[4];
                 errorCode  = uint.MaxValue;
                 return ERR_OK;
@@ -1344,7 +1333,7 @@ namespace ReaderB
         {
             if (_rxBuf[3] != 0)
             {
-                if ((sbyte)_rxBuf[3] == -4) // 0xFC = anti-collision error with count
+                if (_rxBuf[3] == ERR_ANTICOLL)
                     errorCode = _rxBuf[4];
                 else
                     errorCode = uint.MaxValue;
@@ -1352,11 +1341,6 @@ namespace ReaderB
             }
             errorCode = uint.MaxValue;
             return ERR_OK;
-        }
-
-        private static void VerifyCrcInline()
-        {
-            // already verified in SendReceive; placeholder for clarity
         }
 
         private static void WriteUInt32LE(byte[] buf, int offset, uint value)
