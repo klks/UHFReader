@@ -550,9 +550,6 @@ namespace ES_F3105U
 
         private async void btnFindLength_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Length search can take some time, are you sure?", "Find Length Warning", 
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-                return;
 
             //Do some sanity checking
             Task<bool> task_validate = Task.Run(() => b6CReadWriteSanityCheck());
@@ -562,44 +559,85 @@ namespace ES_F3105U
             btn6C_FindLength.Enabled = false;
             gbTagRW.Enabled = false;
 
-            uint iTotalWords = 0;
-            if (MessageBox.Show("Start from beginning?", "Find Length Warning", 
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-            {
-                if (txt6C_RWLen.Text != null && txt6C_RWLen.TextLength > 0)
-                {
-                    iTotalWords = Convert.ToUInt16(txt6C_RWLen.Text);
-                }
-            }
-            else
-            {
-                txt6C_StartAddr.Text = "0";
-                txt6C_RWLen.Text = "1";
-            }
+            uint startWord = 0;
+            txt6C_StartAddr.Text = "0";
 
             byte membank = GetSelectedReadMemoryBank();
             uint accessPwd = Convert.ToUInt32(txt6C_AccessPwd.Text, 16);
-            ushort readSize = 1;
+            uint confirmed = 0;     // words confirmed valid above startWord
+            ushort chunkSize = 1;
+            bool foundBoundary = false;
+            int dbg_readCount = 0;
 
+            // Phase 1: Exponential doubling — home in on the bank boundary quickly
             while (true)
             {
-                DateTime dtStart = DateTime.Now;
+                // Drain: wait minCooldown so any late response from the previous command
+                // arrives and sets the flag, then reset to clear it before sending the next command.
+                await Task.Delay(FormSharedData.minCooldown);
                 FormSharedData.responseParser.ResetFlag("flag_cmd_read");
-                FormSharedData.readerClient.MsgBaseRead(membank, iTotalWords, readSize, accessPwd);
+
+                FormSharedData.readerClient.MsgBaseRead(membank, startWord + confirmed, chunkSize, accessPwd);
                 Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_read"));
                 await task;
+                dbg_readCount++;
 
-                if (task.Result != ErrorCode.OK || FormSharedData.responseParser.readerStatusCode != (int)ErrorCode.OK) break;
-                iTotalWords++;
-
-                //Internal cooldown
-                TimeSpan td = DateTime.Now - dtStart;
-                if (td.Milliseconds < FormSharedData.minCooldown)
+                if (task.Result == ErrorCode.OK && FormSharedData.responseParser.readerStatusCode == ErrorCode.OK)
                 {
-                    Thread.Sleep(FormSharedData.minCooldown - td.Milliseconds);
+                    confirmed += chunkSize;
+                    chunkSize = (ushort)Math.Min(chunkSize * 2, 256);
+                }
+                else if (task.Result == ErrorCode.OK && FormSharedData.responseParser.readerStatusCode == ErrorCode.PARAM_WORDCNT_TOO_LONG)
+                {
+                    foundBoundary = true;
+                    break;
+                }
+                else
+                {
+                    break;
                 }
             }
-            txt6C_RWLen.Text = iTotalWords.ToString();
+
+            // Phase 2: Binary search for the exact word count within the failed chunk
+            int bsLo = 0;
+            int bsHi = chunkSize - 1;
+
+            if (foundBoundary)
+            {
+                while (bsLo < bsHi)
+                {
+                    int mid = (bsLo + bsHi + 1) / 2;
+
+                    // Drain: same as Phase 1 — let any late previous response arrive, then reset.
+                    await Task.Delay(FormSharedData.minCooldown);
+                    FormSharedData.responseParser.ResetFlag("flag_cmd_read");
+
+                    FormSharedData.readerClient.MsgBaseRead(membank, startWord + confirmed, (ushort)mid, accessPwd);
+                    Task<ErrorCode> task = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_read"));
+                    await task;
+                    dbg_readCount++;
+
+                    if (task.Result == ErrorCode.OK && FormSharedData.responseParser.readerStatusCode == ErrorCode.OK)
+                    {
+                        bsLo = mid;
+                    }
+                    else if (task.Result == ErrorCode.OK && FormSharedData.responseParser.readerStatusCode == ErrorCode.PARAM_WORDCNT_TOO_LONG)
+                    {
+                        bsHi = mid - 1;
+                    }
+                    else if (task.Result == ErrorCode.OK)
+                    {
+                        bsHi = mid - 1;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            uint finalLength = startWord + confirmed + (uint)bsLo;
+            txt6C_RWLen.Text = finalLength.ToString();
 
             gbTagRW.Enabled = true;
             btn6C_FindLength.Enabled = true;

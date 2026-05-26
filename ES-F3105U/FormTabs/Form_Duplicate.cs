@@ -264,65 +264,112 @@ namespace ES_F3105U
             uint accessPwd = 0;
             if (txtDup_Read_AccessPwd.Text != "")
                 accessPwd = Convert.ToUInt32(txtDup_Read_AccessPwd.Text, 16);
-            uint readIndex = 0;
-            ushort readSize = 1;
 
             string strFullData = "";
             string latchEPC = "";
+            uint readIndex = 0;
+            ushort chunkSize = 1;
+
+            // Phase 1: Exponential doubling — read in growing chunks to minimise round-trips
+            // and home in on the bank boundary quickly (O(log n) reads).
             while (true)
             {
-                DateTime dtStart = DateTime.Now;
+                // Drain: wait minCooldown so any late response from the previous command
+                // arrives and sets the flag, then AttemptRead_6C's ResetFlag clears it.
+                await Task.Delay(FormSharedData.minCooldown);
 
                 ReadWriteParsedData result = new ReadWriteParsedData();
-                Task<bool> task_read = Task.Run(() => FormSharedData.AttemptRead_6C(membank, readIndex, readSize, accessPwd, result));
+                Task<bool> task_read = Task.Run(() => FormSharedData.AttemptRead_6C(membank, readIndex, chunkSize, accessPwd, result));
                 await task_read;
 
                 if (task_read.Result == true)
                 {
                     if (latchEPC == "" || FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set == false)
                     {
-                        await Task.Delay(250);  //Slow down the next request
+                        await Task.Delay(250);
                         latchEPC = result.StringEPC;
 
-                        //Set a filter now
                         FormSharedData.responseParser.ResetFlag("flag_cmd_set_access_epc_match");
                         FormSharedData.readerClient.MsgBaseSetAccessEpcMatch(0, (byte)result.RawEPC.Length, result.RawEPC);
                         Task<ErrorCode> task_set = Task.Run(() => FormSharedData.responseParser.WaitForFlag("flag_cmd_set_access_epc_match"));
                         await task_set;
                         if (task_set.Result == ErrorCode.OK)
                             FormSharedData.responseParser.isMsgBaseSetAccessEpcMatch_Set = true;
-                        await Task.Delay(250);  //Slow down the next request
+                        await Task.Delay(250);
                     }
 
-                    //Check if there was a problem
                     if (latchEPC != result.StringEPC)
                     {
                         MessageBox.Show("Multiple tags were detected when trying to read, please make sure only 1 card is nearby", "Read Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
-                        strFullData = "";
-                        break;
+                        return "";
                     }
+
                     strFullData += result.StringData;
+                    readIndex += chunkSize;
+                    chunkSize = (ushort)Math.Min(chunkSize * 2, 256);
+                }
+                else if (result.readerStatusCode == ErrorCode.PARAM_WORDCNT_TOO_LONG)
+                {
+                    break;  // Bank ends somewhere in [readIndex, readIndex + chunkSize - 1]
                 }
                 else
                 {
-                    if (result.readerStatusCode != ErrorCode.OK &&
-                        result.readerStatusCode != ErrorCode.PARAM_WORDCNT_TOO_LONG)
+                    if (result.readerStatusCode != ErrorCode.OK)
                     {
                         MessageBox.Show("Not all bytes were able to be read, check error code returned on the right", "Read Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                     }
-                    break;
-                }
-                readIndex++;
-
-                //Internal cooldown
-                TimeSpan td = DateTime.Now - dtStart;
-                if (td.Milliseconds < FormSharedData.minCooldown)
-                {
-                    Thread.Sleep(FormSharedData.minCooldown - td.Milliseconds);
+                    return strFullData;
                 }
             }
+
+            // Phase 2: Binary search — find the exact number of readable words starting at
+            // readIndex.  Invariant: answer ∈ [bsLo, bsHi].
+            int bsLo = 0;
+            int bsHi = chunkSize - 1;
+            string bsLastData = "";
+
+            while (bsLo < bsHi)
+            {
+                int mid = (bsLo + bsHi + 1) / 2;   // ceiling avoids infinite loop when bsLo + 1 == bsHi
+
+                // Drain: same as Phase 1.
+                await Task.Delay(FormSharedData.minCooldown);
+
+                ReadWriteParsedData result = new ReadWriteParsedData();
+                Task<bool> task_read = Task.Run(() => FormSharedData.AttemptRead_6C(membank, readIndex, (ushort)mid, accessPwd, result));
+                await task_read;
+
+                if (task_read.Result == true)
+                {
+                    if (latchEPC != "" && latchEPC != result.StringEPC)
+                    {
+                        MessageBox.Show("Multiple tags were detected when trying to read, please make sure only 1 card is nearby", "Read Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
+                        return "";
+                    }
+                    bsLo = mid;
+                    bsLastData = result.StringData;     // tracks the last full successful read
+                }
+                else if (result.readerStatusCode == ErrorCode.PARAM_WORDCNT_TOO_LONG)
+                {
+                    bsHi = mid - 1;
+                }
+                else
+                {
+                    if (result.readerStatusCode != ErrorCode.OK)
+                    {
+                        MessageBox.Show("Not all bytes were able to be read, check error code returned on the right", "Read Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
+                    }
+                    return strFullData;
+                }
+            }
+
+            if (bsLo > 0)
+                strFullData += bsLastData;
+
             return strFullData;
         }
 
