@@ -49,7 +49,7 @@ namespace LJYZN_105
             int i = 0;
             cbReader_COM.Items.Clear();
             cbReader_COM.Items.Add(" AUTO");
-            for (i = 1; i < 13; i++)
+            for (i = 1; i < 50; i++)
                 cbReader_COM.Items.Add(" COM" + Convert.ToString(i));
             cbReader_COM.SelectedIndex = 0;
 
@@ -133,7 +133,7 @@ namespace LJYZN_105
                     {
                         FormSharedData.fBaud = Convert.ToByte(FormSharedData.fBaud + 2);
                     }
-                    openresult = StaticClassReaderB.AutoOpenComPort(ref port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                    openresult = (int)StaticClassReaderB.AutoOpenComPort(ref port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
                     FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                     if (openresult == 0)
                     {
@@ -166,7 +166,9 @@ namespace LJYZN_105
                         FormSharedData.fBaud = Convert.ToByte(i);
                         if (FormSharedData.fBaud == 3)
                             continue;
-                        openresult = StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                        uint ph = 0;
+                        openresult = (int)StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref ph);
+                        FormSharedData.frmcomportindex = (int)ph;
                         FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                         if (openresult == 0x35)
                         {
@@ -241,7 +243,7 @@ namespace LJYZN_105
                 {
                     temp = cbReader_AlreadyOpenCOM.SelectedItem.ToString();
                     port = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
-                    FormSharedData.fCmdRet = StaticClassReaderB.CloseSpecComPort(port);
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.CloseSpecComPort(port);
                     if (FormSharedData.fCmdRet == 0)
                     {
                         cbReader_AlreadyOpenCOM.Items.RemoveAt(0);
@@ -251,7 +253,9 @@ namespace LJYZN_105
                             port = Convert.ToInt32(temp.Substring(3, temp.Length - 3));
                             StaticClassReaderB.CloseSpecComPort(port);
                             FormSharedData.fComAdr = 0xFF;
-                            StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref FormSharedData.frmcomportindex);
+                            uint ph2 = 0;
+                            StaticClassReaderB.OpenComPort(port, ref FormSharedData.fComAdr, FormSharedData.fBaud, ref ph2);
+                            FormSharedData.frmcomportindex = (int)ph2;
                             FormSharedData.fOpenComIndex = FormSharedData.frmcomportindex;
                             RefreshStatus();
                             btnReader_GetReaderInfo_Click(sender, e); //自动执行读取写卡器信息
@@ -291,14 +295,13 @@ namespace LJYZN_105
 
         private void btnReader_GetReaderInfo_Click(object sender, EventArgs e)
         {
-            byte[] TrType = new byte[2];
-            byte[] VersionInfo = new byte[2];
-            byte ReaderType = 0;
-            byte ScanTime = 0;
-            byte dmaxfre = 0;
-            byte dminfre = 0;
-            byte powerdBm = 0;
-            byte FreBand = 0;
+            ushort fwVersion = 0;
+            ushort trType = 0;
+            byte readerType = 0;
+            byte inventScanTime = 0;
+            byte rfPower = 0;
+            byte beepEnable = 0;
+            byte antennaConf = 0;
             Edit_Version.Text = "";
             Edit_ComAdr.Text = "";
             Edit_scantime.Text = "";
@@ -308,70 +311,29 @@ namespace LJYZN_105
             Edit_powerdBm.Text = "";
             Edit_dminfre.Text = "";
             Edit_dmaxfre.Text = "";
-            FormSharedData.fCmdRet = StaticClassReaderB.GetReaderInformation(ref FormSharedData.fComAdr, VersionInfo, ref ReaderType,
-                                                                            TrType, ref dmaxfre, ref dminfre, ref powerdBm, ref ScanTime, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.GetReaderInformation(
+                ref FormSharedData.fComAdr, ref fwVersion, ref readerType, ref trType,
+                ref inventScanTime, ref rfPower, ref beepEnable, ref antennaConf,
+                FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
             {
-                Edit_Version.Text = Convert.ToString(VersionInfo[0], 10).PadLeft(2, '0') + "." + Convert.ToString(VersionInfo[1], 10).PadLeft(2, '0');
+                Edit_Version.Text = Convert.ToString(fwVersion & 0xFF, 10).PadLeft(2, '0') + "." + Convert.ToString(fwVersion >> 8, 10).PadLeft(2, '0');
 
-                if (powerdBm > 13)
+                if (rfPower > 13)
                     ComboBox_PowerDbm.SelectedIndex = 13;
                 else
-                    ComboBox_PowerDbm.SelectedIndex = powerdBm;
+                    ComboBox_PowerDbm.SelectedIndex = rfPower;
                 Edit_ComAdr.Text = Convert.ToString(FormSharedData.fComAdr, 16).PadLeft(2, '0');
                 Edit_NewComAdr.Text = Convert.ToString(FormSharedData.fComAdr, 16).PadLeft(2, '0');
-                Edit_scantime.Text = Convert.ToString(ScanTime, 10).PadLeft(2, '0') + "*100ms";
-                ComboBox_scantime.SelectedIndex = ScanTime - 3;
-                Edit_powerdBm.Text = Convert.ToString(powerdBm, 10).PadLeft(2, '0');
-
-                FreBand = Convert.ToByte(((dmaxfre & 0xc0) >> 4) | (dminfre >> 6));
-                switch (FreBand)
-                {
-                    case 0:
-                        {
-                            rbReader_FreqBand_User.Checked = true;
-                            FormSharedData.fdminfre = 902.6 + (dminfre & 0x3F) * 0.4;
-                            FormSharedData.fdmaxfre = 902.6 + (dmaxfre & 0x3F) * 0.4;
-                        }
-                        break;
-                    case 1:
-                        {
-                            rbReader_FreqBand_Chinese.Checked = true;
-                            FormSharedData.fdminfre = 920.125 + (dminfre & 0x3F) * 0.25;
-                            FormSharedData.fdmaxfre = 920.125 + (dmaxfre & 0x3F) * 0.25;
-                        }
-                        break;
-                    case 2:
-                        {
-                            rbReader_FreqBand_US.Checked = true;
-                            FormSharedData.fdminfre = 902.75 + (dminfre & 0x3F) * 0.5;
-                            FormSharedData.fdmaxfre = 902.75 + (dmaxfre & 0x3F) * 0.5;
-                        }
-                        break;
-                    case 3:
-                        {
-                            rbReader_FreqBand_Korean.Checked = true;
-                            FormSharedData.fdminfre = 917.1 + (dminfre & 0x3F) * 0.2;
-                            FormSharedData.fdmaxfre = 917.1 + (dmaxfre & 0x3F) * 0.2;
-                        }
-                        break;
-                    case 4:
-                        {
-                            rbReader_FreqBand_Europe.Checked = true;
-                            FormSharedData.fdminfre = 865.1 + (dminfre & 0x3F) * 0.2;
-                            FormSharedData.fdmaxfre = 865.1 + (dmaxfre & 0x3F) * 0.2;
-                        }
-                        break;
-                }
+                Edit_scantime.Text = Convert.ToString(inventScanTime, 10).PadLeft(2, '0') + "*100ms";
+                ComboBox_scantime.SelectedIndex = inventScanTime - 3;
+                Edit_powerdBm.Text = Convert.ToString(rfPower, 10).PadLeft(2, '0');
+                // Note: frequency band bytes (dmaxfre/dminfre) are not returned by the
+                // new pure-C# implementation; frequency display reflects the last written value.
                 Edit_dminfre.Text = Convert.ToString(FormSharedData.fdminfre) + "MHz";
                 Edit_dmaxfre.Text = Convert.ToString(FormSharedData.fdmaxfre) + "MHz";
-                if (FormSharedData.fdmaxfre != FormSharedData.fdminfre)
-                    CheckBox_SameFre.Checked = false;
-                ComboBox_dminfre.SelectedIndex = dminfre & 0x3F;
-                ComboBox_dmaxfre.SelectedIndex = dmaxfre & 0x3F;
-                //   if (ReaderType == 0x08)
                 Edit_Type.Text = "UHFReader09";
-                if ((TrType[0] & 0x02) == 0x02) //第二个字节低第四位代表支持的协议“ISO/IEC 15693”
+                if ((trType & 0x02) == 0x02)
                 {
                     ISO180006B.Checked = true;
                     EPCC1G2.Checked = true;
@@ -415,7 +377,7 @@ namespace LJYZN_105
             scantime = Convert.ToByte(ComboBox_scantime.SelectedIndex + 3);
             setinfo = "Write";
             progressBar1.Value = 10;
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0x13)
                 FormSharedData.fComAdr = aNewComAdr;
             if (FormSharedData.fCmdRet == 0)
@@ -433,7 +395,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 25;
-            FormSharedData.fCmdRet = StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Power Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -446,7 +408,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 40;
-            FormSharedData.fCmdRet = StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Frequency Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -459,7 +421,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 55;
-            FormSharedData.fCmdRet = StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Baud Rate Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -472,7 +434,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 70;
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",InventoryScanTime Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -509,7 +471,7 @@ namespace LJYZN_105
             setinfo = " Recovery ";
             cbReader_SetBaud.SelectedIndex = 3;
             progressBar1.Value = 10;
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteComAdr(ref FormSharedData.fComAdr, ref aNewComAdr, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0x13)
                 FormSharedData.fComAdr = aNewComAdr;
             if (FormSharedData.fCmdRet == 0)
@@ -527,7 +489,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 25;
-            FormSharedData.fCmdRet = StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.SetPowerDbm(ref FormSharedData.fComAdr, powerDbm, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Power Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -540,7 +502,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 40;
-            FormSharedData.fCmdRet = StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.Writedfre(ref FormSharedData.fComAdr, ref dmaxfre, ref dminfre, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Frequency Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -553,7 +515,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 55;
-            FormSharedData.fCmdRet = StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.Writebaud(ref FormSharedData.fComAdr, ref FormSharedData.fBaud, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",Baud Rate Success";
             else if (FormSharedData.fCmdRet == 0xEE)
@@ -566,7 +528,7 @@ namespace LJYZN_105
             }
 
             progressBar1.Value = 70;
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
+            FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteScanTime(ref FormSharedData.fComAdr, ref scantime, FormSharedData.frmcomportindex);
             if (FormSharedData.fCmdRet == 0)
                 returninfo = returninfo + ",InventoryScanTime Success";
             else if (FormSharedData.fCmdRet == 0xEE)

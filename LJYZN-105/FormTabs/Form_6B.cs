@@ -159,8 +159,14 @@ namespace LJYZN_105
             if (Edit_Len_6B.Text == "")
                 return;
             Num = Convert.ToByte(Edit_Len_6B.Text);
-            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_6B(ref FormSharedData.fComAdr, ID_6B, StartAddress, Num, CardData,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_6B(
+                    ref FormSharedData.fComAdr, ref tagId6B, StartAddress, Num, CardData,
+                    ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet == 0)
             {
                 byte[] data = new byte[Num];
@@ -218,8 +224,16 @@ namespace LJYZN_105
             Writedatalen = Convert.ToByte(Edit_WriteData_6B.Text.Length / 2);
             byte[] Writedata = new byte[Writedatalen];
             Writedata = Utilities.Utilities.HexStringToByteArray(Edit_WriteData_6B.Text);
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_6B(ref FormSharedData.fComAdr, ID_6B, StartAddress, Writedata, Writedatalen, ref writtenbyte,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
+                byte writtenCount = 0;
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_6B(
+                    ref FormSharedData.fComAdr, ref tagId6B, StartAddress, Writedata, Writedatalen,
+                    ref writtenCount, ref errCode, FormSharedData.frmcomportindex);
+                writtenbyte = writtenCount;
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             FormSharedData.MainForm.AddCmdLog("WriteCard", "Write", FormSharedData.fCmdRet);
         }
         private void SpeedButton_Query_6B_Click(object sender, EventArgs e)
@@ -264,8 +278,14 @@ namespace LJYZN_105
             Address = Convert.ToByte(Edit_StartAddress_6B.Text);
             if (MessageBox.Show(this, "permanently Lock the address Confirmed?", "Information", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
                 return;
-            FormSharedData.fCmdRet = StaticClassReaderB.LockByte_6B(ref FormSharedData.fComAdr, ID_6B, Address,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.LockByte_6B(
+                    ref FormSharedData.fComAdr, ref tagId6B, Address,
+                    ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             FormSharedData.MainForm.AddCmdLog("LockByte_6B", "Lock", FormSharedData.fCmdRet);
         }
         private void SpeedButton_Check_6B_Click(object sender, EventArgs e)
@@ -287,8 +307,14 @@ namespace LJYZN_105
             if (Edit_StartAddress_6B.Text == "")
                 return;
             Address = Convert.ToByte(Edit_StartAddress_6B.Text);
-            FormSharedData.fCmdRet = StaticClassReaderB.CheckLock_6B(ref FormSharedData.fComAdr, ID_6B, Address, ref ReLockState,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                ulong tagId6B = BitConverter.ToUInt64(ID_6B, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.CheckLock_6B(
+                    ref FormSharedData.fComAdr, ref tagId6B, Address, ref ReLockState,
+                    ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             FormSharedData.MainForm.AddCmdLog("CheckLock_6B", "Check Lock", FormSharedData.fCmdRet);
             if (FormSharedData.fCmdRet == 0)
             {
@@ -322,11 +348,11 @@ namespace LJYZN_105
             byte Contentlen;
             if (Byone_6B.Checked)
             {
-                FormSharedData.fCmdRet = StaticClassReaderB.Inventory_6B(ref FormSharedData.fComAdr, ID_6B, FormSharedData.frmcomportindex);
+                ulong tagId6B = 0;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_6B(ref FormSharedData.fComAdr, ref tagId6B, FormSharedData.frmcomportindex);
                 if (FormSharedData.fCmdRet == 0)
                 {
-                    byte[] daw = new byte[8];
-                    Array.Copy(ID_6B, daw, 8);
+                    byte[] daw = BitConverter.GetBytes(tagId6B);
                     temps = Utilities.Utilities.ByteArrayToHexString(daw);
                     if (!list.Contains(temps))
                     {
@@ -415,8 +441,11 @@ namespace LJYZN_105
                 if (Edit_Query_StartAddress_6B.Text == "")
                     return;
                 StartAddress = Convert.ToByte(Edit_Query_StartAddress_6B.Text);
-                FormSharedData.fCmdRet = StaticClassReaderB.inventory2_6B(ref FormSharedData.fComAdr, Condition, StartAddress, mask, daw, ID2_6B,
-                                                                            ref CardNum, FormSharedData.frmcomportindex);
+                ulong condContent = BitConverter.ToUInt64(daw, 0);
+                uint cardNumUInt2 = 0;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.inventory2_6B(ref FormSharedData.fComAdr, Condition, StartAddress, mask, ref condContent, ID2_6B,
+                                                                            ref cardNumUInt2, FormSharedData.frmcomportindex);
+                CardNum = (int)cardNumUInt2;
                 if ((FormSharedData.fCmdRet == 0x15) | (FormSharedData.fCmdRet == 0x16) |
                     (FormSharedData.fCmdRet == 0x17) | (FormSharedData.fCmdRet == 0x18) |
                     (FormSharedData.fCmdRet == 0xFB))

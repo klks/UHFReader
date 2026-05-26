@@ -127,7 +127,7 @@ namespace Utilities
                     string jsonString = File.ReadAllText(inFileList);
 
                     // Use regex to remove all non-ascii characters for JSON parsing compatibility
-                    jsonString = Regex.Replace(jsonString, @"[^\x00-\x7F]+", string.Empty);
+                    jsonString = Regex.Replace(jsonString, @"[^\x20-\x7F]+", string.Empty);
 
                     try
                     {

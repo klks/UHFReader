@@ -270,9 +270,14 @@ namespace LJYZN_105
             string txtJustEPC = txtDup_Write_FullEPC.Text.Substring(4, txtDup_Write_FullEPC.Text.Length - 4);
             byte[] arrJustEPC = HexStringToByteArray(txtJustEPC);
             wordPtr = Convert.ToByte("02", 16);
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length,
-                                                                    arrJustEPC, FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                    writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, (byte)arrJustEPC.Length,
+                                                                    arrJustEPC, ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet != 0)
             {
                 if (MessageBox.Show("Failed to write Full EPC value. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
@@ -285,8 +290,13 @@ namespace LJYZN_105
 
             //Write jsut EPC
             arrJustEPC = HexStringToByteArray(txtDup_Write_EPC.Text);
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteEPC_G2(ref FormSharedData.fComAdr, FormSharedData.fPassWord, arrJustEPC, (byte)arrJustEPC.Length,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint oldEpc = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteEPC_G2(ref FormSharedData.fComAdr, ref oldEpc, arrJustEPC, (byte)arrJustEPC.Length,
+                                                                    ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet != 0)
             {
                 if (MessageBox.Show("Failed to write just EPC. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
@@ -304,9 +314,14 @@ namespace LJYZN_105
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("00", 16);
 
-                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData,
-                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                        writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)userData.Length, userData,
+                                                                        ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet != 0)
                 {
                     if (MessageBox.Show("Failed to write User Data. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
@@ -320,7 +335,11 @@ namespace LJYZN_105
             int CardNum = 0;
             int Totallen = 0;
             byte[] array14 = new byte[5000];
-            FormSharedData.fCmdRet = StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array14, ref Totallen, ref CardNum, FormSharedData.frmcomportindex);
+            {
+                uint cardNumUInt = 0;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array14, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
+                CardNum = (int)cardNumUInt;
+            }
             if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
                 (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
                 (FormSharedData.fCmdRet == 251))
@@ -357,9 +376,14 @@ namespace LJYZN_105
                 arrBlackFlagData = HexStringToByteArray(strBlackFlagString);
 
                 wordPtr = Convert.ToByte("01", 16);
-                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData,
-                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                        writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, blackDataLen, arrBlackFlagData,
+                                                                        ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet != 0)
                 {
                     if (MessageBox.Show("Failed to write AFI. Keep going?", "Write failed", MessageBoxButtons.YesNo) == DialogResult.No)
@@ -386,7 +410,11 @@ namespace LJYZN_105
             int Totallen = 0;
             byte[] array = new byte[5000];
             string txtEPCString = "";
-            FormSharedData.fCmdRet = StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array, ref Totallen, ref CardNum, FormSharedData.frmcomportindex);
+            {
+                uint cardNumUInt = 0;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.Inventory_G2(ref FormSharedData.fComAdr, 0, 0, 0, array, ref Totallen, ref cardNumUInt, FormSharedData.frmcomportindex);
+                CardNum = (int)cardNumUInt;
+            }
             if ((FormSharedData.fCmdRet == 1) | (FormSharedData.fCmdRet == 2) |
                 (FormSharedData.fCmdRet == 3) | (FormSharedData.fCmdRet == 4) |
                 (FormSharedData.fCmdRet == 251))
@@ -549,17 +577,27 @@ namespace LJYZN_105
             arrTemp = HexStringToByteArray(strWavev2Key); //Set wave key
             byte wordPtr = 2;
             byte writeLen = 4;
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
-                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, 0,
-                                                                    iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                                                                    ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, 0,
+                                                                    iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
 
             //Set protection (Readable and writeable from the secured state)
             FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
             byte select = 1;
             byte setprotect = 2;
-            FormSharedData.fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, FormSharedData.fPassWord, 
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, ref pwd,
                                                                         FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
-                                                                        ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex); ;
+                                                                        ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
 
             MessageBox.Show("This card will now identify as a Wave v2 Card", "Create Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             FormSharedData.tss_Status.Text = DateTime.Now.ToLongTimeString() + " Wave create success!";
@@ -596,18 +634,28 @@ namespace LJYZN_105
                 FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key); //Set wave key
                 byte select = 1;
                 byte setprotect = 0;
-                FormSharedData.fCmdRet = StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, FormSharedData.fPassWord,
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.SetCardProtect_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, select, setprotect, ref pwd,
                                                                             FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, iEPCLenBytes,
-                                                                            ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex); ;
+                                                                            ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
 
                 //Reset access key to 00000000
                 FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey); //Set wave key
                 arrTemp = HexStringToByteArray(FormSharedData.strDefaultKey);
                 byte wordPtr = 2;
                 byte writeLen = 4;
-                FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
-                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                        0, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, writeLen, arrTemp,
+                                                                        ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        0, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet == 0)
                 {
                     MessageBox.Show("This card has been reset to an original state\nThe Wave v2 key has been removed", "Reset Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -818,9 +866,14 @@ namespace LJYZN_105
             byte[] tidData = HexStringToByteArray(txtDup_Write_TID.Text);
             byte wordPtr = Convert.ToByte("00", 16);
 
-            FormSharedData.fCmdRet = StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData,
-                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                    writtenDataNum, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.WriteCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, (byte)tidData.Length, tidData,
+                                                                    ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    writtenDataNum, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet != 0 || FormSharedData.ferrorcode != -1)
             {
                 FormSharedData.MainForm.AddCmdLog("TID Write", "TID Write Failed", FormSharedData.fCmdRet, FormSharedData.ferrorcode);
@@ -854,10 +907,14 @@ namespace LJYZN_105
                 byte[] arrEPCHexBytes = HexStringToByteArray(strSearchEPC);
                 byte iEPCLenBytes = Convert.ToByte(strSearchEPC.Length / 2);
 
-                byte QTControl = 0;
-                FormSharedData.fCmdRet = StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, FormSharedData.fPassWord,
-                                                                                    FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, ref QTControl,
-                                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                uint qtPwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint qtErrCode = uint.MaxValue;
+                byte[] paramOut = new byte[4];
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.GetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
+                                                                                    FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, paramOut,
+                                                                                    ref qtErrCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = qtErrCode == uint.MaxValue ? -1 : (int)qtErrCode;
+                byte QTControl = paramOut[0];
                 if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
                 {
                     if ((QTControl & (byte)MonzaQT.PAGE_PUBLIC) == (byte)MonzaQT.PAGE_PUBLIC)
@@ -913,9 +970,12 @@ namespace LJYZN_105
                 if (cbDup_MonzaQT_Distance.SelectedIndex == 1)
                     QTControl |= (byte)MonzaQT.RANGE_REDUCE;
 
-                FormSharedData.fCmdRet = StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, FormSharedData.fPassWord,
+                uint qtPwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint qtErrCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.SetMonza4QTWorkParamter_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, iEPCLenBytes, ref qtPwd,
                                                                                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, QTControl,
-                                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                                                                                    ref qtErrCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = qtErrCode == uint.MaxValue ? -1 : (int)qtErrCode;
                 if (FormSharedData.fCmdRet == 0 && FormSharedData.ferrorcode == -1)
                     FormSharedData.MainForm.AddCmdLog("MonzaQT Write Success", "MonzaQT command successful", FormSharedData.fCmdRet);
                 else
@@ -1038,9 +1098,14 @@ namespace LJYZN_105
             byte[] arrTemp;
 
             FormSharedData.fPassWord = HexStringToByteArray(strCardKey); //Set wave key
-            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
-                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                    ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
@@ -1093,9 +1158,14 @@ namespace LJYZN_105
                 readSize = (byte)i;
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("00", 16);
-                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, readSize, FormSharedData.fPassWord,
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.EPC, wordPtr, readSize, ref pwd,
                                                                     FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray, iEPCLenBytes,
-                                                                    ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                                                                    ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
@@ -1136,9 +1206,14 @@ namespace LJYZN_105
             {
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("0", 16);
-                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)i,
-                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.User, wordPtr, (byte)i,
+                                                                    ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet == 0)
                 {
                     arrTemp = new byte[i * 2];
@@ -1164,9 +1239,14 @@ namespace LJYZN_105
             readSize = 2;
             wordPtr = Convert.ToByte("00", 16);
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
-            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
-                                                                FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
@@ -1183,9 +1263,14 @@ namespace LJYZN_105
             readSize = 2;
             wordPtr = Convert.ToByte("02", 16);
             FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
-            FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
-                                                                FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray,
-                                                                iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+            {
+                uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                uint errCode = uint.MaxValue;
+                FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag, retArray,
+                                                                iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+            }
             if (FormSharedData.fCmdRet == 0)
             {
                 arrTemp = new byte[readSize * 2];
@@ -1204,9 +1289,14 @@ namespace LJYZN_105
                 Array.Clear(retArray, 0, 320);
                 wordPtr = Convert.ToByte("02", 16);
                 FormSharedData.fPassWord = HexStringToByteArray(strWavev2Key);
-                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
-                                                                    FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                    retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.Reserved, wordPtr, readSize,
+                                                                    ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                    retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
@@ -1227,9 +1317,14 @@ namespace LJYZN_105
 
                 Array.Clear(retArray, 0, 320);
                 FormSharedData.fPassWord = HexStringToByteArray(FormSharedData.strDefaultKey);
-                FormSharedData.fCmdRet = StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, readSize, 
-                                                                        FormSharedData.fPassWord, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
-                                                                        retArray, iEPCLenBytes, ref FormSharedData.ferrorcode, FormSharedData.frmcomportindex);
+                {
+                    uint pwd = BitConverter.ToUInt32(FormSharedData.fPassWord, 0);
+                    uint errCode = uint.MaxValue;
+                    FormSharedData.fCmdRet = (int)StaticClassReaderB.ReadCard_G2(ref FormSharedData.fComAdr, arrEPCHexBytes, (byte)MemBank.TID, wordPtr, readSize,
+                                                                        ref pwd, FormSharedData.Maskadr, FormSharedData.MaskLen, FormSharedData.MaskFlag,
+                                                                        retArray, iEPCLenBytes, ref errCode, FormSharedData.frmcomportindex);
+                    FormSharedData.ferrorcode = errCode == uint.MaxValue ? -1 : (int)errCode;
+                }
                 if (FormSharedData.fCmdRet == 0)
                 {
                     arrTemp = new byte[readSize * 2];
